@@ -10,6 +10,7 @@ class MainWindow:
         self.window = load_ui(resolve("ui/main_window.ui"))
 
         self.window.pushButton.clicked.connect(self.open_second)
+        self.window.slider1.valueChanged.connect(self.window.slider1Label.setNum)
 
     def open_second(self):
         self.second_window = load_ui(resolve("ui/tool_view.ui"))
