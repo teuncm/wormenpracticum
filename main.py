@@ -15,9 +15,6 @@ class MainWindow:
         self.second_window = load_ui(resolve("ui/tool_view.ui"))
         self.second_window.show()
 
-    def show(self):
-        self.window.show()
-
 
 def main():
     app = QApplication(sys.argv)
@@ -26,7 +23,7 @@ def main():
     # Set global window icon
     app.setWindowIcon(QIcon(resolve("ui/icon.ico")))
     main = MainWindow()
-    main.show()
+    main.window.show()
     sys.exit(app.exec())
 
 
