@@ -3,7 +3,7 @@ name = "wormenpracticum"
 version = "0.0.1"
 description = "Python rewrite of the UvA Psychobiologie wormenpracticum."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "pyinstaller>=6.19.0",
     "pyqtgraph>=0.14.0",

@@ -4,6 +4,9 @@
 # Practicum data
 data/
 
+# Generated from Qt Designer .ui files
+**/ui_*.py
+
 # Python.gitignore from:
 # https://github.com/github/gitignore/blob/main/Python.gitignore
 
