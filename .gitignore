@@ -2,7 +2,10 @@
 data/
 
 # Generated from Qt Designer .ui files
-**/ui_*.py
+ui_*.py
+
+# MacOS
+.DS_Store
 
 # Python.gitignore from:
 # https://github.com/github/gitignore/blob/main/Python.gitignore
