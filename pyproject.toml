@@ -17,3 +17,22 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.15.2",
 ]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes (real bugs)
+    "I",    # import sorting
+    "UP",   # pyupgrade (modern Python)
+    "B",    # flake8-bugbear (common mistakes)
+    "SIM",  # simplify (cleaner code)
+    "C4",   # comprehensions improvements
+    "PIE",  # misc small improvements
+    "RET",  # return improvements
+    "PTH",  # use pathlib instead of os.path
+    "DTZ",  # timezone-aware datetime
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
