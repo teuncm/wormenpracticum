@@ -1,7 +1,8 @@
-from PySide6.QtUiTools import QUiLoader
-from PySide6.QtCore import QFile
-from pathlib import Path
 import sys
+from pathlib import Path
+
+from PySide6.QtCore import QFile
+from PySide6.QtUiTools import QUiLoader
 
 # Base directory for development and PyInstaller bundle.
 BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
