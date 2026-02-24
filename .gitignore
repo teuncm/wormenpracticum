@@ -7,6 +7,9 @@ ui_*.py
 # MacOS
 .DS_Store
 
+# MATLAB reference files
+*.m
+
 # Python.gitignore from:
 # https://github.com/github/gitignore/blob/main/Python.gitignore
 

@@ -5,12 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 # from misc.util import load_ui, resolve
-from model.data_functions import (
-    load_data,
-    save_data,
-    show_load_dialog,
-    show_save_dialog,
-)
+from tools.utility_functions import resolve_project
 from ui.ui_main_window import Ui_MainWindow
 from ui.ui_tool_view import Ui_ToolView
 
@@ -34,35 +29,14 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    example_df = pd.DataFrame({"A": [4, 2], "B": [6, 9]})
+    # Platform-independent style
+    app.setStyle("Fusion")
+    # Set global window icon
+    app.setWindowIcon(QIcon(resolve_project("ui/icon.ico")))
+    main = MainWindow()
+    main.show()
 
-    file_path = show_save_dialog()
-    if file_path:
-        save_data(file_path, example_df)
-
-    file_path2 = show_load_dialog()
-
-    if file_path2:
-        loaded_df = load_data(file_path2)
-        print(loaded_df)
-
-
-# def main():
-#     # df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
-
-#     # save_worm_data("data/worm_data.parquet", df)
-
-#     app = QApplication(sys.argv)
-#     # Platform-independent style
-#     app.setStyle("Fusion")
-#     # Set global window icon
-#     app.setWindowIcon(QIcon(resolve("ui/icon.ico")))
-#     main = MainWindow()
-#     main.window.show()
-
-#     save_dialog()
-
-#     sys.exit(app.exec())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
