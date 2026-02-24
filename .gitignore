@@ -2,7 +2,7 @@
 data/
 
 # Generated from Qt Designer .ui files
-ui_*.py
+app/ui/ui_*.py
 
 # MacOS
 .DS_Store
