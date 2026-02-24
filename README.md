@@ -20,7 +20,7 @@ uv run pyside6-designer
 uv run python -m tools.ui_convert
 
 # Run
-uv run main.
+uv run python -m main
 
 # Tidy code
 uv run ruff check . --fix

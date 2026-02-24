@@ -4,8 +4,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-import app.model.data_functions as data_functions
+from app.model.data_io import load_data
 from app.ui.ui_main_window import Ui_MainWindow
+from app.view.data_dialog import show_load_dialog
 
 
 class MainView(QMainWindow):
@@ -29,10 +30,10 @@ class MainView(QMainWindow):
         self.plotWidget.setMenuEnabled(False)
 
     def load_data(self):
-        filename = data_functions.show_load_dialog()
+        filename = show_load_dialog()
 
         if filename:
-            loaded_df = data_functions.load_data(filename)
+            loaded_df = load_data(filename)
             print(loaded_df)
 
             for i in range(1, loaded_df.shape[1]):
