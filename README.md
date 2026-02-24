@@ -19,7 +19,7 @@ uv run pyside6-designer
 # Convert UI components to Python
 uv run python -m tools.ui_convert
 
-# Run
+# Run app
 uv run python -m main
 
 # Tidy code
