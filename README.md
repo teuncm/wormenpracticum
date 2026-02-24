@@ -16,6 +16,9 @@ uv sync
 # Design
 uv run pyside6-designer
 
+# Convert
+uv run python .\misc\convert_ui.py
+
 # Run
 uv run main.py
 

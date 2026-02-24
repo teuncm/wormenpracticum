@@ -7,30 +7,16 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "numpy>=2.4.2",
     "pandas>=3.0.1",
-    "pyinstaller>=6.19.0",
+    "pyarrow>=23.0.1",
     "pyqtgraph>=0.14.0",
     "pyside6>=6.10.2",
 ]
 
 [dependency-groups]
 dev = [
+    "pyinstaller>=6.19.0",
     "pytest>=9.0.2",
     "ruff>=0.15.2",
-]
-
-[tool.ruff.lint]
-select = [
-    "E",    # pycodestyle errors
-    "F",    # pyflakes (real bugs)
-    "I",    # import sorting
-    "UP",   # pyupgrade (modern Python)
-    "B",    # flake8-bugbear (common mistakes)
-    "SIM",  # simplify (cleaner code)
-    "C4",   # comprehensions improvements
-    "PIE",  # misc small improvements
-    "RET",  # return improvements
-    "PTH",  # use pathlib instead of os.path
-    "DTZ",  # timezone-aware datetime
 ]
 
 [tool.ruff.format]
