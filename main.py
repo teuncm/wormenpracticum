@@ -2,9 +2,9 @@ import sys
 
 import pandas as pd
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMainWindow
 
-from misc.util import load_ui, resolve
+# from misc.util import load_ui, resolve
 from model.worm_data import load_data, save_data, show_load_dialog, show_save_dialog
 from ui.ui_main_window import Ui_MainWindow
 from ui.ui_tool_view import Ui_ToolView
