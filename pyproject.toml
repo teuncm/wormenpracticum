@@ -21,7 +21,7 @@ dev = [
 
 [tool.ruff]
 exclude = [
-    "ui/",
+    "app/ui/",
 ]
 
 [tool.ruff.format]

@@ -1,2 +1,2 @@
-# Build script for PyInstaller.
-uv run pyinstaller --icon ui/icon.ico --noconfirm --windowed --name wormenpracticum --add-data "ui;ui" main.py
+# Windows build script
+uv run pyinstaller --icon app/ui/icon.ico --noconfirm --windowed --name wormenpracticum --add-data "app/ui;app/ui" main.py
