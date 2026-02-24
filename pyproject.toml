@@ -22,7 +22,7 @@ dev = [
 [tool.ruff]
 src = ["app"]
 exclude = [
-    "app/ui/",
+    "app/window/",
 ]
 
 [tool.ruff.format]
