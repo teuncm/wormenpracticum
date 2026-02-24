@@ -1,9 +1,10 @@
 import sys
+from pathlib import Path
 
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from app.utility_functions import resolve_project
+from app.utility_functions import resource_path
 from app.view.main_window import MainWindow
 
 
@@ -12,7 +13,7 @@ def main():
     # Platform-independent style
     app.setStyle("Fusion")
     # Global window icon
-    app.setWindowIcon(QIcon(resolve_project("app/ui/icon.ico")))
+    app.setWindowIcon(QIcon(resource_path("app/ui/icon.ico")))
     window = MainWindow()
     window.show()
 
