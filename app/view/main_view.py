@@ -1,12 +1,11 @@
 import pyqtgraph as pg
+from app.designer.ui_main_window import Ui_MainWindow
+from app.model.data_io import load_data
+from app.view.data_dialog import show_load_dialog
 from PySide6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
 )
-
-from app.model.data_io import load_data
-from app.ui.ui_main_window import Ui_MainWindow
-from app.view.data_dialog import show_load_dialog
 
 
 class MainView(QMainWindow):

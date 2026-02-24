@@ -1,3 +1,4 @@
+from app.designer.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
@@ -7,8 +8,6 @@ from PySide6.QtWidgets import (
     QSlider,
     QVBoxLayout,
 )
-
-from app.ui.ui_pulse_window import Ui_PulseWindow
 
 
 class PulseView(QDialog):
