@@ -2,26 +2,36 @@ import sys
 
 import numpy as np
 import pandas as pd
-from data_functions import (
+from PySide6.QtWidgets import QApplication
+
+from .data_functions import (
     load_data,
     save_data,
     show_load_dialog,
     show_save_dialog,
 )
-from PySide6.QtWidgets import QApplication
 
 
-def gen_dummy_data(t_max=10e6, N=1000) -> pd.DataFrame:
+def gen_dummy_data(t_max, sample_rate, num_channels) -> pd.DataFrame:
     """Generate matrix with 16 sine waves for testing."""
-    timestamps = np.linspace(0, t_max, num=N)
+    # Wave frequency in Hz
+    WAVE_FREQ = 10000
+    # Total number of samples
+    N = int(t_max * sample_rate)
+    # Samples are measured in milliseconds
+    timestamps = np.linspace(0, t_max, num=N, endpoint=False)
 
-    data = np.array(
-        [timestamps]
-        + [np.sin(2 * np.pi * f * timestamps / t_max) for f in range(1, 17)]
-    ).T
+    waves = np.array(
+        [np.sin(2 * np.pi * WAVE_FREQ * timestamps) for _ in range(num_channels)]
+    )
+
+    waves += np.random.normal(scale=0.1, size=waves.shape)
+
+    data = np.array([timestamps] + [waves[i] for i in range(num_channels)]).T
 
     df = pd.DataFrame(
-        data, columns=["Timestamp (ms)"] + [f"Channel {i} (uV)" for i in range(1, 17)]
+        data,
+        columns=["Timestamp (s)"] + [f"Channel {i} (V)" for i in range(num_channels)],
     )
 
     return df
@@ -30,7 +40,7 @@ def gen_dummy_data(t_max=10e6, N=1000) -> pd.DataFrame:
 def main():
     _ = QApplication(sys.argv)
 
-    dummy_df = gen_dummy_data(t_max=10e6, N=50000000)
+    dummy_df = gen_dummy_data(t_max=0.0010, sample_rate=100000, num_channels=2)
 
     print(dummy_df)
 

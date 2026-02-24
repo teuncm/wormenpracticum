@@ -1,8 +1,12 @@
 import sys
 
 import pandas as pd
+import pyqtgraph as pg
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout
+
+import model.data_functions as data_functions
+from model.worm_data_test import gen_dummy_data
 
 # from misc.util import load_ui, resolve
 from tools.utility_functions import resolve_project
@@ -17,8 +21,36 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.ui.pushButton.clicked.connect(self.open_second)
-        self.ui.slider1.valueChanged.connect(self.ui.slider1Label.setNum)
+        self.ui.loadButton.clicked.connect(self.load_data)
+
+        self.plotWidget = pg.PlotWidget()
+        layout = QVBoxLayout(self.ui.plotContainer)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.plotWidget)
+
+        self.plotWidget.setTitle("Evoked Response")
+        self.plotWidget.setLabel("left", "Voltage", units="V")
+        self.plotWidget.setLabel("bottom", "Time", units="s")
+        self.plotWidget.setMouseEnabled(False, False)
+        self.plotWidget.setMenuEnabled(False)
+
+    def load_data(self):
+        filename = data_functions.show_load_dialog()
+
+        if filename:
+            loaded_df = data_functions.load_data(filename)
+            print(loaded_df)
+
+            for i in range(1, loaded_df.shape[1]):
+                color = pg.intColor(i, hues=loaded_df.shape[1] - 1)
+                color.setAlpha(100)
+
+                self.plotWidget.plot(
+                    loaded_df.iloc[:, 0],
+                    loaded_df.iloc[:, i],
+                    name=f"Channel {i}",
+                    pen=pg.mkPen(color=color, width=1),
+                )
 
     def open_second(self):
         self.second_window = QMainWindow()
