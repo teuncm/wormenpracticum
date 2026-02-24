@@ -10,7 +10,7 @@ Python rewrite of the UvA Psychobiologie wormenpracticum.
 ### Development
 
 ```ini
-# Setup
+# Setup environment
 uv sync
 
 # Design UI components
