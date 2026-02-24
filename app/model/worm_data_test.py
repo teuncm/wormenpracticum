@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from PySide6.QtWidgets import QApplication
 
-from .data_functions import (
+from app.model.data_functions import (
     load_data,
     save_data,
     show_load_dialog,

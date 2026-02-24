@@ -11,10 +11,12 @@ def convert_ui_files() -> None:
     for ui_file in ui_files:
         output_file = ui_file.with_name(f"ui_{ui_file.stem}.py")
 
-        print(f"Converting {ui_file} → {output_file}")
+        command = ["pyside6-uic", str(ui_file), "-o", str(output_file)]
+
+        print(" ".join(command))
 
         subprocess.run(
-            ["pyside6-uic", str(ui_file), "-o", str(output_file)],
+            command,
             check=True,
         )
 

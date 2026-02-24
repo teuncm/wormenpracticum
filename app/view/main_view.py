@@ -1,12 +1,14 @@
 import pyqtgraph as pg
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QVBoxLayout,
+)
 
 import app.model.data_functions as data_functions
 from app.ui.ui_main_window import Ui_MainWindow
-from app.ui.ui_tool_view import Ui_ToolView
 
 
-class MainWindow(QMainWindow):
+class MainView(QMainWindow):
     def __init__(self):
         super().__init__()
 
@@ -43,9 +45,3 @@ class MainWindow(QMainWindow):
                     name=f"Channel {i}",
                     pen=pg.mkPen(color=color, width=1),
                 )
-
-    def open_second(self):
-        self.second_window = QMainWindow()
-        self.second_ui = Ui_ToolView()
-        self.second_ui.setupUi(self.second_window)
-        self.second_window.show()
