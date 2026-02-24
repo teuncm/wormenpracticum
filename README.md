@@ -20,11 +20,18 @@ uv run pyside6-designer
 uv run python -m tools.ui_convert
 
 # Run
-uv run main.py
+uv run main.
 
 # Tidy code
 uv run ruff check . --fix
+```
 
+### Bundling
+
+```ini
 # Build (Windows)
 .\tools\build.ps1
+
+# Build (Mac/Linux)
+./tools/build.sh
 ```
