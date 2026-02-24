@@ -26,7 +26,7 @@ uv run python -m main
 uv run ruff check . --fix
 ```
 
-### Bundling
+### Packaging
 
 ```ini
 # Build (Windows)
