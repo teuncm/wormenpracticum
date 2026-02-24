@@ -13,15 +13,15 @@ Python rewrite of the UvA Psychobiologie wormenpracticum.
 # Setup
 uv sync
 
-# Design
+# Design UI components
 uv run pyside6-designer
 
-# Convert
-uv run python .\misc\convert_ui.py
+# Convert UI components to Python
+uv run python .\tools\convert_ui.py
 
 # Run
 uv run main.py
 
 # Build (Windows)
-.\misc\build.ps1
+.\tools\build.ps1
 ```
