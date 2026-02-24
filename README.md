@@ -24,4 +24,7 @@ uv run main.py
 
 # Build (Windows)
 .\tools\build.ps1
+
+# Tidy code
+uv run ruff check . --fix
 ```
