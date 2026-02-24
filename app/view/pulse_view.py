@@ -1,4 +1,4 @@
-from app.designer.ui_pulse_window import Ui_PulseWindow
+from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
