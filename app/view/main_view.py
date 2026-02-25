@@ -28,12 +28,14 @@ class MainView(QMainWindow):
         self.plotWidget.setMouseEnabled(False, False)
         self.plotWidget.setMenuEnabled(False)
 
+    def set_controller(self, controller):
+        self.controller = controller
+
     def load_data(self):
         filename = show_load_dialog()
 
         if filename:
             loaded_df = load_data(filename)
-            print(loaded_df)
 
             for i in range(1, loaded_df.shape[1]):
                 color = pg.intColor(i, hues=loaded_df.shape[1] - 1)

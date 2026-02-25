@@ -1,16 +1,9 @@
-import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from PySide6.QtWidgets import QApplication
-
 from app.model.data_io import (
-    load_data,
     save_data,
-)
-from app.view.data_dialog import (
-    show_load_dialog,
-    show_save_dialog,
 )
 
 
@@ -40,21 +33,13 @@ def gen_dummy_data(t_max, sample_rate, num_channels) -> pd.DataFrame:
 
 
 def main():
-    _ = QApplication(sys.argv)
-
     dummy_df = gen_dummy_data(t_max=0.0010, sample_rate=100000, num_channels=2)
 
     print(dummy_df)
 
-    file_path = show_save_dialog()
+    file_path = Path("data/test_data.parquet")
     if file_path:
         save_data(file_path, dummy_df)
-
-    file_path2 = show_load_dialog()
-
-    if file_path2:
-        loaded_df = load_data(file_path2)
-        print(loaded_df)
 
 
 if __name__ == "__main__":
