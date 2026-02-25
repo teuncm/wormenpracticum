@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.ruff]
-src = ["app", "test", "tools"]
+src = ["app", "tests", "tools"]
 exclude = [
     "app/window/",
 ]
@@ -31,4 +31,4 @@ indent-style = "space"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["test"]
+testpaths = ["tests"]

@@ -19,8 +19,11 @@ uv run pyside6-designer
 # Convert UI components to Python
 uv run python -m tools.ui_convert
 
-# Run app
+# Run
 uv run python -m main
+
+# Test
+uv run python -m pytest
 
 # Tidy code
 uv run ruff check . --fix
