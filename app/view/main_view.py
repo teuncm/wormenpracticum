@@ -41,6 +41,10 @@ class MainView(QMainWindow):
         self.plotWidget.setLabel("bottom", "Time", units="s")
         self.plotWidget.setMouseEnabled(x=True, y=False)
         self.plotWidget.setMenuEnabled(False)
+        legend = self.plotWidget.addLegend()
+
+        legend.anchor((1, 0), (1, 0))
+        legend.setBrush(pg.mkBrush(("w")))
 
         self.plotMagnitude = 1.0
 
@@ -70,8 +74,6 @@ class MainView(QMainWindow):
                 name=f"Channel {i}",
                 pen=pg.mkPen(color=color, width=1),
             )
-
-        self.plotWidget.addLegend()
 
         # Adjust x viewbox limits based on dataframe.
         self.plotWidget.getViewBox().setLimits(

@@ -64,9 +64,6 @@ class PulseView(QDialog):
         self.plotWidget.setLabel("bottom", "Time", units="s")
         self.plotWidget.setMouseEnabled(x=False, y=False)
 
-    def set_controller(self, controller):
-        self.controller = controller
-
     def update_pulse_width(self, value):
         pulse_width = value / 100.0
         self.plotWidget.clear()

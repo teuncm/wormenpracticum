@@ -13,20 +13,13 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,2">
-   <item>
-    <widget class="QGroupBox" name="sliderBox">
-     <property name="title">
-      <string>GroupBox</string>
-     </property>
-    </widget>
-   </item>
+  <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,1">
    <item>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
       <string>GroupBox</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QWidget" name="pulseContainer" native="true">
         <property name="autoFillBackground">
@@ -35,6 +28,13 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="sliderBox">
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
     </widget>
    </item>
   </layout>
