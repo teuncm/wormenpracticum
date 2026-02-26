@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from app.model.data_io import load_data, save_data
+from app.model.data_io import read_data, write_data
 
 
 def test_save_load_data(tmp_path):
@@ -11,7 +11,7 @@ def test_save_load_data(tmp_path):
 
     file_path = Path(tmp_path) / "test_data.parquet"
 
-    save_data(file_path, test_df)
-    loaded_df = load_data(file_path)
+    write_data(file_path, test_df)
+    loaded_df = read_data(file_path)
 
     assert test_df.equals(loaded_df)

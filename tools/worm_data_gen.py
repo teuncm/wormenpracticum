@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from app.model.data_io import (
-    save_data,
+    write_data,
 )
 
 
@@ -39,7 +39,7 @@ def main():
 
     file_path = Path("data/test_data.parquet")
     if file_path:
-        save_data(file_path, dummy_df)
+        write_data(file_path, dummy_df)
 
 
 if __name__ == "__main__":

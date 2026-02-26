@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-UI_ROOT = Path("app/ui")
+UI_ROOT = Path("app/window")
 
 
 def convert_ui_files() -> None:

@@ -1,18 +1,18 @@
 import pandas as pd
 
 
-def save_data(file_path, df) -> None:
-    """Save experiment data to a Parquet file.
+def write_data(file_path, df) -> None:
+    """Write experiment data to a Parquet file.
 
     Args:
-        file_path (str): The path to the Parquet file to save.
-        df (pd.DataFrame): The DataFrame to save.
+        file_path (str): The path to the Parquet file to write.
+        df (pd.DataFrame): The DataFrame to write to the Parquet file.
     """
     df.to_parquet(file_path, index=False)
 
 
-def load_data(file_path) -> pd.DataFrame:
-    """Load experiment data in Parquet format from file path
+def read_data(file_path) -> pd.DataFrame:
+    """Read experiment data in Parquet format from file path
 
     Args:
         file_path (str): The path to the Parquet file to read.
