@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 from app.model.data_io import read_data
 from app.view.data_dialog import show_load_dialog
@@ -41,32 +42,54 @@ class MainView(QMainWindow):
         self.plotWidget.setMouseEnabled(x=True, y=False)
         self.plotWidget.setMenuEnabled(False)
 
-        self.plotWidget.getViewBox().setLimits(xMin=0, xMax=1)
+        self.plotMagnitude = 1.0
 
-        self.load_data("data/test2.parquet")
+        loaded_df = read_data("data/test.parquet")
+        self.plot_data(loaded_df)
 
     def load_data_with_dialog(self):
         filename = show_load_dialog()
 
         if filename:
-            self.load_data(filename)
+            loaded_df = read_data(filename)
+            self.plot_data(loaded_df)
 
-    def load_data(self, filename):
-        loaded_df = read_data(filename)
+    def plot_data(self, df):
+        """Plot data from the file system.
 
-        for i in range(1, loaded_df.shape[1]):
-            color = pg.intColor(i, hues=loaded_df.shape[1] - 1)
+        Args:
+            df (DataFrame): DataFrame of data to plot
+        """
+        for i in range(1, df.shape[1]):
+            color = pg.intColor(i, hues=df.shape[1] - 1)
             color.setAlpha(100)
 
             self.plotWidget.plot(
-                loaded_df.iloc[:, 0],
-                loaded_df.iloc[:, i],
+                df.iloc[:, 0],
+                df.iloc[:, i],
                 name=f"Channel {i}",
                 pen=pg.mkPen(color=color, width=1),
             )
 
+        self.plotWidget.addLegend()
+
+        # Adjust x viewbox limits based on dataframe.
+        self.plotWidget.getViewBox().setLimits(
+            xMin=df.iloc[:, 0].min(), xMax=df.iloc[:, 0].max()
+        )
+
+        self.plotMagnitude = np.max(np.abs(df.iloc[:, 1:]))
+
     def update_plot_amplitude(self, value):
+        """Scale plot amplitude based on slider value.
+
+        Args:
+            value (int): Slider value
+        """
         view_scale_factor = value / float(AMP_SLIDER_SCALE_FACTOR)
         self.plotWidget.getViewBox().setRange(
-            yRange=(-view_scale_factor, view_scale_factor)
+            yRange=(
+                -view_scale_factor * self.plotMagnitude,
+                view_scale_factor * self.plotMagnitude,
+            )
         )

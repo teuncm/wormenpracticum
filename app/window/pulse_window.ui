@@ -6,14 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>823</width>
-    <height>521</height>
+    <width>882</width>
+    <height>460</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,2">
+   <item>
+    <widget class="QGroupBox" name="sliderBox">
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
@@ -24,22 +31,6 @@
        <widget class="QWidget" name="pulseContainer" native="true">
         <property name="autoFillBackground">
          <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>GroupBox</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QSlider" name="pulseWidthSlider">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
         </property>
        </widget>
       </item>
