@@ -3,6 +3,7 @@ from app.model.data_io import read_data
 from app.view.data_dialog import show_load_dialog
 from app.view.plot_helper import set_global_plot_config
 from app.window.ui_main_window import Ui_MainWindow
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
@@ -12,12 +13,13 @@ AMP_SLIDER_SCALE_FACTOR = 100
 
 
 class MainView(QMainWindow):
+    editImpulseRequested = Signal()
+
     def __init__(self):
         super().__init__()
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
         set_global_plot_config()
 
         self.ui.loadButton.clicked.connect(self.load_data_with_dialog)
@@ -26,7 +28,7 @@ class MainView(QMainWindow):
         self.ui.ampSlider.setValue(0)
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
-        # self
+        self.ui.editImpulseButton.clicked.connect(self.editImpulseRequested)
 
         self.plotWidget = pg.PlotWidget()
         layout = QVBoxLayout(self.ui.plotContainer)
@@ -42,9 +44,6 @@ class MainView(QMainWindow):
         self.plotWidget.getViewBox().setLimits(xMin=0, xMax=1)
 
         self.load_data("data/test2.parquet")
-
-    def set_controller(self, controller):
-        self.controller = controller
 
     def load_data_with_dialog(self):
         filename = show_load_dialog()

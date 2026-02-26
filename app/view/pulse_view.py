@@ -1,11 +1,7 @@
+import pyqtgraph as pg
 from app.window.ui_pulse_window import Ui_PulseWindow
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QSlider,
     QVBoxLayout,
 )
 
@@ -17,24 +13,27 @@ class PulseView(QDialog):
         self.ui = Ui_PulseWindow()
         self.ui.setupUi(self)
 
-        self.build_sliders(4)
+        self.ui.pulseWidthSlider.valueChanged.connect(self.update_pulse_width)
 
-    def build_sliders(self, n):
-        groupbox = QGroupBox("Channel Gain")
-        group_layout = QHBoxLayout()
-        groupbox.setLayout(group_layout)
+        self.plotWidget = pg.PlotWidget()
+        layout = QVBoxLayout(self.ui.pulseContainer)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.plotWidget)
 
-        for i in range(n):
-            col = QVBoxLayout()
+        self.plotWidget.setTitle("Impulse")
+        self.plotWidget.setLabel("left", "Voltage", units="V")
+        self.plotWidget.setLabel("bottom", "Time", units="s")
+        self.plotWidget.setMouseEnabled(x=False, y=False)
 
-            label = QLabel(f"Ch {i + 1}")
-            slider = QSlider(Qt.Orientation.Vertical)
-            slider.setRange(0, 100)
-            slider.setValue(50)
+    def set_controller(self, controller):
+        self.controller = controller
 
-            col.addWidget(label)
-            col.addWidget(slider)
-
-            group_layout.addLayout(col)
-
-        self.ui.verticalLayout.addWidget(groupbox)
+    def update_pulse_width(self, value):
+        pulse_width = value / 100.0
+        self.plotWidget.clear()
+        self.plotWidget.plot(
+            [0, pulse_width, pulse_width, 1],
+            [0, 0, 1, 1],
+            pen=pg.mkPen(color="r", width=2),
+            name="Pulse",
+        )
