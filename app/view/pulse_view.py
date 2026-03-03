@@ -1,18 +1,16 @@
 import pyqtgraph as pg
-from app.view.symbols import translate_symbols
+from app.view.pulse_segment import PulseSegmentWidget
 from app.window.ui_pulse_window import Ui_PulseWindow
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
-    QDoubleSpinBox,
-    QHBoxLayout,
-    QLabel,
+    QPushButton,
     QVBoxLayout,
 )
 
 
 class PulseView(QDialog):
-    pulseParametersChanged = Signal()
+    pulseChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -20,40 +18,25 @@ class PulseView(QDialog):
         self.ui = Ui_PulseWindow()
         self.ui.setupUi(self)
 
-        layout = QVBoxLayout(self.ui.sliderBox)
+        # Configure tab management.
+        self.ui.segmentTabWidget.setTabsClosable(True)
+        self.ui.segmentTabWidget.tabCloseRequested.connect(self.handle_close_tab)
+        self.ui.segmentTabWidget.setMovable(True)
+        self.ui.segmentTabWidget.tabBar().tabMoved.connect(self.renumber_tabs)
 
-        self.spinboxes = {}
+        # Add base segment tab.
+        self.add_segment_tab()
 
-        params = {
-            "V": (0.0, 2.0, 0.01),
-            "PW": (0.0, 1.0, 0.01),
-            "T": (0.0, 100.0, 0.1),
-            "DELTA_V": (0.0, 1.0, 0.01),
-            "DELTA_PW": (-1.0, 1.0, 0.01),
-            "DELTA_T": (0.0, 360.0, 1.0),
-        }
+        # Add new tab button and anchor it to the top right corner of the tab widget.
+        new_segment_button = QPushButton("+")
+        new_segment_button.setFixedWidth(25)
+        new_segment_button.clicked.connect(self.add_segment_tab)
+        self.ui.segmentTabWidget.setCornerWidget(
+            new_segment_button, Qt.Corner.TopRightCorner
+        )
+        new_segment_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-        for name, (min_val, max_val, step) in params.items():
-            row = QHBoxLayout()
-
-            label = QLabel(translate_symbols(name))
-            label.setFixedWidth(40)
-
-            spin = QDoubleSpinBox()
-            spin.setRange(min_val, max_val)
-            spin.setSingleStep(step)
-            spin.setDecimals(3)
-            spin.setValue(0.0)
-
-            spin.valueChanged.connect(self.pulseParametersChanged)
-
-            row.addWidget(label)
-            row.addWidget(spin)
-
-            layout.addLayout(row)
-
-            self.spinboxes[name] = spin
-
+        # Create plot widget for pulse visualization.
         self.plotWidget = pg.PlotWidget()
         layout = QVBoxLayout(self.ui.pulseContainer)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -62,14 +45,46 @@ class PulseView(QDialog):
         self.plotWidget.setTitle("Impulse")
         self.plotWidget.setLabel("left", "Voltage", units="V")
         self.plotWidget.setLabel("bottom", "Time", units="s")
-        self.plotWidget.setMouseEnabled(x=False, y=False)
+        # self.plotWidget.setMouseEnabled(x=False, y=False)
 
-    def update_pulse_width(self, value):
-        pulse_width = value / 100.0
+        self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)
+
+        self.pulseChanged.emit()
+
+    def renumber_tabs(self):
+        for i in range(self.ui.segmentTabWidget.count()):
+            self.ui.segmentTabWidget.setTabText(i, f"{i}")
+
+        self.pulseChanged.emit()
+
+    def handle_close_tab(self, index):
+        # Keep at least one segment tab open.
+        if self.ui.segmentTabWidget.count() <= 1:
+            return
+
+        self.ui.segmentTabWidget.removeTab(index)
+        self.renumber_tabs()
+
+    def add_segment_tab(self):
+        segment = PulseSegmentWidget()
+
+        index = self.ui.segmentTabWidget.addTab(segment, "")
+        self.ui.segmentTabWidget.setCurrentIndex(index)
+
+        segment.segmentChanged.connect(self.pulseChanged)
+        self.renumber_tabs()
+
+    def update_pulse_plot(self, plot_data):
         self.plotWidget.clear()
-        self.plotWidget.plot(
-            [0, pulse_width, pulse_width, 1],
-            [0, 0, 1, 1],
-            pen=pg.mkPen(color="r", width=2),
-            name="Pulse",
-        )
+        if plot_data is not None:
+            time_points, voltage_points = plot_data
+            self.plotWidget.plot(
+                time_points,
+                voltage_points,
+                pen=pg.mkPen(color="k", width=1),
+                name="Pulse",
+            )
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.pulseChanged.emit()
