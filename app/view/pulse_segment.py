@@ -1,6 +1,6 @@
-from app.view.symbols import translate_symbols
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDoubleSpinBox,
     QFormLayout,
     QWidget,
@@ -18,12 +18,10 @@ class PulseSegmentWidget(QWidget):
         self.spinboxes = {}
 
         params = {
-            "amplitude_v": (0.8, -1.0, 1.0, 0.1),
-            "phase_s": (0.2, 0.0, 1.0, 0.1),
-            "rest_s": (0.5, 0.0, 1.0, 0.1),
-            "delta_amplitude_v": (0.0, -1.0, 1.0, 0.05),
-            "delta_phase_s": (0.0, -1.0, 1.0, 0.05),
-            "delta_rest_s": (0.0, -1.0, 1.0, 0.05),
+            "amp_v": (1.0, -1.0, 1.0, 0.1),
+            "dur_s": (1.0, 0.0, 1.0, 0.1),
+            "step_amp_v": (0.0, -1.0, 1.0, 0.1),
+            "step_dur_s": (0.0, -1.0, 1.0, 0.1),
         }
 
         for name, (default_val, min_val, max_val, step) in params.items():
@@ -35,6 +33,13 @@ class PulseSegmentWidget(QWidget):
 
             spin.valueChanged.connect(self.segmentChanged)
 
-            formLayout.addRow(translate_symbols(name), spin)
+            formLayout.addRow(name, spin)
 
             self.spinboxes[name] = spin
+
+        self.monophasic_checkbox = QCheckBox("is_monophasic")
+
+        self.monophasic_checkbox.setChecked(False)
+        self.monophasic_checkbox.stateChanged.connect(self.segmentChanged)
+
+        formLayout.addRow(self.monophasic_checkbox)

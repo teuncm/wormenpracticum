@@ -25,7 +25,8 @@ class PulseView(QDialog):
         self.ui.segmentTabWidget.tabCloseRequested.connect(self.handle_close_tab)
         self.ui.segmentTabWidget.setMovable(True)
         self.ui.segmentTabWidget.tabBar().setUsesScrollButtons(True)
-        self.ui.segmentTabWidget.tabBar().tabMoved.connect(self.renumber_tabs)
+        self.ui.segmentTabWidget.tabBar().tabMoved.connect(self.handle_move_tab)
+        self.ui.segmentTabWidget.currentChanged.connect(self.renumber_tabs)
 
         # Add base segment tab.
         self.add_segment_tab()
@@ -48,7 +49,7 @@ class PulseView(QDialog):
         self.plotWidget.setTitle("Impulse")
         self.plotWidget.setLabel("left", "Voltage", units="V")
         self.plotWidget.setLabel("bottom", "Time", units="s")
-        # self.plotWidget.setMouseEnabled(x=False, y=False)
+        self.plotWidget.setMouseEnabled(x=False, y=False)
 
         self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
@@ -57,9 +58,13 @@ class PulseView(QDialog):
 
     def renumber_tabs(self):
         for i in range(self.ui.segmentTabWidget.count()):
-            self.ui.segmentTabWidget.setTabText(i, f"{i}")
+            self.ui.segmentTabWidget.setTabText(i, f"{i + 1}")
 
         self.pulseChanged.emit()
+        self.stepChanged.emit()
+
+    def handle_move_tab(self, *_):
+        self.renumber_tabs()
 
     def handle_close_tab(self, index):
         # Keep at least one segment tab open.
@@ -81,21 +86,22 @@ class PulseView(QDialog):
     def update_step_slider(self, n_steps):
         max_idx = n_steps - 1
         self.ui.stepSlider.setMaximum(max_idx)
-        # If current value is larger than maximum, push it back.
-        if self.ui.stepSlider.value() > max_idx:
-            self.ui.stepSlider.setValue(max_idx)
 
-            # Emit stepChanged to update the plot for the new step.
-            self.stepChanged.emit()
+        self.ui.stepSlider.setValue(max_idx)
 
-    def update_pulse_plot(self, plot_data):
+        # Emit stepChanged to update the plot.
+        self.stepChanged.emit()
+
+    def clear_plot(self):
         self.plotWidget.clear()
+
+    def update_pulse_plot(self, plot_data, color="k", width=2):
         if plot_data is not None:
             time_points, voltage_points = plot_data
             self.plotWidget.plot(
                 time_points,
                 voltage_points,
-                pen=pg.mkPen(color="k", width=1),
+                pen=pg.mkPen(color=color, width=width),
                 name="Pulse",
             )
 
