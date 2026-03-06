@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from app.model.app_model import AppModel
 from app.view.main_view import MainView
 from app.view.pulse_segment import PulseSegmentWidget

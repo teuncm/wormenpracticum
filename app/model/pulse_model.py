@@ -18,7 +18,6 @@
 #     def __init__(self, N, pulse_segments):
 #         self.N = N
 #         self.pulse_segments = pulse_segments
-import copy
 
 import numpy as np
 

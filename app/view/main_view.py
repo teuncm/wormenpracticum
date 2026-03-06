@@ -48,8 +48,8 @@ class MainView(QMainWindow):
 
         self.plotMagnitude = 1.0
 
-        loaded_df = read_data("data/test.parquet")
-        self.plot_data(loaded_df)
+        # loaded_df = read_data("data/test.parquet")
+        # self.plot_data(loaded_df)
 
     def load_data_with_dialog(self):
         filename = show_load_dialog()
