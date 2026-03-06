@@ -54,6 +54,7 @@ class Pulse(SignalSequence):
 
         samples = np.zeros(n_samples)
 
+        # If pulse has no sample, exit early
         if n_samples == 0:
             return samples
 
@@ -90,6 +91,11 @@ class PulseTrain(SignalSequence):
     def sample(self, sr_hz) -> np.ndarray:
         """Sample the train."""
         samples_list = []
+
+        # If pulse list is empty, exit early
+        if not self.pulses:
+            return np.array([])
+
         for pulse in self.pulses:
             pulse_samples = pulse.sample(sr_hz)
             samples_list.append(pulse_samples)
@@ -115,6 +121,13 @@ class PulseGenerator:
         self.sr_hz = sr_hz
         self.train_steps = []
         self.expand()
+
+    def n_samples(self, sr_hz) -> int:
+        """Number of samples in the generated pulse trains."""
+        n_samples_per_step = self.base_train.n_samples(sr_hz)
+        total_n_samples = n_samples_per_step * self.base_train.n_steps
+
+        return total_n_samples
 
     def expand(self) -> None:
         """Expand the pulse train into a list of pulse trains for each step."""
