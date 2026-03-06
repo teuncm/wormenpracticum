@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1358</width>
-    <height>625</height>
+    <width>1554</width>
+    <height>393</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Pulse Editor</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
    <item>
     <widget class="QGroupBox" name="quantityBox">
      <property name="minimumSize">
@@ -82,6 +82,9 @@
              <height>100</height>
             </size>
            </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
            <property name="currentIndex">
             <number>-1</number>
            </property>
@@ -103,6 +106,13 @@
        <widget class="QWidget" name="pulseContainer" native="true">
         <property name="autoFillBackground">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSlider" name="stepSlider">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
        </widget>
       </item>

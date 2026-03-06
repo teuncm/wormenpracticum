@@ -2,6 +2,7 @@ import pyqtgraph as pg
 from app.view.pulse_segment import PulseSegmentWidget
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
     QDialog,
     QPushButton,
@@ -11,6 +12,7 @@ from PySide6.QtWidgets import (
 
 class PulseView(QDialog):
     pulseChanged = Signal()
+    stepChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -22,6 +24,7 @@ class PulseView(QDialog):
         self.ui.segmentTabWidget.setTabsClosable(True)
         self.ui.segmentTabWidget.tabCloseRequested.connect(self.handle_close_tab)
         self.ui.segmentTabWidget.setMovable(True)
+        self.ui.segmentTabWidget.tabBar().setUsesScrollButtons(True)
         self.ui.segmentTabWidget.tabBar().tabMoved.connect(self.renumber_tabs)
 
         # Add base segment tab.
@@ -48,6 +51,7 @@ class PulseView(QDialog):
         # self.plotWidget.setMouseEnabled(x=False, y=False)
 
         self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)
+        self.ui.stepSlider.valueChanged.connect(self.stepChanged)
 
         self.pulseChanged.emit()
 
@@ -73,6 +77,16 @@ class PulseView(QDialog):
 
         segment.segmentChanged.connect(self.pulseChanged)
         self.renumber_tabs()
+
+    def update_step_slider(self, n_steps):
+        max_idx = n_steps - 1
+        self.ui.stepSlider.setMaximum(max_idx)
+        # If current value is larger than maximum, push it back.
+        if self.ui.stepSlider.value() > max_idx:
+            self.ui.stepSlider.setValue(max_idx)
+
+            # Emit stepChanged to update the plot for the new step.
+            self.stepChanged.emit()
 
     def update_pulse_plot(self, plot_data):
         self.plotWidget.clear()

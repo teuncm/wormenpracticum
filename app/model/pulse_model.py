@@ -100,12 +100,34 @@ class PulseGenerator:
         self.train_steps = []
         self._expand()
 
+    def width(self, sr_hz) -> int:
+        """Width of the train in samples."""
+        return self.base_train.n_samples(sr_hz)
+
     def n_samples(self, sr_hz) -> int:
         """Number of samples in the generated pulse trains."""
-        n_samples_per_step = self.base_train.n_samples(sr_hz)
+        n_samples_per_step = self.width(sr_hz)
         total_n_samples = n_samples_per_step * self.base_train.n_steps
 
         return total_n_samples
+
+    def get_signal(
+        self, sr_hz, train_step_idx, pulse_idx=-1
+    ) -> tuple[SignalSequence, int]:
+        """Get a specific signal."""
+        train = self.train_steps[train_step_idx]
+
+        if pulse_idx == -1:
+            return train, 0
+
+        sample_offset = 0
+        pulse = train.pulses[pulse_idx]
+        for i in range(len(train.pulses)):
+            if i == pulse_idx:
+                break
+            sample_offset += train.pulses[i].n_samples(sr_hz=sr_hz)
+
+        return pulse, sample_offset
 
     def _expand(self) -> None:
         """Expand the pulse train into a list of pulse trains for each step."""
