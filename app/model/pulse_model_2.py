@@ -120,7 +120,7 @@ class PulseGenerator:
         self.base_train = base_train
         self.sr_hz = sr_hz
         self.train_steps = []
-        self.expand()
+        self._expand()
 
     def n_samples(self, sr_hz) -> int:
         """Number of samples in the generated pulse trains."""
@@ -129,7 +129,7 @@ class PulseGenerator:
 
         return total_n_samples
 
-    def expand(self) -> None:
+    def _expand(self) -> None:
         """Expand the pulse train into a list of pulse trains for each step."""
         cur_train = copy.deepcopy(self.base_train)
         train_steps = []
@@ -146,6 +146,11 @@ class PulseGenerator:
 
         # Contains pulse train samples for all iterations
         samples_mat = np.zeros((self.base_train.n_steps, n_samples_per_step))
+
+        # Early exit if there is nothing to generate.
+        if n_samples_per_step == 0 or self.base_train.n_steps == 0:
+            return samples_mat
+
         for i in range(self.base_train.n_steps):
             cur_samples = self.train_steps[i].sample(sr_hz)
             cur_n_samples = len(cur_samples)
