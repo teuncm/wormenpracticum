@@ -14,7 +14,7 @@ def main():
 
     app = QApplication(sys.argv)
     # Platform-independent style
-    app.setStyle("Fusion")
+    # app.setStyle("Fusion")
     # Global window icon
     app.setWindowIcon(QIcon(resource_path("app/window/icon.ico")))
 

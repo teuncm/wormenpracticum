@@ -1,101 +1,141 @@
-# class PulseSegment:
-#     V: float
-#     PW: float
-#     T: float
-#     DELTA_V: float
-#     DELTA_PW: float
-#     DELTA_T: float
-#     def __init__(self, V, PW, T, DELTA_V, DELTA_PW, DELTA_T):
-#         self.V = V
-#         self.PW = PW
-#         self.T = T
-#         self.DELTA_V = DELTA_V
-#         self.DELTA_PW = DELTA_PW
-#         self.DELTA_T = DELTA_T
-# class Pulse:
-#     N: int
-#     pulse_segments: list[PulseSegment]
-#     def __init__(self, N, pulse_segments):
-#         self.N = N
-#         self.pulse_segments = pulse_segments
+import copy
 
 import numpy as np
+from app.model.signal import SignalSequence
 
-MS_PER_S = 1000.0
 
-
-class PulseSegment:
-    amplitude_v: float
-    phase_s: float
-    rest_s: float
-    delta_amplitude_v: float
-    delta_phase_s: float
-    delta_rest_s: float
+class Pulse(SignalSequence):
+    amp_v: float
+    dur_s: float
+    step_amp_v: float
+    step_dur_s: float
+    is_monophasic: bool
 
     def __init__(
-        self,
-        amplitude_v,
-        phase_s,
-        rest_s,
-        delta_amplitude_v,
-        delta_phase_s,
-        delta_rest_s,
+        self, amp_v, dur_s, step_amp_v=0.0, step_dur_s=0.0, is_monophasic=False
     ):
-        self.amplitude_v = amplitude_v
-        self.phase_s = phase_s
-        self.rest_s = rest_s
-        self.delta_amplitude_v = delta_amplitude_v
-        self.delta_phase_s = delta_phase_s
-        self.delta_rest_s = delta_rest_s
+        self.amp_v = amp_v
+        self.dur_s = dur_s
+        self.step_amp_v = step_amp_v
+        self.step_dur_s = step_dur_s
+        self.is_monophasic = is_monophasic
 
-    def sample_segment(self, sample_rate_hz):
-        num_phase_samples = max(int(round(self.phase_s / 2.0 * sample_rate_hz)), 0)
-        num_rest_samples = max(int(round(self.rest_s * sample_rate_hz)), 0)
+    def n_samples(self, sr_hz) -> int:
+        """Number of samples in the pulse."""
+        # Guarantee that we can divide the pulse into two parts
+        n_half_pulse_samples = int(round(self.dur_s / 2.0 * sr_hz))
+        # Guarantee that the number of samples is at least 0
+        n_pulse_samples_capped = max(2 * n_half_pulse_samples, 0)
 
-        print(num_phase_samples)
+        return n_pulse_samples_capped
 
-        pos_phase_samples = np.full(num_phase_samples, self.amplitude_v)
-        neg_phase_samples = np.full(num_phase_samples, -self.amplitude_v)
-        rest_samples = np.zeros(num_rest_samples)
+    def sample(self, sr_hz) -> np.ndarray:
+        """Sample the pulse."""
+        n_samples = self.n_samples(sr_hz)
 
-        return np.concatenate([pos_phase_samples, neg_phase_samples, rest_samples])
+        samples = np.zeros(n_samples)
 
-    def add_delta(self):
-        self.amplitude_v += self.delta_amplitude_v
-        self.phase_s += self.delta_phase_s
-        self.rest_s += self.delta_rest_s
+        # If pulse has no sample, exit early
+        if n_samples == 0:
+            return samples
 
+        if self.is_monophasic:
+            samples[:] = self.amp_v
+        else:
+            # Allowed because n_samples is guaranteed to be even
+            split = n_samples // 2
+            samples[:split] = self.amp_v
+            samples[split:] = -self.amp_v
 
-class Pulse:
-    N: int
-    pulse_segments: list[PulseSegment]
+        return samples
 
-    def __init__(self, N, pulse_segments):
-        self.N = N
-        self.pulse_segments = pulse_segments
-
-    def sample_pulse(self, sample_rate_hz):
-        samples = []
-
-        for _ in range(self.N):
-            for segment in self.pulse_segments:
-                samples.append(segment.sample_segment(sample_rate_hz))
-                segment.add_delta()
-
-        return np.concatenate(samples)
-
-    def get_timeframe_s(
-        self, samples: np.ndarray, sample_rate_hz: float, sample_offset: int = 0
-    ):
-        return (np.arange(len(samples)) + sample_offset) / sample_rate_hz
+    def _step(self) -> None:
+        """Advance the pulse in-place."""
+        self.amp_v += self.step_amp_v
+        self.dur_s += self.step_dur_s
 
 
-# class PulseGenerator:
-#     pulse: Pulse
-#     sample_rate_hz: float
+class PulseTrain(SignalSequence):
+    pulses: list[Pulse]
+    n_steps: int
 
-#     def __init__(self, pulse: Pulse, sample_rate_hz: float):
-#         self.pulse = copy.deepcopy(pulse)
-#         self.sample_rate_hz = sample_rate_hz
-#         self.cur_sample_idx = 0
-#         self.cur_pulse_segment_idx = 0
+    def __init__(self, pulses, n_steps=1):
+        self.pulses = pulses
+        self.n_steps = n_steps
+
+    def n_samples(self, sr_hz) -> int:
+        """Number of samples in the train."""
+        n_samples = sum(pulse.n_samples(sr_hz) for pulse in self.pulses)
+
+        return n_samples
+
+    def sample(self, sr_hz) -> np.ndarray:
+        """Sample the train."""
+        samples_list = []
+
+        # If pulse list is empty, exit early
+        if not self.pulses:
+            return np.array([])
+
+        for pulse in self.pulses:
+            pulse_samples = pulse.sample(sr_hz)
+            samples_list.append(pulse_samples)
+
+        samples = np.concatenate(samples_list)
+
+        return samples
+
+    def _step(self) -> None:
+        """Advance the train in-place."""
+        for pulse in self.pulses:
+            pulse._step()
+
+
+class PulseGenerator:
+    base_train: PulseTrain
+    train_steps: list[PulseTrain]
+
+    def __init__(self, base_train: PulseTrain):
+        self.base_train = base_train
+        self.train_steps = []
+        self._expand()
+
+    def n_samples(self, sr_hz) -> int:
+        """Number of samples in the generated pulse trains."""
+        n_samples_per_step = self.base_train.n_samples(sr_hz)
+        total_n_samples = n_samples_per_step * self.base_train.n_steps
+
+        return total_n_samples
+
+    def _expand(self) -> None:
+        """Expand the pulse train into a list of pulse trains for each step."""
+        cur_train = copy.deepcopy(self.base_train)
+        train_steps = []
+        for _ in range(self.base_train.n_steps):
+            train_steps.append(copy.deepcopy(cur_train))
+            cur_train._step()
+
+        self.train_steps = train_steps
+
+    def generate(self, sr_hz) -> np.ndarray:
+        """Sample the pulse train over all steps."""
+        # Fit all trains to the length of the base train.
+        n_samples_per_step = self.base_train.n_samples(sr_hz)
+
+        # Contains pulse train samples for all iterations
+        samples_mat = np.zeros((self.base_train.n_steps, n_samples_per_step))
+
+        # Early exit if there is nothing to generate.
+        if n_samples_per_step == 0 or self.base_train.n_steps == 0:
+            return samples_mat
+
+        for i in range(self.base_train.n_steps):
+            cur_samples = self.train_steps[i].sample(sr_hz)
+            cur_n_samples = len(cur_samples)
+
+            if cur_n_samples > n_samples_per_step:
+                samples_mat[i, :n_samples_per_step] = cur_samples[:n_samples_per_step]
+            else:
+                samples_mat[i, :cur_n_samples] = cur_samples[:cur_n_samples]
+
+        return samples_mat
