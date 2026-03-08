@@ -2,7 +2,7 @@ import numpy as np
 import pyqtgraph as pg
 from app.model.data_io import read_data
 from app.view.data_dialog import show_load_dialog
-from app.view.plot_helper import set_global_plot_config
+from app.view.view_helpers import set_global_plot_config
 from app.window.ui_main_window import Ui_MainWindow
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (

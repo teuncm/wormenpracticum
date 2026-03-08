@@ -2,7 +2,6 @@ import pyqtgraph as pg
 from app.view.pulse_segment import PulseSegmentWidget
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
     QDialog,
     QPushButton,
