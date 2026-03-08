@@ -1,4 +1,5 @@
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
+from app.model.signal import get_time_bounds_s
 
 PULSE_SAMPLE_HZ = 1000
 
@@ -23,9 +24,14 @@ class AppModel:
         if self.pulse_generator is None:
             return None
 
-        dur_s = self.pulse_generator.base_train.actual_dur_s(sr_hz=PULSE_SAMPLE_HZ)
+        n_samples = self.pulse_generator.base_train.n_samples(sr_hz=PULSE_SAMPLE_HZ)
 
-        return (0, dur_s)
+        left, right = get_time_bounds_s(
+            n_samples=n_samples,
+            sr_hz=PULSE_SAMPLE_HZ,
+        )
+
+        return (left, right)
 
     def get_y_bounds(self):
         if self.pulse_generator is None:
