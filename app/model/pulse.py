@@ -24,11 +24,11 @@ class Pulse(SignalSequence):
         """Peak of the pulse."""
         return abs(self.amp_v)
 
-    def actual_dur_s(self, sr_hz) -> float:
+    def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the pulse in seconds, taking into account the actual number of samples."""
         return self.n_samples(sr_hz) / sr_hz
 
-    def n_samples(self, sr_hz) -> int:
+    def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the pulse."""
         # Guarantee that we can divide the pulse into two parts
         n_half_pulse_samples = int(round(self.dur_s / 2.0 * sr_hz))
@@ -37,7 +37,7 @@ class Pulse(SignalSequence):
 
         return n_pulse_samples_capped
 
-    def sample(self, sr_hz) -> np.ndarray:
+    def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the pulse."""
         n_samples = self.n_samples(sr_hz)
 
@@ -78,15 +78,15 @@ class PulseTrain(SignalSequence):
         """Peak of the train."""
         return max(pulse.peak_v() for pulse in self.pulses)
 
-    def actual_dur_s(self, sr_hz) -> float:
+    def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the train in seconds, taking into account the actual number of samples."""
         return sum(pulse.actual_dur_s(sr_hz) for pulse in self.pulses)
 
-    def n_samples(self, sr_hz) -> int:
+    def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the train."""
         return sum(pulse.n_samples(sr_hz) for pulse in self.pulses)
 
-    def sample(self, sr_hz) -> np.ndarray:
+    def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the train."""
         samples_list = []
 
@@ -98,7 +98,7 @@ class PulseTrain(SignalSequence):
 
         return samples
 
-    def get_sample_offset(self, sr_hz, pulse_idx):
+    def get_sample_offset(self, sr_hz: float, pulse_idx: int) -> int:
         """Get sample offset within the given train"""
         if pulse_idx < 0 or pulse_idx >= len(self.pulses):
             raise ValueError("Pulse index out of range.")
@@ -124,14 +124,14 @@ class PulseGenerator:
         self.train_steps = []
         self._expand()
 
-    def n_samples_mat(self, sr_hz) -> int:
+    def n_samples_mat(self, sr_hz: float) -> int:
         """Number of samples in the generated pulse train matrix."""
         n_samples_per_step = self.base_train.n_samples(sr_hz)
         total_n_samples = n_samples_per_step * self.base_train.n_steps
 
         return total_n_samples
 
-    def sample_mat(self, sr_hz) -> np.ndarray:
+    def sample_mat(self, sr_hz: float) -> np.ndarray:
         """Sample the pulse train over all steps, truncating samples where needed."""
         # Fit all trains to the length of the base train.
         n_samples_per_step = self.base_train.n_samples(sr_hz)
@@ -156,7 +156,7 @@ class PulseGenerator:
         return samples_mat
 
     def sample_section(
-        self, sr_hz, train_step_idx, pulse_idx=-1
+        self, sr_hz: float, train_step_idx: int, pulse_idx: int = -1
     ) -> tuple[np.ndarray, np.ndarray]:
         """Get a signal at a specific index within the train matrix and its timeframe."""
         if pulse_idx >= len(self.base_train.pulses):

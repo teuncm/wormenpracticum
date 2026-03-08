@@ -37,3 +37,10 @@ def get_timeframe_s(n_samples: int, sr_hz: float, sample_offset: int = 0) -> np.
     timeframe = (np.arange(n_samples) + sample_offset) / sr_hz
 
     return timeframe
+
+
+def get_timepoint_s(sr_hz: float, sample_offset: int) -> float:
+    """Get signal timepoint using the given sample rate and sample offset."""
+    timepoint = sample_offset / sr_hz
+
+    return timepoint
