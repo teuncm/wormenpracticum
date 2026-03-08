@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
+from app.model.signal import get_time_bounds_s, get_time_frame_s
 
 TEST_SR_HZ = 4.0
 
@@ -109,6 +110,21 @@ def test_duration_round_up(round_up_dur_neg_v_pulse):
 
     train = PulseTrain(pulses=[pulse], n_steps=1)
     assert train.actual_dur_s(sr_hz=TEST_SR_HZ) == 1.0
+
+
+def test_duration_train(round_up_dur_neg_v_pulse):
+    """Verify that the train duration is calculated correctly."""
+    train = PulseTrain(pulses=[round_up_dur_neg_v_pulse, round_up_dur_neg_v_pulse])
+
+    train_dur_s = train.actual_dur_s(sr_hz=TEST_SR_HZ)
+    left, right = get_time_bounds_s(
+        n_samples=train.n_samples(sr_hz=TEST_SR_HZ), sr_hz=TEST_SR_HZ
+    )
+
+    calculated_dur = right - left
+
+    assert train_dur_s == 2.0
+    assert train_dur_s == calculated_dur
 
 
 def test_n_samples(round_down_dur_neg_v_pulse):

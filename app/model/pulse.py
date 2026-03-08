@@ -1,7 +1,7 @@
 import copy
 
 import numpy as np
-from app.model.signal import SignalSequence, get_timeframe_s
+from app.model.signal import SignalSequence, get_time_frame_s, get_time_point_s
 
 
 class Pulse(SignalSequence):
@@ -26,7 +26,9 @@ class Pulse(SignalSequence):
 
     def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the pulse in seconds, taking into account the actual number of samples."""
-        return self.n_samples(sr_hz) / sr_hz
+        bound_sample_idx = self.n_samples(sr_hz=sr_hz)
+
+        return get_time_point_s(sr_hz=sr_hz, sample_offset=bound_sample_idx)
 
     def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the pulse."""
@@ -170,7 +172,7 @@ class PulseGenerator:
         if pulse_idx == -1:
             # Sample this train.
             samples = train.sample(sr_hz=sr_hz)
-            timeframe = get_timeframe_s(len(samples), sr_hz)
+            timeframe = get_time_frame_s(len(samples), sr_hz)
 
             return samples, timeframe
 
@@ -182,7 +184,7 @@ class PulseGenerator:
 
         # Sample this pulse.
         samples = pulse.sample(sr_hz=sr_hz)
-        timeframe = get_timeframe_s(len(samples), sr_hz, sample_offset=sample_offset)
+        timeframe = get_time_frame_s(len(samples), sr_hz, sample_offset=sample_offset)
 
         return samples, timeframe
 

@@ -32,14 +32,16 @@ class SignalSequence(ABC):
         pass
 
 
-def get_timeframe_s(n_samples: int, sr_hz: float, sample_offset: int = 0) -> np.ndarray:
+def get_time_frame_s(
+    n_samples: int, sr_hz: float, sample_offset: int = 0
+) -> np.ndarray:
     """Get sample timeframe using the given sample rate and sample offset."""
     timeframe = (np.arange(n_samples) + sample_offset) / sr_hz
 
     return timeframe
 
 
-def get_timepoint_s(sr_hz: float, sample_offset: int) -> float:
+def get_time_point_s(sr_hz: float, sample_offset: int) -> float:
     """Get sample timepoint using the given sample rate and sample offset."""
     timepoint = sample_offset / sr_hz
 
@@ -50,7 +52,7 @@ def get_time_bounds_s(
     n_samples: int, sr_hz: float, sample_offset: int = 0
 ) -> tuple[float, float]:
     """Get sample time bounds using the given sample rate and sample offset."""
-    left = get_timepoint_s(sr_hz=sr_hz, sample_offset=sample_offset)
-    right = get_timepoint_s(sr_hz=sr_hz, sample_offset=sample_offset + n_samples)
+    left = get_time_point_s(sr_hz=sr_hz, sample_offset=sample_offset)
+    right = get_time_point_s(sr_hz=sr_hz, sample_offset=sample_offset + n_samples)
 
     return left, right
