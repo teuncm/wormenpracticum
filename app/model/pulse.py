@@ -98,6 +98,17 @@ class PulseTrain(SignalSequence):
 
         return samples
 
+    def get_sample_offset(self, sr_hz, pulse_idx):
+        """Get sample offset within the given train"""
+        if pulse_idx < 0 or pulse_idx >= len(self.pulses):
+            raise ValueError("Pulse index out of range.")
+
+        offset = 0
+        for i in range(pulse_idx):
+            offset += self.pulses[i].n_samples(sr_hz)
+
+        return offset
+
     def _step(self) -> None:
         """Advance the train in-place."""
         for pulse in self.pulses:
@@ -167,11 +178,7 @@ class PulseGenerator:
         pulse = train.pulses[pulse_idx]
 
         # Determine pulse sample offset within this particular pulse train.
-        sample_offset = 0
-        for i in range(len(train.pulses)):
-            if i == pulse_idx:
-                break
-            sample_offset += train.pulses[i].n_samples(sr_hz=sr_hz)
+        sample_offset = train.get_sample_offset(sr_hz=sr_hz, pulse_idx=pulse_idx)
 
         # Sample this pulse.
         samples = pulse.sample(sr_hz=sr_hz)
