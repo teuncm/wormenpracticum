@@ -12,17 +12,17 @@ class SignalSequence(ABC):
         pass
 
     @abstractmethod
-    def actual_dur_s(self, sr_hz) -> float:
+    def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the signal in seconds, taking into account the actual number of samples."""
         pass
 
     @abstractmethod
-    def n_samples(self, sr_hz) -> int:
+    def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the signal."""
         pass
 
     @abstractmethod
-    def sample(self, sr_hz) -> np.ndarray:
+    def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the signal."""
         pass
 
