@@ -1,5 +1,4 @@
-import app.model.signal
-from app.model.app_model import AppModel
+from app.model.app_model import PULSE_SAMPLE_HZ, AppModel
 from app.view.main_view import MainView
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
@@ -51,26 +50,14 @@ class AppController:
             return
 
         cur_step = self.pulse_view.ui.stepSlider.value()
-
-        sr_hz = 1000
-        signal_obj, sample_offset = self.app_model.pulse_generator.get_signal(
-            sr_hz, cur_step
-        )
-        y = signal_obj.sample(sr_hz)
-        t = app.model.signal.get_timeframe_s(len(y), sr_hz, sample_offset)
-
+        y, t = self.app_model.pulse_generator.sample_section(PULSE_SAMPLE_HZ, cur_step)
         self.pulse_view.clear_plot()
         self.pulse_view.update_pulse_plot((t, y), color="k", width=1)
 
         cur_tab = self.pulse_view.ui.segmentTabWidget.currentIndex()
-
-        sr_hz = 1000
-        signal_obj, sample_offset = self.app_model.pulse_generator.get_signal(
-            sr_hz, cur_step, cur_tab
+        y, t = self.app_model.pulse_generator.sample_section(
+            PULSE_SAMPLE_HZ, cur_step, cur_tab
         )
-        y = signal_obj.sample(sr_hz)
-        t = app.model.signal.get_timeframe_s(len(y), sr_hz, sample_offset)
-
         self.pulse_view.update_pulse_plot((t, y), color="b", width=3)
 
         # Set plot boundaries based on the signal.

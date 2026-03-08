@@ -1,7 +1,7 @@
 import copy
 
 import numpy as np
-from app.model.signal import SignalSequence
+from app.model.signal import SignalSequence, get_timeframe_s
 
 
 class Pulse(SignalSequence):
@@ -68,14 +68,14 @@ class PulseTrain(SignalSequence):
     n_steps: int
 
     def __init__(self, pulses, n_steps=1):
+        if len(pulses) == 0:
+            raise ValueError("Pulse train must contain at least one pulse.")
+
         self.pulses = pulses
         self.n_steps = n_steps
 
     def peak_v(self) -> float:
         """Peak of the train."""
-        if not self.pulses:
-            return 0.0
-
         return max(pulse.peak_v() for pulse in self.pulses)
 
     def actual_dur_s(self, sr_hz) -> float:
@@ -84,17 +84,11 @@ class PulseTrain(SignalSequence):
 
     def n_samples(self, sr_hz) -> int:
         """Number of samples in the train."""
-        n_samples = sum(pulse.n_samples(sr_hz) for pulse in self.pulses)
-
-        return n_samples
+        return sum(pulse.n_samples(sr_hz) for pulse in self.pulses)
 
     def sample(self, sr_hz) -> np.ndarray:
         """Sample the train."""
         samples_list = []
-
-        # If pulse list is empty, exit early
-        if not self.pulses:
-            return np.array([])
 
         for pulse in self.pulses:
             pulse_samples = pulse.sample(sr_hz)
@@ -119,47 +113,15 @@ class PulseGenerator:
         self.train_steps = []
         self._expand()
 
-    def width(self, sr_hz) -> int:
-        """Width of the train in samples."""
-        return self.base_train.n_samples(sr_hz)
-
-    def n_samples(self, sr_hz) -> int:
-        """Number of samples in the generated pulse trains."""
-        n_samples_per_step = self.width(sr_hz)
+    def n_samples_mat(self, sr_hz) -> int:
+        """Number of samples in the generated pulse train matrix."""
+        n_samples_per_step = self.base_train.n_samples(sr_hz)
         total_n_samples = n_samples_per_step * self.base_train.n_steps
 
         return total_n_samples
 
-    def get_signal(
-        self, sr_hz, train_step_idx, pulse_idx=-1
-    ) -> tuple[SignalSequence, int]:
-        """Get a specific signal."""
-        train = self.train_steps[train_step_idx]
-
-        if pulse_idx == -1:
-            return train, 0
-
-        sample_offset = 0
-        pulse = train.pulses[pulse_idx]
-        for i in range(len(train.pulses)):
-            if i == pulse_idx:
-                break
-            sample_offset += train.pulses[i].n_samples(sr_hz=sr_hz)
-
-        return pulse, sample_offset
-
-    def _expand(self) -> None:
-        """Expand the pulse train into a list of pulse trains for each step."""
-        cur_train = copy.deepcopy(self.base_train)
-        train_steps = []
-        for _ in range(self.base_train.n_steps):
-            train_steps.append(copy.deepcopy(cur_train))
-            cur_train._step()
-
-        self.train_steps = train_steps
-
-    def generate(self, sr_hz) -> np.ndarray:
-        """Sample the pulse train over all steps."""
+    def sample_mat(self, sr_hz) -> np.ndarray:
+        """Sample the pulse train over all steps, truncating samples where needed."""
         # Fit all trains to the length of the base train.
         n_samples_per_step = self.base_train.n_samples(sr_hz)
 
@@ -171,12 +133,59 @@ class PulseGenerator:
             return samples_mat
 
         for i in range(self.base_train.n_steps):
+            # Data for this train step.
             cur_samples = self.train_steps[i].sample(sr_hz)
-            cur_n_samples = len(cur_samples)
 
-            if cur_n_samples > n_samples_per_step:
-                samples_mat[i, :n_samples_per_step] = cur_samples[:n_samples_per_step]
-            else:
-                samples_mat[i, :cur_n_samples] = cur_samples[:cur_n_samples]
+            # Number of samples to write to the matrix for this step, capped at the length of the base train samples.
+            write_n_samples = min(len(cur_samples), n_samples_per_step)
+
+            # Write the samples to the matrix row, truncating if necessary.
+            samples_mat[i, :write_n_samples] = cur_samples[:write_n_samples]
 
         return samples_mat
+
+    def sample_section(
+        self, sr_hz, train_step_idx, pulse_idx=-1
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Get a signal at a specific index within the train matrix and its timeframe."""
+        if pulse_idx >= len(self.base_train.pulses):
+            raise ValueError("Pulse index out of range.")
+        if train_step_idx >= self.base_train.n_steps:
+            raise ValueError("Train step index out of range.")
+
+        # Get pulse train at requested generator step.
+        train = self.train_steps[train_step_idx]
+
+        if pulse_idx == -1:
+            # Sample this train.
+            samples = train.sample(sr_hz=sr_hz)
+            timeframe = get_timeframe_s(len(samples), sr_hz)
+
+            return samples, timeframe
+
+        # Get pulse at requested index within the train.
+        pulse = train.pulses[pulse_idx]
+
+        # Determine pulse sample offset within this particular pulse train.
+        sample_offset = 0
+        for i in range(len(train.pulses)):
+            if i == pulse_idx:
+                break
+            sample_offset += train.pulses[i].n_samples(sr_hz=sr_hz)
+
+        # Sample this pulse.
+        samples = pulse.sample(sr_hz=sr_hz)
+        timeframe = get_timeframe_s(len(samples), sr_hz, sample_offset=sample_offset)
+
+        return samples, timeframe
+
+    def _expand(self) -> None:
+        """Expand the pulse train into a list of pulse trains for each step."""
+        # Since _step() is in-place, we need to deepcopy the base train to avoid modifying it.
+        cur_train = copy.deepcopy(self.base_train)
+        train_steps = []
+        for _ in range(self.base_train.n_steps):
+            train_steps.append(copy.deepcopy(cur_train))
+            cur_train._step()
+
+        self.train_steps = train_steps

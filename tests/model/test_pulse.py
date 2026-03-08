@@ -56,19 +56,19 @@ def test_train_sample(get_train_decreasing):
 
 def test_generator_sample(get_train_decreasing, get_train_equal, get_train_overflow):
     """Verify that generator sampling produces the expected samples."""
-    samples = PulseGenerator(get_train_decreasing).generate(sr_hz=TEST_SR_HZ)
+    samples = PulseGenerator(get_train_decreasing).sample_mat(sr_hz=TEST_SR_HZ)
     expected_samples = np.array(
         [[7.0, 7.0, -7.0, -7.0, -2, -2], [8.0, -8.0, -2, -2, 0, 0]]
     )
 
     assert np.allclose(samples, expected_samples)
 
-    samples = PulseGenerator(get_train_equal).generate(sr_hz=TEST_SR_HZ)
+    samples = PulseGenerator(get_train_equal).sample_mat(sr_hz=TEST_SR_HZ)
     expected_samples = np.array([[7.0, 7.0, -7.0, -7.0], [8.0, -8.0, 5, 5]])
 
     assert np.allclose(samples, expected_samples)
 
-    samples = PulseGenerator(get_train_overflow).generate(sr_hz=TEST_SR_HZ)
+    samples = PulseGenerator(get_train_overflow).sample_mat(sr_hz=TEST_SR_HZ)
     expected_samples = np.array([[7.0, 7.0, -7.0, -7.0], [8.0, -8.0, 67, 67]])
 
     assert np.allclose(samples, expected_samples)
@@ -143,7 +143,7 @@ def test_monophasic_sample(monophasic_pulse):
     pulse = monophasic_pulse
     train = PulseTrain(pulses=[pulse], n_steps=2)
     generator = PulseGenerator(train)
-    samples = generator.generate(sr_hz=TEST_SR_HZ)
+    samples = generator.sample_mat(sr_hz=TEST_SR_HZ)
 
     assert np.isclose(np.sum(samples), 5 * 2 * 2 * TEST_SR_HZ)
     assert np.allclose(samples.flatten(), [5.0] * 16)

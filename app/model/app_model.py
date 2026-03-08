@@ -1,6 +1,8 @@
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
 from app.model.signal import get_timeframe_s
 
+PULSE_SAMPLE_HZ = 1000
+
 
 class AppModel:
     pulse_config: PulseTrain | None
@@ -22,20 +24,14 @@ class AppModel:
         if self.pulse_generator is None:
             return None
 
-        sr_hz = 1000
-        n_samples = self.pulse_generator.width(sr_hz)
-        t = get_timeframe_s(n_samples, sr_hz, 0)
+        dur_s = self.pulse_generator.base_train.actual_dur_s(sr_hz=PULSE_SAMPLE_HZ)
 
-        return (t.min(), t.max())
+        return (0, dur_s)
 
     def get_y_bounds(self):
         if self.pulse_generator is None:
             return None
 
-        sr_hz = 1000
-        signal_obj, _ = self.pulse_generator.get_signal(sr_hz, 0)
-        y = signal_obj.sample(sr_hz)
+        peak = self.pulse_generator.base_train.peak_v()
 
-        abs_max = max(abs(y.min()), abs(y.max()))
-
-        return (-abs_max, abs_max)
+        return (-peak, peak)
