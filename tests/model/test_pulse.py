@@ -2,22 +2,22 @@ import numpy as np
 import pytest
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
 
-TEST_SR_HZ = 2.0
+TEST_SR_HZ = 4.0
 
 
 @pytest.fixture
 def neg_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=7.0, dur_s=2, step_amp_v=1, step_dur_s=-1)
+    return Pulse(amp_v=7.0, dur_s=1, step_amp_v=1, step_dur_s=-0.5)
 
 
 @pytest.fixture
 def zero_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=-2, dur_s=1, step_amp_v=0, step_dur_s=0, is_monophasic=True)
+    return Pulse(amp_v=-2, dur_s=0.5, step_amp_v=0, step_dur_s=0, is_monophasic=True)
 
 
 @pytest.fixture
 def pos_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=5, dur_s=0, step_amp_v=0, step_dur_s=1, is_monophasic=True)
+    return Pulse(amp_v=5, dur_s=0, step_amp_v=0, step_dur_s=0.5, is_monophasic=True)
 
 
 @pytest.fixture
@@ -75,13 +75,18 @@ def test_generator_sample(get_train_decreasing, get_train_equal, get_train_overf
 
 
 @pytest.fixture
-def odd_dur_neg_v_pulse() -> Pulse:
-    return Pulse(amp_v=-5.0, dur_s=1.4, step_amp_v=0, step_dur_s=0)
+def round_down_dur_neg_v_pulse() -> Pulse:
+    return Pulse(amp_v=-5.0, dur_s=0.7, step_amp_v=0, step_dur_s=0)
 
 
-def test_peak(odd_dur_neg_v_pulse):
+@pytest.fixture
+def round_up_dur_neg_v_pulse() -> Pulse:
+    return Pulse(amp_v=-5.0, dur_s=0.8, step_amp_v=0, step_dur_s=0)
+
+
+def test_peak(round_down_dur_neg_v_pulse):
     """Verify that peak calculations are correct."""
-    pulse = odd_dur_neg_v_pulse
+    pulse = round_down_dur_neg_v_pulse
 
     assert pulse.peak_v() == 5.0
 
@@ -89,23 +94,31 @@ def test_peak(odd_dur_neg_v_pulse):
     assert train.peak_v() == 5.0
 
 
-def test_duration(odd_dur_neg_v_pulse):
-    """Verify that duration calculations are correct."""
-    pulse = odd_dur_neg_v_pulse
+def test_duration_round_down(round_down_dur_neg_v_pulse):
+    """Verify that downwards duration rounding works."""
+    pulse = round_down_dur_neg_v_pulse
+    assert pulse.actual_dur_s(sr_hz=TEST_SR_HZ) == 0.5
 
-    assert pulse.sample(sr_hz=TEST_SR_HZ).shape[0] == 2
+    train = PulseTrain(pulses=[pulse], n_steps=1)
+    assert train.actual_dur_s(sr_hz=TEST_SR_HZ) == 0.5
 
+
+def test_duration_round_up(round_up_dur_neg_v_pulse):
+    """Verify that upwards duration rounding works."""
+    pulse = round_up_dur_neg_v_pulse
     assert pulse.actual_dur_s(sr_hz=TEST_SR_HZ) == 1.0
 
     train = PulseTrain(pulses=[pulse], n_steps=1)
     assert train.actual_dur_s(sr_hz=TEST_SR_HZ) == 1.0
 
 
-def test_n_samples(odd_dur_neg_v_pulse):
+def test_n_samples(round_down_dur_neg_v_pulse):
     """Verify that n_samples calculations are correct."""
-    pulse = odd_dur_neg_v_pulse
+    pulse = round_down_dur_neg_v_pulse
 
     assert pulse.n_samples(sr_hz=TEST_SR_HZ) == 2
+    assert pulse.sample(sr_hz=TEST_SR_HZ).shape[0] == 2
 
     train = PulseTrain(pulses=[pulse, pulse], n_steps=1)
     assert train.n_samples(sr_hz=TEST_SR_HZ) == 4
+    assert train.sample(sr_hz=TEST_SR_HZ).shape[0] == 4
