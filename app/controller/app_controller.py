@@ -58,7 +58,10 @@ class AppController:
         y, t = self.app_model.pulse_generator.sample_section(
             PULSE_SAMPLE_HZ, cur_step, cur_tab
         )
-        self.pulse_view.update_pulse_plot((t, y), color="b", width=3)
+        self.pulse_view.update_pulse_plot((t, y), color="b", width=2)
+
+        if len(t) > 0 and len(y) > 0:
+            self.pulse_view.update_pulse_bounds(t[0], t[-1], y.max(), y.min())
 
         # Set plot boundaries based on the signal.
         x_bounds = self.app_model.get_x_bounds()

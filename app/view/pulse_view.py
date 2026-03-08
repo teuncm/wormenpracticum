@@ -94,7 +94,7 @@ class PulseView(QDialog):
     def clear_plot(self):
         self.plotWidget.clear()
 
-    def update_pulse_plot(self, plot_data, color="k", width=2):
+    def update_pulse_plot(self, plot_data, color, width=2):
         if plot_data is not None:
             time_points, voltage_points = plot_data
             self.plotWidget.plot(
@@ -103,6 +103,63 @@ class PulseView(QDialog):
                 pen=pg.mkPen(color=color, width=width),
                 name="Pulse",
             )
+
+    def update_pulse_bounds(self, lt, rt, tp, bt):
+        guide_color = "b"
+
+        left = pg.InfiniteLine(
+            pos=lt,
+            angle=90,
+            pen=pg.mkPen(
+                color=guide_color,
+                width=1,
+                style=Qt.PenStyle.DotLine,
+                alpha=0.3,
+            ),
+        )
+
+        right = pg.InfiniteLine(
+            pos=rt,
+            angle=90,
+            pen=pg.mkPen(
+                color=guide_color,
+                width=1,
+                style=Qt.PenStyle.DotLine,
+                alpha=0.3,
+            ),
+        )
+
+        top = pg.InfiniteLine(
+            pos=tp,
+            angle=0,
+            pen=pg.mkPen(
+                color=guide_color,
+                width=1,
+                style=Qt.PenStyle.DotLine,
+                alpha=0.3,
+            ),
+        )
+
+        bottom = pg.InfiniteLine(
+            pos=bt,
+            angle=0,
+            pen=pg.mkPen(
+                color=guide_color,
+                width=1,
+                style=Qt.PenStyle.DotLine,
+                alpha=0.3,
+            ),
+        )
+
+        left.setZValue(-10)
+        right.setZValue(-10)
+        top.setZValue(-10)
+        bottom.setZValue(-10)
+
+        self.plotWidget.addItem(left)
+        self.plotWidget.addItem(right)
+        self.plotWidget.addItem(top)
+        self.plotWidget.addItem(bottom)
 
     def showEvent(self, event):
         super().showEvent(event)
