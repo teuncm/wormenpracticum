@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
-from app.model.signal import get_time_bounds_s, get_time_frame_s
+from app.model.signal import get_time_bounds_s
 
 TEST_SR_HZ = 4.0
 
