@@ -20,6 +20,14 @@ class Pulse(SignalSequence):
         self.step_dur_s = step_dur_s
         self.is_monophasic = is_monophasic
 
+    def peak_v(self) -> float:
+        """Peak of the pulse."""
+        return abs(self.amp_v)
+
+    def actual_dur_s(self, sr_hz) -> float:
+        """Total duration of the pulse in seconds, taking into account the actual number of samples."""
+        return self.n_samples(sr_hz) / sr_hz
+
     def n_samples(self, sr_hz) -> int:
         """Number of samples in the pulse."""
         # Guarantee that we can divide the pulse into two parts
@@ -62,6 +70,17 @@ class PulseTrain(SignalSequence):
     def __init__(self, pulses, n_steps=1):
         self.pulses = pulses
         self.n_steps = n_steps
+
+    def peak_v(self) -> float:
+        """Peak of the train."""
+        if not self.pulses:
+            return 0.0
+
+        return max(pulse.peak_v() for pulse in self.pulses)
+
+    def actual_dur_s(self, sr_hz) -> float:
+        """Total duration of the train in seconds, taking into account the actual number of samples."""
+        return sum(pulse.actual_dur_s(sr_hz) for pulse in self.pulses)
 
     def n_samples(self, sr_hz) -> int:
         """Number of samples in the train."""
