@@ -15,7 +15,9 @@ def set_global_plot_config():
     pg.setConfigOptions(background="w", foreground="k", antialias=True)
 
 
-def create_plot_widget():
+def create_plot_widget(
+    title=None, x_label=None, x_units=None, y_label=None, y_units=None
+):
     """Create a plot widget in a frame."""
     frame = QFrame()
     frame.setFrameShape(QFrame.Shape.StyledPanel)
@@ -29,6 +31,13 @@ def create_plot_widget():
     plot.setClipToView(True)
     plot.setDownsampling(auto=True)
     plot.hideButtons()
+
+    if title:
+        plot.setTitle(title)
+    if x_label:
+        plot.setLabel("bottom", x_label, units=x_units)
+    if y_label:
+        plot.setLabel("left", y_label, units=y_units)
 
     layout.addWidget(plot)
 
