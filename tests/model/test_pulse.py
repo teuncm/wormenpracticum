@@ -87,7 +87,6 @@ def round_up_dur_neg_v_pulse() -> Pulse:
 def test_peak(round_down_dur_neg_v_pulse):
     """Verify that peak calculations are correct."""
     pulse = round_down_dur_neg_v_pulse
-
     assert pulse.peak_v() == 5.0
 
     train = PulseTrain(pulses=[pulse], n_steps=1)
@@ -115,10 +114,36 @@ def test_duration_round_up(round_up_dur_neg_v_pulse):
 def test_n_samples(round_down_dur_neg_v_pulse):
     """Verify that n_samples calculations are correct."""
     pulse = round_down_dur_neg_v_pulse
-
     assert pulse.n_samples(sr_hz=TEST_SR_HZ) == 2
     assert pulse.sample(sr_hz=TEST_SR_HZ).shape[0] == 2
 
     train = PulseTrain(pulses=[pulse, pulse], n_steps=1)
     assert train.n_samples(sr_hz=TEST_SR_HZ) == 4
     assert train.sample(sr_hz=TEST_SR_HZ).shape[0] == 4
+
+
+@pytest.fixture
+def monophasic_pulse() -> Pulse:
+    return Pulse(amp_v=5, dur_s=2, step_amp_v=0, step_dur_s=0, is_monophasic=True)
+
+
+def test_zero_sum(round_up_dur_neg_v_pulse, monophasic_pulse):
+    """Test that all sampled pulses sum to zero."""
+    pulse = round_up_dur_neg_v_pulse
+    samples = pulse.sample(sr_hz=TEST_SR_HZ)
+    assert np.isclose(np.sum(samples), 0.0)
+
+    train = PulseTrain(pulses=[pulse, pulse], n_steps=1)
+    samples = train.sample(sr_hz=TEST_SR_HZ)
+    assert np.isclose(np.sum(samples), 0.0)
+
+
+def test_monophasic_sample(monophasic_pulse):
+    """Verify that monophasic pulse sampling produces the expected samples."""
+    pulse = monophasic_pulse
+    train = PulseTrain(pulses=[pulse], n_steps=2)
+    generator = PulseGenerator(train)
+    samples = generator.generate(sr_hz=TEST_SR_HZ)
+
+    assert np.isclose(np.sum(samples), 5 * 2 * 2 * TEST_SR_HZ)
+    assert np.allclose(samples.flatten(), [5.0] * 16)
