@@ -1,23 +1,19 @@
 import pyqtgraph as pg
-from PySide6.QtWidgets import (
-    QFrame,
-    QLabel,
-    QVBoxLayout,
-)
+from PySide6.QtWidgets import QBoxLayout, QFrame, QLabel, QVBoxLayout
 
 MARGIN_DEFAULT = 30
 SPACING_DEFAULT = 20
 GRID_ALPHA_DEFAULT = 0.1
 
 
-def set_global_plot_config():
+def set_global_plot_config() -> None:
     """Configure the plot style globally."""
     pg.setConfigOptions(background="w", foreground="k", antialias=True)
 
 
 def create_plot_widget(
     title=None, x_label=None, x_units=None, y_label=None, y_units=None
-):
+) -> tuple[QFrame, pg.PlotWidget]:
     """Create a plot widget in a frame."""
     frame = QFrame()
     frame.setFrameShape(QFrame.Shape.StyledPanel)
@@ -44,7 +40,7 @@ def create_plot_widget(
     return frame, plot
 
 
-def create_title(title_text):
+def create_title(title_text) -> QLabel:
     """Create a section title."""
     title = QLabel(title_text)
     font = title.font()
@@ -61,7 +57,7 @@ def spacer(
     margin_right=MARGIN_DEFAULT,
     margin_bottom=MARGIN_DEFAULT,
     spacing=SPACING_DEFAULT,
-):
+) -> QBoxLayout:
     """Set margins and spacing for a layout."""
     layout.setContentsMargins(margin_left, margin_top, margin_right, margin_bottom)
     layout.setSpacing(spacing)
