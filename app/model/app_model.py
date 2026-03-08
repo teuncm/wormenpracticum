@@ -1,5 +1,4 @@
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
-from app.model.signal import get_timeframe_s
 
 PULSE_SAMPLE_HZ = 1000
 
