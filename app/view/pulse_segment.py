@@ -9,16 +9,12 @@ class PulseSegmentWidget(QWidget):
         super().__init__()
 
         layout = QGridLayout(self)
-
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        # spacer(layout, margin=0, spacing=0)
-
-        self.spinboxes = {}
-
-        # column headers
         layout.addWidget(QLabel("Base"), 0, 1)
         layout.addWidget(QLabel("Step"), 0, 2)
+
+        self.spinboxes = {}
 
         params = {
             "Amplitude (V)": ("amp_v", "step_amp_v"),
