@@ -85,13 +85,22 @@ def round_up_dur_neg_v_pulse() -> Pulse:
     return Pulse(amp_v=-5.0, dur_s=0.8, step_amp_v=0, step_dur_s=0)
 
 
-def test_peak(round_down_dur_neg_v_pulse):
-    """Verify that peak calculations are correct."""
+def test_min_v(round_down_dur_neg_v_pulse):
+    """Verify that min_v calculations are correct."""
     pulse = round_down_dur_neg_v_pulse
-    assert pulse.peak_v() == 5.0
+    assert pulse.min_v() == -5.0
 
     train = PulseTrain(pulses=[pulse], n_steps=1)
-    assert train.peak_v() == 5.0
+    assert train.min_v() == -5.0
+
+
+def test_max_v(round_down_dur_neg_v_pulse):
+    """Verify that max_v calculations are correct."""
+    pulse = round_down_dur_neg_v_pulse
+    assert pulse.max_v() == 5.0
+
+    train = PulseTrain(pulses=[pulse], n_steps=1)
+    assert train.max_v() == 5.0
 
 
 def test_duration_round_down(round_down_dur_neg_v_pulse):

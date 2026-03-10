@@ -1,7 +1,12 @@
 import copy
 
 import numpy as np
-from app.model.signal import SignalSequence, get_time_frame_s, get_time_point_s
+from app.model.signal import (
+    SignalSequence,
+    get_time_bounds_s,
+    get_time_frame_s,
+    get_time_point_s,
+)
 
 
 class Pulse(SignalSequence):
@@ -20,9 +25,19 @@ class Pulse(SignalSequence):
         self.step_dur_s = step_dur_s
         self.is_monophasic = is_monophasic
 
-    def peak_v(self) -> float:
-        """Peak of the pulse."""
-        return abs(self.amp_v)
+    def min_v(self) -> float:
+        """Minimum voltage of the pulse."""
+        if self.is_monophasic:
+            return self.amp_v
+        else:
+            return -abs(self.amp_v)
+
+    def max_v(self) -> float:
+        """Maximum voltage of the pulse."""
+        if self.is_monophasic:
+            return self.amp_v
+        else:
+            return abs(self.amp_v)
 
     def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the pulse in seconds, taking into account the actual number of samples."""
@@ -76,9 +91,13 @@ class PulseTrain(SignalSequence):
         self.pulses = pulses
         self.n_steps = n_steps
 
-    def peak_v(self) -> float:
-        """Peak of the train."""
-        return max(pulse.peak_v() for pulse in self.pulses)
+    def min_v(self) -> float:
+        """Minimum voltage of the train."""
+        return min(pulse.min_v() for pulse in self.pulses)
+
+    def max_v(self) -> float:
+        """Maximum voltage of the train."""
+        return max(pulse.max_v() for pulse in self.pulses)
 
     def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the train in seconds, taking into account the actual number of samples."""
@@ -125,6 +144,24 @@ class PulseGenerator:
         self.base_train = base_train
         self.train_steps = []
         self._expand()
+
+    def v_bounds(self) -> tuple[float, float]:
+        """Voltage bounds of the generated pulse trains."""
+        min_v = 0
+        max_v = 0
+
+        for train in self.train_steps:
+            train_min_v, train_max_v = train.min_v(), train.max_v()
+            min_v = min(min_v, train_min_v)
+            max_v = max(max_v, train_max_v)
+
+        return min_v, max_v
+
+    def time_bounds(self, sr_hz: float) -> tuple[float, float]:
+        """Time bounds of the generated pulse trains."""
+        n_samples = self.base_train.n_samples(sr_hz)
+
+        return get_time_bounds_s(n_samples, sr_hz)
 
     def n_samples_mat(self, sr_hz: float) -> int:
         """Number of samples in the generated pulse train matrix."""
