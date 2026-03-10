@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 from app.view.pulse_segment import PulseSegmentWidget
-from app.view.view_helpers import create_guide_line, create_plot_widget
+from app.view.view_helpers import create_guide_line, create_plot_widget, spacer
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -29,6 +29,9 @@ class PulseView(QDialog):
             y_label="Voltage",
             y_units="V",
         )
+
+        spacer(self.ui.horizontalLayout)
+        self.ui.verticalLayout.stretch(0)
 
         layout = QVBoxLayout(self.ui.pulseContainer)
         layout.addWidget(frame)
