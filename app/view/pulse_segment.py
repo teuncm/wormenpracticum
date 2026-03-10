@@ -1,10 +1,6 @@
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QDoubleSpinBox,
-    QFormLayout,
-    QWidget,
-)
+from app.view.view_helpers import spacer
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QGridLayout, QLabel, QWidget
 
 
 class PulseSegmentWidget(QWidget):
@@ -13,33 +9,48 @@ class PulseSegmentWidget(QWidget):
     def __init__(self):
         super().__init__()
 
-        formLayout = QFormLayout(self)
+        layout = QGridLayout(self)
+
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # spacer(layout, margin=0, spacing=0)
 
         self.spinboxes = {}
 
+        # column headers
+        layout.addWidget(QLabel("Base"), 0, 1)
+        layout.addWidget(QLabel("Step"), 0, 2)
+
         params = {
+            "Amplitude (V)": ("amp_v", "step_amp_v"),
+            "Duration (s)": ("dur_s", "step_dur_s"),
+        }
+
+        defaults = {
             "amp_v": (1.0, -1.0, 1.0, 0.1),
             "dur_s": (1.0, 0.0, 1.0, 0.1),
             "step_amp_v": (0.0, -1.0, 1.0, 0.1),
             "step_dur_s": (0.0, -1.0, 1.0, 0.1),
         }
 
-        for name, (default_val, min_val, max_val, step) in params.items():
-            spin = QDoubleSpinBox()
-            spin.setRange(min_val, max_val)
-            spin.setSingleStep(step)
-            spin.setDecimals(3)
-            spin.setValue(default_val)
+        for row, (label, (base_key, step_key)) in enumerate(params.items(), start=1):
+            layout.addWidget(QLabel(label), row, 0)
 
-            spin.valueChanged.connect(self.segmentChanged)
+            for col, key in enumerate([base_key, step_key], start=1):
+                default_val, min_val, max_val, step = defaults[key]
 
-            formLayout.addRow(name, spin)
+                spin = QDoubleSpinBox()
+                spin.setRange(min_val, max_val)
+                spin.setSingleStep(step)
+                spin.setDecimals(3)
+                spin.setValue(default_val)
 
-            self.spinboxes[name] = spin
+                spin.valueChanged.connect(self.segmentChanged)
 
-        self.monophasic_checkbox = QCheckBox("is_monophasic")
+                layout.addWidget(spin, row, col)
+                self.spinboxes[key] = spin
 
-        self.monophasic_checkbox.setChecked(False)
+        self.monophasic_checkbox = QCheckBox("Monophasic")
         self.monophasic_checkbox.stateChanged.connect(self.segmentChanged)
 
-        formLayout.addRow(self.monophasic_checkbox)
+        layout.addWidget(self.monophasic_checkbox, 3, 0, 1, 3)

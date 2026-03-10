@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QPushButton,
+    QSizePolicy,
 )
 
 
@@ -27,7 +28,7 @@ class PulseView(QDialog):
         self.setup_tabs()
 
         frame, plot = create_plot_widget(
-            title="Impulse",
+            title="Pulse train",
             x_label="Time",
             x_units="s",
             y_label="Voltage",
@@ -37,7 +38,7 @@ class PulseView(QDialog):
         spacer(self.ui.horizontalLayout)
         self.ui.parameterLayout.insertWidget(0, create_title("Parameters"))
         self.ui.parameterLayout.insertWidget(4, create_title("Plot options"))
-        self.ui.plotLayout.addWidget(create_title("Impulse plot"))
+        self.ui.plotLayout.addWidget(create_title("Pulse train plot"))
         self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
 
@@ -64,6 +65,10 @@ class PulseView(QDialog):
             new_segment_button, Qt.Corner.TopRightCorner
         )
         new_segment_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        self.ui.segmentTabWidget.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
 
     def renumber_tabs(self):
         for i in range(self.ui.segmentTabWidget.count()):

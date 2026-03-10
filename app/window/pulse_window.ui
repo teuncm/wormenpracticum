@@ -21,7 +21,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="nLabel">
          <property name="text">
-          <string>N</string>
+          <string>Number of steps</string>
          </property>
         </widget>
        </item>

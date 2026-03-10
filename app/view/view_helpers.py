@@ -63,11 +63,11 @@ def create_guide_line(
     return guide_line
 
 
-def create_title(title_text) -> QLabel:
+def create_title(title_text, bold=True) -> QLabel:
     """Create a section title."""
     title = QLabel(title_text)
     font = title.font()
-    font.setBold(True)
+    font.setBold(bold)
     # font.setPointSize(font.pointSize() + 1)
     title.setFont(font)
 
@@ -76,6 +76,7 @@ def create_title(title_text) -> QLabel:
 
 def spacer(
     layout,
+    margin=None,
     margin_left=MARGIN_DEFAULT,
     margin_top=MARGIN_DEFAULT,
     margin_right=MARGIN_DEFAULT,
@@ -83,6 +84,9 @@ def spacer(
     spacing=SPACING_DEFAULT,
 ) -> QBoxLayout:
     """Set margins and spacing for a layout."""
+    if margin is not None:
+        margin_left = margin_top = margin_right = margin_bottom = margin
+
     layout.setContentsMargins(margin_left, margin_top, margin_right, margin_bottom)
     layout.setSpacing(spacing)
 
