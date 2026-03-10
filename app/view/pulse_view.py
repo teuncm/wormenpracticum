@@ -108,7 +108,7 @@ class PulseView(QDialog):
     def draw_zero_line(self):
         self.plotWidget.addItem(
             create_guide_line(
-                0, 0, color="k", width=1, style=Qt.PenStyle.SolidLine, alpha=50
+                0, 0, color="k", width=1, style=Qt.PenStyle.SolidLine, alpha=30
             )
         )
 

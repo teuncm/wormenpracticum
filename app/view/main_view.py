@@ -28,14 +28,15 @@ class MainView(QMainWindow):
         self.ui.setupUi(self)
         set_global_plot_config()
 
-        self.ui.loadButton.clicked.connect(self.load_data_with_dialog)
-
         self.ui.ampSlider.setMaximum(2 * AMP_SLIDER_SCALE_FACTOR)
         self.ui.ampSlider.setValue(0)
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
-        self.ui.editImpulseButton.clicked.connect(self.editImpulseRequested)
-        self.ui.editProtocolButton.clicked.connect(self.editProtocolRequested)
+        self.ui.actionLoad_data.triggered.connect(self.load_data_with_dialog)
+        # self.ui.actionSave_data.triggered.connect()
+
+        self.ui.actionImpulse.triggered.connect(self.editImpulseRequested)
+        self.ui.actionProtocol.triggered.connect(self.editProtocolRequested)
 
         frame, plot = create_plot_widget(
             title="Evoked Response",
@@ -49,8 +50,7 @@ class MainView(QMainWindow):
 
         self.ui.plotLayout.addWidget(create_title("Evoked response plot"))
         self.ui.plotLayout.addWidget(frame)
-        self.ui.optionsLayout.insertWidget(0, create_title("Actions"))
-        self.ui.optionsLayout.insertWidget(3, create_title("Plot options"))
+        self.ui.optionsLayout.insertWidget(0, create_title("Plot options"))
         self.plotWidget = plot
 
         # legend.anchor((1, 0), (1, 0))

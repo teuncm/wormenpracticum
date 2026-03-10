@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QBoxLayout, QFrame, QLabel, QVBoxLayout
 
 MARGIN_DEFAULT = 20
 SPACING_DEFAULT = 18
-GRID_ALPHA_DEFAULT = 0.1
+GRID_ALPHA_DEFAULT = 0.07
 
 
 def set_global_plot_config() -> None:

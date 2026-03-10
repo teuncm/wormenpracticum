@@ -18,36 +18,11 @@
     <item>
      <layout class="QVBoxLayout" name="optionsLayout">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_6">
-        <item>
-         <widget class="QPushButton" name="loadButton">
-          <property name="text">
-           <string>Load data</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="saveButton">
-          <property name="text">
-           <string>Save data</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="editImpulseButton">
-          <property name="text">
-           <string>Edit impulse</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="editProtocolButton">
-          <property name="text">
-           <string>Edit protocol</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QSlider" name="ampSlider">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+       </widget>
       </item>
       <item>
        <spacer name="verticalSpacer">
@@ -62,13 +37,6 @@
         </property>
        </spacer>
       </item>
-      <item>
-       <widget class="QSlider" name="ampSlider">
-        <property name="orientation">
-         <enum>Qt::Orientation::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
     <item>
@@ -76,6 +44,58 @@
     </item>
    </layout>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1424</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionLoad_data"/>
+    <addaction name="actionSave_data"/>
+    <addaction name="actionAbout"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionImpulse"/>
+    <addaction name="actionProtocol"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+  </widget>
+  <action name="actionLoad_data">
+   <property name="text">
+    <string>Load data</string>
+   </property>
+  </action>
+  <action name="actionSave_data">
+   <property name="text">
+    <string>Save data</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionImpulse">
+   <property name="text">
+    <string>Impulse</string>
+   </property>
+  </action>
+  <action name="actionProtocol">
+   <property name="text">
+    <string>Protocol</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
