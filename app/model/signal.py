@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+MV_PER_V = 1000.0
 MS_PER_S = 1000.0
 
 
