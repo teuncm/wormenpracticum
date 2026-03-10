@@ -2,8 +2,8 @@ import pyqtgraph as pg
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QBoxLayout, QFrame, QLabel, QVBoxLayout
 
-MARGIN_DEFAULT = 30
-SPACING_DEFAULT = 20
+MARGIN_DEFAULT = 20
+SPACING_DEFAULT = 18
 GRID_ALPHA_DEFAULT = 0.1
 
 
@@ -67,7 +67,8 @@ def create_title(title_text) -> QLabel:
     """Create a section title."""
     title = QLabel(title_text)
     font = title.font()
-    font.setPointSize(font.pointSize() + 1)
+    font.setBold(True)
+    # font.setPointSize(font.pointSize() + 1)
     title.setFont(font)
 
     return title

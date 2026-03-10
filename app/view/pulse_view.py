@@ -1,12 +1,16 @@
 import pyqtgraph as pg
 from app.view.pulse_segment import PulseSegmentWidget
-from app.view.view_helpers import create_guide_line, create_plot_widget, spacer
+from app.view.view_helpers import (
+    create_guide_line,
+    create_plot_widget,
+    create_title,
+    spacer,
+)
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QPushButton,
-    QVBoxLayout,
 )
 
 
@@ -31,11 +35,10 @@ class PulseView(QDialog):
         )
 
         spacer(self.ui.horizontalLayout)
-        self.ui.verticalLayout.stretch(0)
-
-        layout = QVBoxLayout(self.ui.pulseContainer)
-        layout.addWidget(frame)
-
+        self.ui.parameterLayout.insertWidget(0, create_title("Parameters"))
+        self.ui.parameterLayout.insertWidget(4, create_title("Plot options"))
+        self.ui.plotLayout.addWidget(create_title("Impulse plot"))
+        self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
 
         self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)

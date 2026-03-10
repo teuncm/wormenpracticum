@@ -1,9 +1,10 @@
-from app.model.app_model import PULSE_SAMPLE_HZ, AppModel
+from app.model.app_model import AppModel
 from app.view.main_view import MainView
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
 
 SEGMENT_ROUND_DECIMALS = 5
+TARGET_N_SAMPLES = 2001
 
 
 class AppController:
@@ -49,15 +50,23 @@ class AppController:
         if self.app_model.pulse_generator is None:
             return
 
-        cur_step = self.pulse_view.ui.stepSlider.value()
-        y, t = self.app_model.pulse_generator.sample_section(PULSE_SAMPLE_HZ, cur_step)
         self.pulse_view.clear_plot()
         self.pulse_view.draw_zero_line()
+
+        # Early exit if duration is 0!
+        target_dur = self.app_model.pulse_generator.target_dur_s()
+        if target_dur == 0:
+            return
+
+        train_plot_sr = TARGET_N_SAMPLES / target_dur
+
+        cur_step = self.pulse_view.ui.stepSlider.value()
+        y, t = self.app_model.pulse_generator.sample_section(train_plot_sr, cur_step)
         self.pulse_view.update_train_plot((t, y), color="k", width=1)
 
         cur_tab = self.pulse_view.ui.segmentTabWidget.currentIndex()
         y, t = self.app_model.pulse_generator.sample_section(
-            PULSE_SAMPLE_HZ, cur_step, cur_tab
+            train_plot_sr, cur_step, cur_tab
         )
         self.pulse_view.update_train_plot((t, y), color="b", width=2)
 

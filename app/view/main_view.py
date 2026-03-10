@@ -2,12 +2,16 @@ import numpy as np
 import pyqtgraph as pg
 from app.model.data_io import read_data
 from app.view.data_dialog import show_load_dialog
-from app.view.view_helpers import set_global_plot_config
+from app.view.view_helpers import (
+    create_plot_widget,
+    create_title,
+    set_global_plot_config,
+    spacer,
+)
 from app.window.ui_main_window import Ui_MainWindow
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QMainWindow,
-    QVBoxLayout,
 )
 
 AMP_SLIDER_SCALE_FACTOR = 100
@@ -31,20 +35,24 @@ class MainView(QMainWindow):
 
         self.ui.editImpulseButton.clicked.connect(self.editImpulseRequested)
 
-        self.plotWidget = pg.PlotWidget()
-        layout = QVBoxLayout(self.ui.plotContainer)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.plotWidget)
+        frame, plot = create_plot_widget(
+            title="Evoked Response",
+            x_label="Time",
+            x_units="s",
+            y_label="Voltage",
+            y_units="V",
+        )
 
-        self.plotWidget.setTitle("Evoked Response")
-        self.plotWidget.setLabel("left", "Voltage", units="V")
-        self.plotWidget.setLabel("bottom", "Time", units="s")
-        self.plotWidget.setMouseEnabled(x=True, y=False)
-        self.plotWidget.setMenuEnabled(False)
-        legend = self.plotWidget.addLegend()
+        spacer(self.ui.centralwidget.layout())
 
-        legend.anchor((1, 0), (1, 0))
-        legend.setBrush(pg.mkBrush(("w")))
+        self.ui.plotLayout.addWidget(create_title("Evoked response plot"))
+        self.ui.plotLayout.addWidget(frame)
+        self.ui.optionsLayout.insertWidget(0, create_title("Actions"))
+        self.ui.optionsLayout.insertWidget(3, create_title("Plot options"))
+        self.plotWidget = plot
+
+        # legend.anchor((1, 0), (1, 0))
+        # legend.setBrush(pg.mkBrush(("w")))
 
         self.plotMagnitude = 1.0
 

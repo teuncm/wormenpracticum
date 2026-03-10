@@ -1,7 +1,5 @@
 from app.model.pulse import Pulse, PulseGenerator, PulseTrain
 
-PULSE_SAMPLE_HZ = 1000
-
 
 class AppModel:
     # To do: add default generator
