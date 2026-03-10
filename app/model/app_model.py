@@ -21,14 +21,15 @@ class AppModel:
         if self.pulse_generator is None:
             return None
 
-        t_min, t_max = self.pulse_generator.time_bounds(PULSE_SAMPLE_HZ)
+        t_max = self.pulse_generator.target_dur_s()
 
-        return (t_min, t_max)
+        return (0, t_max)
 
     def get_y_bounds(self):
         if self.pulse_generator is None:
             return None
 
         v_min, v_max = self.pulse_generator.v_bounds()
+        v_peak = max(abs(v_min), abs(v_max))
 
-        return (v_min, v_max)
+        return (-v_peak, v_peak)

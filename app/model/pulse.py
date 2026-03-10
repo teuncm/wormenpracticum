@@ -39,6 +39,10 @@ class Pulse(SignalSequence):
         else:
             return abs(self.amp_v)
 
+    def target_dur_s(self) -> float:
+        """Target duration of the pulse in seconds, without accounting for sampling effects."""
+        return self.dur_s
+
     def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the pulse in seconds, taking into account the actual number of samples."""
         bound_sample_idx = self.n_samples(sr_hz=sr_hz)
@@ -99,6 +103,10 @@ class PulseTrain(SignalSequence):
         """Maximum voltage of the train."""
         return max(pulse.max_v() for pulse in self.pulses)
 
+    def target_dur_s(self) -> float:
+        """Target duration of the train in seconds, without accounting for sampling effects."""
+        return sum(pulse.target_dur_s() for pulse in self.pulses)
+
     def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the train in seconds, taking into account the actual number of samples."""
         return sum(pulse.actual_dur_s(sr_hz) for pulse in self.pulses)
@@ -156,6 +164,10 @@ class PulseGenerator:
             max_v = max(max_v, train_max_v)
 
         return min_v, max_v
+
+    def target_dur_s(self) -> float:
+        """Target duration of the generated pulse trains in seconds, without accounting for sampling effects."""
+        return self.base_train.target_dur_s()
 
     def time_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the generated pulse trains."""

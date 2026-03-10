@@ -17,6 +17,11 @@ class SignalSequence(ABC):
         pass
 
     @abstractmethod
+    def target_dur_s(self) -> float:
+        """Target duration of the signal in seconds, without accounting for sampling effects."""
+        pass
+
+    @abstractmethod
     def actual_dur_s(self, sr_hz: float) -> float:
         """Total duration of the signal in seconds, taking into account the actual number of samples."""
         pass

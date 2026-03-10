@@ -1,4 +1,6 @@
 import pyqtgraph as pg
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QBoxLayout, QFrame, QLabel, QVBoxLayout
 
 MARGIN_DEFAULT = 30
@@ -38,6 +40,28 @@ def create_plot_widget(
     layout.addWidget(plot)
 
     return frame, plot
+
+
+def create_guide_line(
+    position, angle, color="b", width=1, style=Qt.PenStyle.DotLine, alpha=255
+) -> pg.InfiniteLine:
+
+    c = pg.mkColor(color)
+    c.setAlpha(alpha)
+
+    guide_line = pg.InfiniteLine(
+        pos=position,
+        angle=angle,
+        pen=pg.mkPen(
+            color=c,
+            width=width,
+            style=style,
+        ),
+    )
+
+    guide_line.setZValue(0)
+
+    return guide_line
 
 
 def create_title(title_text) -> QLabel:
