@@ -1,5 +1,6 @@
 from app.model.app_model import AppModel
 from app.view.main_view import MainView
+from app.view.protocol_view import ProtocolView
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
 
@@ -13,8 +14,10 @@ class AppController:
 
         self.main_view = MainView()
         self.pulse_view = PulseView()
+        self.protocol_view = ProtocolView()
 
         self.main_view.editImpulseRequested.connect(self.open_impulse_window)
+        self.main_view.editProtocolRequested.connect(self.open_protocol_window)
         self.pulse_view.pulseChanged.connect(self.update_pulse_state)
         self.pulse_view.stepChanged.connect(self.update_plot)
 
@@ -23,6 +26,9 @@ class AppController:
 
     def open_impulse_window(self):
         self.pulse_view.show()
+
+    def open_protocol_window(self):
+        self.protocol_view.show()
 
     def update_pulse_state(self):
         """Update pulse data and plot"""

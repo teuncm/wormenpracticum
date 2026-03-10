@@ -19,6 +19,7 @@ AMP_SLIDER_SCALE_FACTOR = 100
 
 class MainView(QMainWindow):
     editImpulseRequested = Signal()
+    editProtocolRequested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -34,6 +35,7 @@ class MainView(QMainWindow):
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
         self.ui.editImpulseButton.clicked.connect(self.editImpulseRequested)
+        self.ui.editProtocolButton.clicked.connect(self.editProtocolRequested)
 
         frame, plot = create_plot_widget(
             title="Evoked Response",

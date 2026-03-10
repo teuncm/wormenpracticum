@@ -4,9 +4,12 @@ from app.model.pulse import Pulse, PulseGenerator, PulseTrain
 class AppModel:
     # To do: add default generator
     pulse_generator: PulseGenerator | None
+    # To do: implement experiment protocol
+    protocol: None
 
     def __init__(self):
         self.pulse_generator = None
+        self.protocol = None
 
     def update_pulse_config(self, pulse_data):
         pulses = [Pulse(**segment) for segment in pulse_data["segments"]]
