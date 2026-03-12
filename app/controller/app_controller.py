@@ -5,7 +5,7 @@ from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
 
 SEGMENT_ROUND_DECIMALS = 5
-TARGET_N_SAMPLES = 2001
+TARGET_N_SAMPLES = 9001
 
 
 class AppController:

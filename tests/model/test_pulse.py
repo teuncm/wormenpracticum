@@ -172,3 +172,7 @@ def test_monophasic_sample(monophasic_pulse):
 
     assert np.isclose(np.sum(samples), 5 * 2 * 2 * TEST_SR_HZ)
     assert np.allclose(samples.flatten(), [5.0] * 16)
+
+
+def standard_pulse() -> Pulse:
+    return Pulse(amp_v=1, dur_s=1, step_amp_v=0, step_dur_s=0, is_monophasic=False)

@@ -51,10 +51,24 @@ class Pulse(SignalSequence):
 
     def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the pulse."""
+        # Old code: causes more drift than below code
         # Guarantee that we can divide the pulse into two parts
         n_half_pulse_samples = int(round(self.dur_s / 2.0 * sr_hz))
+
         # Guarantee that the number of samples is at least 0
         n_pulse_samples_capped = max(2 * n_half_pulse_samples, 0)
+
+        # if self.dur_s <= 0:
+        #     return 0
+
+        # n_samples = int(round(self.dur_s * sr_hz))
+
+        # if not self.is_monophasic:
+        #     # Guarantee that biphasic pulses have an even number of samples
+        #     if n_samples % 2 == 1:
+        #         n_samples += 1
+
+        # n_pulse_samples_capped = max(n_samples, 0)
 
         return n_pulse_samples_capped
 
