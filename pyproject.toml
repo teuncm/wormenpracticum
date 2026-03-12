@@ -5,6 +5,7 @@ description = "Python rewrite of the UvA Psychobiologie wormenpracticum."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "nidaqmx>=1.4.1",
     "numpy>=2.4.2",
     "pandas>=3.0.1",
     "pyarrow>=23.0.1",
