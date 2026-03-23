@@ -1,8 +1,12 @@
 from app.model.app_model import AppModel
+from app.model.nidaq_constants import NI_DAQ_DISCOVERY_POLL_INTERVAL_MS
+from app.model.nidaq_model import NidaqModel
 from app.view.main_view import MainView
 from app.view.protocol_view import ProtocolView
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication
 
 SEGMENT_ROUND_DECIMALS = 5
 TARGET_N_SAMPLES = 9001
@@ -11,6 +15,7 @@ TARGET_N_SAMPLES = 9001
 class AppController:
     def __init__(self):
         self.app_model = AppModel()
+        self.nidaq_model = NidaqModel()
 
         self.main_view = MainView()
         self.pulse_view = PulseView()
@@ -21,6 +26,16 @@ class AppController:
         self.pulse_view.pulseChanged.connect(self.update_pulse_state)
         self.pulse_view.stepChanged.connect(self.update_plot)
 
+        self.refresh_nidaq_status()
+        self.nidaq_status_timer = QTimer(self.main_view)
+        self.nidaq_status_timer.setInterval(NI_DAQ_DISCOVERY_POLL_INTERVAL_MS)
+        self.nidaq_status_timer.timeout.connect(self.refresh_nidaq_status)
+        self.nidaq_status_timer.start()
+
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self.shutdown)
+
     def start(self):
         self.main_view.show()
 
@@ -29,6 +44,13 @@ class AppController:
 
     def open_protocol_window(self):
         self.protocol_view.show()
+
+    def refresh_nidaq_status(self):
+        self.nidaq_model.refresh_discovery_status()
+        self.main_view.set_nidaq_status(self.nidaq_model.nidaq_status)
+
+    def shutdown(self):
+        self.nidaq_status_timer.stop()
 
     def update_pulse_state(self):
         """Update pulse data and plot"""

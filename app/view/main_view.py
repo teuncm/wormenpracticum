@@ -1,6 +1,7 @@
 import numpy as np
 import pyqtgraph as pg
 from app.model.data_io import read_data
+from app.model.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.view.data_dialog import show_load_dialog
 from app.view.view_helpers import (
     create_plot_widget,
@@ -32,11 +33,15 @@ class MainView(QMainWindow):
         self.ui.ampSlider.setValue(0)
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
-        self.ui.actionLoad_data.triggered.connect(self.load_data_with_dialog)
+        self.ui.actionLoad_data.triggered.connect(
+            lambda: self.load_data_with_dialog()
+        )
         # self.ui.actionSave_data.triggered.connect()
 
-        self.ui.actionImpulse.triggered.connect(self.editImpulseRequested)
-        self.ui.actionProtocol.triggered.connect(self.editProtocolRequested)
+        self.ui.actionImpulse.triggered.connect(lambda: self.editImpulseRequested.emit())
+        self.ui.actionProtocol.triggered.connect(
+            lambda: self.editProtocolRequested.emit()
+        )
 
         frame, plot = create_plot_widget(
             title="Evoked Response",
@@ -52,6 +57,7 @@ class MainView(QMainWindow):
         self.ui.plotLayout.addWidget(frame)
         self.ui.optionsLayout.insertWidget(0, create_title("Plot options"))
         self.plotWidget = plot
+        self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
 
         # legend.anchor((1, 0), (1, 0))
         # legend.setBrush(pg.mkBrush(("w")))
@@ -105,3 +111,6 @@ class MainView(QMainWindow):
                 view_scale_factor * self.plotMagnitude,
             )
         )
+
+    def set_nidaq_status(self, status: str):
+        self.ui.nidaqStatusLabel.setText(f"Status: {status}")

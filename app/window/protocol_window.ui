@@ -6,13 +6,46 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>566</width>
+    <height>688</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Protocol Editor</string>
   </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="channelFormLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="positiveChannelLabel">
+       <property name="text">
+        <string>Positive channel</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="positiveChannelComboBox"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="negativeChannelLabel">
+       <property name="text">
+        <string>Negative channel</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="negativeChannelComboBox"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>Apply</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

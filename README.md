@@ -13,11 +13,12 @@ Python rewrite of the UvA Psychobiologie wormenpracticum.
 # Setup environment
 uv sync
 
-# Design UI components
+# Design UI components visually as .ui files
 uv run pyside6-designer
 
 # Convert UI components to Python
-uv run python -m tools.ui_convert
+# After editing .ui files, regenerate the generated ui_*.py files.
+uv run python tools/ui_convert.py
 
 # Run
 uv run python -m main
