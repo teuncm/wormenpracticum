@@ -6,25 +6,15 @@ MV_PER_V = 1000.0
 MS_PER_S = 1000.0
 
 
-class SignalSequence(ABC):
+class Signal(ABC):
     @abstractmethod
-    def min_v(self) -> float:
-        """Minimum voltage of the signal."""
+    def v_bounds(self) -> tuple[float, float]:
+        """Voltage bounds of the signal."""
         pass
 
     @abstractmethod
-    def max_v(self) -> float:
-        """Maximum voltage of the signal."""
-        pass
-
-    @abstractmethod
-    def target_dur_s(self) -> float:
-        """Target duration of the signal in seconds, without accounting for sampling effects."""
-        pass
-
-    @abstractmethod
-    def actual_dur_s(self, sr_hz: float) -> float:
-        """Total duration of the signal in seconds, taking into account the actual number of samples."""
+    def t_bounds(self, sr_hz: float) -> tuple[float, float]:
+        """Time bounds of the signal."""
         pass
 
     @abstractmethod
@@ -34,13 +24,15 @@ class SignalSequence(ABC):
 
     @abstractmethod
     def sample(self, sr_hz: float) -> np.ndarray:
-        """Sample the signal."""
+        """Sample the signal at the given sample rate."""
         pass
 
-    @abstractmethod
-    def _step(self) -> None:
-        """Advance the signal in-place."""
-        pass
+
+def quantize_time_point(time_s: float, sr_hz: float) -> int:
+    """Quantize a time point to a sample offset."""
+    sample_offset = int(time_s * sr_hz)
+
+    return sample_offset
 
 
 def get_time_frame_s(

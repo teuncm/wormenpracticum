@@ -2,75 +2,75 @@ import copy
 
 import numpy as np
 from app.model.signal import (
-    SignalSequence,
+    Signal,
     get_time_bounds_s,
     get_time_frame_s,
-    get_time_point_s,
+    quantize_time_point,
 )
 
 
-class Pulse(SignalSequence):
+class Pulse(Signal):
     amp_v: float
+    start_s: float
     dur_s: float
     step_amp_v: float
+    step_start_s: float
     step_dur_s: float
     is_monophasic: bool
 
     def __init__(
-        self, amp_v, dur_s, step_amp_v=0.0, step_dur_s=0.0, is_monophasic=False
+        self,
+        amp_v,
+        start_s,
+        dur_s,
+        step_amp_v=0.0,
+        step_start_s=0.0,
+        step_dur_s=0.0,
+        is_monophasic=False,
     ):
         self.amp_v = amp_v
+        self.start_s = start_s
         self.dur_s = dur_s
         self.step_amp_v = step_amp_v
+        self.step_start_s = step_start_s
         self.step_dur_s = step_dur_s
         self.is_monophasic = is_monophasic
 
-    def min_v(self) -> float:
-        """Minimum voltage of the pulse."""
+    def v_bounds(self) -> tuple[float, float]:
+        """Voltage bounds of the pulse."""
         if self.is_monophasic:
-            return self.amp_v
+            if self.amp_v >= 0:
+                return 0, self.amp_v
+            else:
+                return self.amp_v, 0
         else:
-            return -abs(self.amp_v)
+            return -self.amp_v, self.amp_v
 
-    def max_v(self) -> float:
-        """Maximum voltage of the pulse."""
-        if self.is_monophasic:
-            return self.amp_v
-        else:
-            return abs(self.amp_v)
+    def t_bounds(self, sr_hz: float) -> tuple[float, float]:
+        """Time bounds of the quantized pulse."""
+        sample_offset = quantize_time_point(time_s=self.start_s, sr_hz=sr_hz)
+        n_samples = self.n_samples(sr_hz=sr_hz)
 
-    def target_dur_s(self) -> float:
-        """Target duration of the pulse in seconds, without accounting for sampling effects."""
-        return self.dur_s
+        t_min, t_max = get_time_bounds_s(
+            n_samples=n_samples, sr_hz=sr_hz, sample_offset=sample_offset
+        )
 
-    def actual_dur_s(self, sr_hz: float) -> float:
-        """Total duration of the pulse in seconds, taking into account the actual number of samples."""
-        bound_sample_idx = self.n_samples(sr_hz=sr_hz)
-
-        return get_time_point_s(sr_hz=sr_hz, sample_offset=bound_sample_idx)
+        return t_min, t_max
 
     def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the pulse."""
-        # Old code: causes more drift than below code
-        # Guarantee that we can divide the pulse into two parts
-        n_half_pulse_samples = int(round(self.dur_s / 2.0 * sr_hz))
+        # Early exit
+        if self.dur_s <= 0:
+            return 0
 
-        # Guarantee that the number of samples is at least 0
-        n_pulse_samples_capped = max(2 * n_half_pulse_samples, 0)
+        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz) + 1
 
-        # if self.dur_s <= 0:
-        #     return 0
+        if not self.is_monophasic:
+            # Guarantee that biphasic pulses have an even number of samples
+            if n_samples % 2 == 1:
+                n_samples += 1
 
-        # n_samples = int(round(self.dur_s * sr_hz))
-
-        # if not self.is_monophasic:
-        #     # Guarantee that biphasic pulses have an even number of samples
-        #     if n_samples % 2 == 1:
-        #         n_samples += 1
-
-        # n_pulse_samples_capped = max(n_samples, 0)
-
-        return n_pulse_samples_capped
+        return n_samples
 
     def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the pulse."""
@@ -85,7 +85,7 @@ class Pulse(SignalSequence):
         if self.is_monophasic:
             samples[:] = self.amp_v
         else:
-            # Allowed because n_samples is guaranteed to be even
+            # Allowed because n_samples is guaranteed to be even for biphasic pulses.
             split = n_samples // 2
             samples[:split] = self.amp_v
             samples[split:] = -self.amp_v
@@ -95,155 +95,139 @@ class Pulse(SignalSequence):
     def _step(self) -> None:
         """Advance the pulse in-place."""
         self.amp_v += self.step_amp_v
+        self.start_s += self.step_start_s
         self.dur_s += self.step_dur_s
 
 
-class PulseTrain(SignalSequence):
+class Stimulus(Signal):
+    dur_s: float
     pulses: list[Pulse]
-    n_steps: int
 
-    def __init__(self, pulses, n_steps=1):
-        if len(pulses) == 0:
-            raise ValueError("Pulse train must contain at least one pulse.")
-
+    def __init__(self, dur_s: float, pulses: list[Pulse]):
+        self.dur_s = dur_s
         self.pulses = pulses
-        self.n_steps = n_steps
 
-    def min_v(self) -> float:
-        """Minimum voltage of the train."""
-        return min(pulse.min_v() for pulse in self.pulses)
+    def v_bounds(self) -> tuple[float, float]:
+        """Voltage bounds of the stimulus."""
+        v_mins = []
+        v_maxs = []
+        for pulse in self.pulses:
+            v_min, v_max = pulse.v_bounds()
+            v_mins.append(v_min)
+            v_maxs.append(v_max)
 
-    def max_v(self) -> float:
-        """Maximum voltage of the train."""
-        return max(pulse.max_v() for pulse in self.pulses)
+        return min(v_mins), max(v_maxs)
 
-    def target_dur_s(self) -> float:
-        """Target duration of the train in seconds, without accounting for sampling effects."""
-        return sum(pulse.target_dur_s() for pulse in self.pulses)
-
-    def actual_dur_s(self, sr_hz: float) -> float:
-        """Total duration of the train in seconds, taking into account the actual number of samples."""
-        return sum(pulse.actual_dur_s(sr_hz) for pulse in self.pulses)
+    def t_bounds(self, sr_hz: float) -> tuple[float, float]:
+        """Time bounds of the stimulus."""
+        n_samples = self.n_samples(sr_hz=sr_hz)
+        t_min, t_max = get_time_bounds_s(
+            n_samples=n_samples, sr_hz=sr_hz, sample_offset=0
+        )
+        return t_min, t_max
 
     def n_samples(self, sr_hz: float) -> int:
-        """Number of samples in the train."""
-        return sum(pulse.n_samples(sr_hz) for pulse in self.pulses)
+        """Get the number of samples in each step of the stimulus preset."""
+        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz) + 1
+
+        return n_samples
 
     def sample(self, sr_hz: float) -> np.ndarray:
-        """Sample the train."""
-        samples_list = []
+        """Sample the stimulus."""
+        # Initialize the sample array.
+        n_samples = self.n_samples(sr_hz=sr_hz)
+        samples = np.zeros(n_samples)
+        max_idx = n_samples - 1
 
+        # Sample each pulse and add it to the overall stimulus.
         for pulse in self.pulses:
-            pulse_samples = pulse.sample(sr_hz)
-            samples_list.append(pulse_samples)
+            # Get the pulse's sample offset within the stimulus.
+            sample_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
 
-        samples = np.concatenate(samples_list)
+            # Sample the pulse.
+            pulse_samples = pulse.sample(sr_hz=sr_hz)
+
+            # Add the pulse samples to the overall stimulus.
+            end_offset = sample_offset + len(pulse_samples)
+            if end_offset <= len(samples):
+                samples[sample_offset:end_offset] = pulse_samples
+            else:
+                samples[sample_offset:] = pulse_samples[: max_idx - sample_offset + 1]
 
         return samples
 
-    def get_sample_offset(self, sr_hz: float, pulse_idx: int) -> int:
-        """Get sample offset within the given train"""
-        if pulse_idx < 0 or pulse_idx >= len(self.pulses):
-            raise ValueError("Pulse index out of range.")
-
-        offset = 0
-        for i in range(pulse_idx):
-            offset += self.pulses[i].n_samples(sr_hz)
-
-        return offset
-
     def _step(self) -> None:
-        """Advance the train in-place."""
+        """Advance the stimulus in-place."""
         for pulse in self.pulses:
             pulse._step()
 
 
-class PulseGenerator:
-    base_train: PulseTrain
-    train_steps: list[PulseTrain]
+class StimulusPreset:
+    name: str
+    n_steps: int
+    stimulus: Stimulus
 
-    def __init__(self, base_train: PulseTrain):
-        self.base_train = base_train
-        self.train_steps = []
+    def __init__(self, name: str, dur_s: float, pulses: list[Pulse], n_steps: int = 1):
+        self.name = name
+        self.n_steps = n_steps
+        self.stimulus = Stimulus(dur_s=dur_s, pulses=pulses)
+
+
+class StimulusGenerator:
+    preset: StimulusPreset
+    stimuli: list[Stimulus]
+
+    def __init__(self, preset: StimulusPreset):
+        self.preset = preset
+        self.stimuli = []
         self._expand()
 
     def v_bounds(self) -> tuple[float, float]:
-        """Voltage bounds of the generated pulse trains."""
-        min_v = 0
-        max_v = 0
+        """Voltage bounds of the stimulus generator."""
+        v_mins = []
+        v_maxs = []
+        for stimulus in self.stimuli:
+            for pulse in stimulus.pulses:
+                v_min, v_max = pulse.v_bounds()
+                v_mins.append(v_min)
+                v_maxs.append(v_max)
 
-        for train in self.train_steps:
-            train_min_v, train_max_v = train.min_v(), train.max_v()
-            min_v = min(min_v, train_min_v)
-            max_v = max(max_v, train_max_v)
+        return min(v_mins), max(v_maxs)
 
-        return min_v, max_v
+    def t_bounds(self, sr_hz: float) -> tuple[float, float]:
+        """Time bounds of the stimulus generator."""
+        n_samples_step = self.preset.stimulus.n_samples(sr_hz=sr_hz)
 
-    def target_dur_s(self) -> float:
-        """Target duration of the generated pulse trains in seconds, without accounting for sampling effects."""
-        return self.base_train.target_dur_s()
+        t_min, t_max = get_time_bounds_s(
+            n_samples=n_samples_step, sr_hz=sr_hz, sample_offset=0
+        )
 
-    def time_bounds(self, sr_hz: float) -> tuple[float, float]:
-        """Time bounds of the generated pulse trains."""
-        n_samples = self.base_train.n_samples(sr_hz)
-
-        return get_time_bounds_s(n_samples, sr_hz)
-
-    def n_samples_mat(self, sr_hz: float) -> int:
-        """Number of samples in the generated pulse train matrix."""
-        n_samples_per_step = self.base_train.n_samples(sr_hz)
-        total_n_samples = n_samples_per_step * self.base_train.n_steps
-
-        return total_n_samples
-
-    def sample_mat(self, sr_hz: float) -> np.ndarray:
-        """Sample the pulse train over all steps, truncating samples where needed."""
-        # Fit all trains to the length of the base train.
-        n_samples_per_step = self.base_train.n_samples(sr_hz)
-
-        # Contains pulse train samples for all iterations
-        samples_mat = np.zeros((self.base_train.n_steps, n_samples_per_step))
-
-        # Early exit if there is nothing to generate.
-        if n_samples_per_step == 0 or self.base_train.n_steps == 0:
-            return samples_mat
-
-        for i in range(self.base_train.n_steps):
-            # Data for this train step.
-            cur_samples = self.train_steps[i].sample(sr_hz)
-
-            # Number of samples to write to the matrix for this step, capped at the length of the base train samples.
-            write_n_samples = min(len(cur_samples), n_samples_per_step)
-
-            # Write the samples to the matrix row, truncating if necessary.
-            samples_mat[i, :write_n_samples] = cur_samples[:write_n_samples]
-
-        return samples_mat
+        return t_min, t_max
 
     def sample_section(
-        self, sr_hz: float, train_step_idx: int, pulse_idx: int = -1
+        self, sr_hz: float, stimulus_idx: int, pulse_idx: int = -1
     ) -> tuple[np.ndarray, np.ndarray]:
         """Get a signal at a specific index within the train matrix and its timeframe."""
-        if pulse_idx >= len(self.base_train.pulses):
+        if pulse_idx >= len(self.preset.stimulus.pulses):
             raise ValueError("Pulse index out of range.")
-        if train_step_idx >= self.base_train.n_steps:
-            raise ValueError("Train step index out of range.")
+        if stimulus_idx >= self.preset.n_steps:
+            raise ValueError("Stimulus index out of range.")
 
         # Get pulse train at requested generator step.
-        train = self.train_steps[train_step_idx]
+        stimulus = self.stimuli[stimulus_idx]
 
         if pulse_idx == -1:
             # Sample this train.
-            samples = train.sample(sr_hz=sr_hz)
+            samples = stimulus.sample(sr_hz=sr_hz)
             timeframe = get_time_frame_s(len(samples), sr_hz)
 
             return samples, timeframe
 
         # Get pulse at requested index within the train.
-        pulse = train.pulses[pulse_idx]
+        pulse = stimulus.pulses[pulse_idx]
 
         # Determine pulse sample offset within this particular pulse train.
-        sample_offset = train.get_sample_offset(sr_hz=sr_hz, pulse_idx=pulse_idx)
+        sample_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
 
         # Sample this pulse.
         samples = pulse.sample(sr_hz=sr_hz)
@@ -252,12 +236,12 @@ class PulseGenerator:
         return samples, timeframe
 
     def _expand(self) -> None:
-        """Expand the pulse train into a list of pulse trains for each step."""
-        # Since _step() is in-place, we need to deepcopy the base train to avoid modifying it.
-        cur_train = copy.deepcopy(self.base_train)
-        train_steps = []
-        for _ in range(self.base_train.n_steps):
-            train_steps.append(copy.deepcopy(cur_train))
-            cur_train._step()
+        """Expand the stimulus for each step."""
+        # Since _step() is in-place, we need to deepcopy the base stimulus to avoid modifying it.
+        cur_stimulus = copy.deepcopy(self.preset.stimulus)
+        stimuli = []
+        for _ in range(self.preset.n_steps):
+            stimuli.append(copy.deepcopy(cur_stimulus))
+            cur_stimulus._step()
 
-        self.train_steps = train_steps
+        self.stimuli = stimuli
