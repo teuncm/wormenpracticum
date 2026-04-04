@@ -39,10 +39,7 @@ class Pulse(Signal):
     def v_bounds(self) -> tuple[float, float]:
         """Voltage bounds of the pulse."""
         if self.is_monophasic:
-            if self.amp_v >= 0:
-                return 0, self.amp_v
-            else:
-                return self.amp_v, 0
+            return self.amp_v, self.amp_v
         else:
             return -self.amp_v, self.amp_v
 
@@ -63,14 +60,14 @@ class Pulse(Signal):
         if self.dur_s <= 0:
             return 0
 
-        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz) + 1
+        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
         if not self.is_monophasic:
             # Guarantee that biphasic pulses have an even number of samples
             if n_samples % 2 == 1:
-                n_samples += 1
+                n_samples -= 1
 
-        return n_samples
+        return max(n_samples, 0)
 
     def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the pulse."""
@@ -124,37 +121,38 @@ class Stimulus(Signal):
         t_min, t_max = get_time_bounds_s(
             n_samples=n_samples, sr_hz=sr_hz, sample_offset=0
         )
+
         return t_min, t_max
 
     def n_samples(self, sr_hz: float) -> int:
         """Get the number of samples in each step of the stimulus preset."""
-        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz) + 1
+        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
-        return n_samples
+        return max(n_samples, 0)
 
     def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the stimulus."""
         # Initialize the sample array.
-        n_samples = self.n_samples(sr_hz=sr_hz)
-        samples = np.zeros(n_samples)
-        max_idx = n_samples - 1
+        n_samples_stim = self.n_samples(sr_hz=sr_hz)
+        samples_stim = np.zeros(n_samples_stim)
 
         # Sample each pulse and add it to the overall stimulus.
         for pulse in self.pulses:
             # Get the pulse's sample offset within the stimulus.
-            sample_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+            pulse_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+            n_samples_pulse = pulse.n_samples(sr_hz=sr_hz)
+            n_samples_pulse_truncated = min(
+                n_samples_pulse, n_samples_stim - pulse_offset
+            )
 
             # Sample the pulse.
             pulse_samples = pulse.sample(sr_hz=sr_hz)
 
-            # Add the pulse samples to the overall stimulus.
-            end_offset = sample_offset + len(pulse_samples)
-            if end_offset <= len(samples):
-                samples[sample_offset:end_offset] = pulse_samples
-            else:
-                samples[sample_offset:] = pulse_samples[: max_idx - sample_offset + 1]
+            samples_stim[pulse_offset : pulse_offset + n_samples_pulse_truncated] = (
+                pulse_samples[:n_samples_pulse_truncated]
+            )
 
-        return samples
+        return samples_stim
 
     def _step(self) -> None:
         """Advance the stimulus in-place."""
@@ -196,44 +194,40 @@ class StimulusGenerator:
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the stimulus generator."""
-        n_samples_step = self.preset.stimulus.n_samples(sr_hz=sr_hz)
-
-        t_min, t_max = get_time_bounds_s(
-            n_samples=n_samples_step, sr_hz=sr_hz, sample_offset=0
-        )
-
-        return t_min, t_max
+        return self.preset.stimulus.t_bounds(sr_hz=sr_hz)
 
     def sample_section(
         self, sr_hz: float, stimulus_idx: int, pulse_idx: int = -1
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Get a signal at a specific index within the train matrix and its timeframe."""
+        """Get stimulus or pulse at specified index."""
         if pulse_idx >= len(self.preset.stimulus.pulses):
             raise ValueError("Pulse index out of range.")
         if stimulus_idx >= self.preset.n_steps:
             raise ValueError("Stimulus index out of range.")
 
-        # Get pulse train at requested generator step.
+        # Get stimulus at index.
         stimulus = self.stimuli[stimulus_idx]
 
         if pulse_idx == -1:
-            # Sample this train.
-            samples = stimulus.sample(sr_hz=sr_hz)
-            timeframe = get_time_frame_s(len(samples), sr_hz)
+            # Sample this stimulus.
+            samples_stim = stimulus.sample(sr_hz=sr_hz)
+            timeframe_stim = get_time_frame_s(len(samples_stim), sr_hz)
 
-            return samples, timeframe
+            return samples_stim, timeframe_stim
 
-        # Get pulse at requested index within the train.
+        # Get pulse at requested index within the stimulus.
         pulse = stimulus.pulses[pulse_idx]
 
-        # Determine pulse sample offset within this particular pulse train.
-        sample_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+        # Determine pulse sample offset within this stimulus.
+        pulse_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
 
         # Sample this pulse.
-        samples = pulse.sample(sr_hz=sr_hz)
-        timeframe = get_time_frame_s(len(samples), sr_hz, sample_offset=sample_offset)
+        samples_pulse = pulse.sample(sr_hz=sr_hz)
+        timeframe_pulse = get_time_frame_s(
+            len(samples_pulse), sr_hz, sample_offset=pulse_offset
+        )
 
-        return samples, timeframe
+        return samples_pulse, timeframe_pulse
 
     def _expand(self) -> None:
         """Expand the stimulus for each step."""
