@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 from app.model.pulse import Pulse, Stimulus
 
@@ -39,6 +38,7 @@ def stimulus_basic() -> Stimulus:
 
 def test_stim(stimulus_basic: Stimulus) -> None:
     assert len(stimulus_basic.pulses) == 4
+
     assert stimulus_basic.sample(sr_hz=TEST_SR_HZ).tolist() == [
         1.0,
         1.0,

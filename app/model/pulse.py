@@ -90,7 +90,7 @@ class Pulse(Signal):
         return samples
 
     def _step(self) -> None:
-        """Advance the pulse in-place."""
+        """Advance the pulse state in-place."""
         self.amp_v += self.step_amp_v
         self.start_s += self.step_start_s
         self.dur_s += self.step_dur_s
@@ -155,7 +155,7 @@ class Stimulus(Signal):
         return samples_stim
 
     def _step(self) -> None:
-        """Advance the stimulus in-place."""
+        """Advance the stimulus state in-place."""
         for pulse in self.pulses:
             pulse._step()
 

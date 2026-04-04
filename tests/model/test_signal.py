@@ -18,7 +18,9 @@ def simple_time_frame_s():
 def test_quantize_time_point():
     """Verify that the time point is quantized correctly."""
     assert -1 == quantize_time_point(time_s=-0.2, sr_hz=TEST_SR_HZ)
+    assert -1 == quantize_time_point(time_s=-0.05, sr_hz=TEST_SR_HZ)
     assert 0 == quantize_time_point(time_s=0.0, sr_hz=TEST_SR_HZ)
+    assert 0 == quantize_time_point(time_s=0.05, sr_hz=TEST_SR_HZ)
     assert 0 == quantize_time_point(time_s=0.2, sr_hz=TEST_SR_HZ)
     assert 1 == quantize_time_point(time_s=0.25, sr_hz=TEST_SR_HZ)
 
