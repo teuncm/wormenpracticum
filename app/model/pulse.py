@@ -63,7 +63,8 @@ class Pulse(Signal):
         n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
         if not self.is_monophasic:
-            # Guarantee that biphasic pulses have an even number of samples
+            # Guarantee that biphasic pulses have an even number of samples.
+            # Causes truncation by at most one extra sample.
             if n_samples % 2 == 1:
                 n_samples -= 1
 
