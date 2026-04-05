@@ -28,11 +28,7 @@ class StimulusGenerator:
                 v_mins.append(v_min)
                 v_maxs.append(v_max)
 
-        limit_v = self.config.limit_v
-
-        return np.clip(min(v_mins), -limit_v, limit_v), np.clip(
-            max(v_maxs), -limit_v, limit_v
-        )
+        return min(v_mins), max(v_maxs)
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the stimulus generator."""

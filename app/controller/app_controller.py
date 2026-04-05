@@ -48,7 +48,6 @@ class AppController:
                 )
 
         params = {
-            "name": self.pulse_view.ui.nameLineEdit.text().strip(),
             "N": self.pulse_view.ui.nSpinBox.value(),
             "dur_s": self.pulse_view.ui.durSpinBox.value(),
             "limit_v": self.pulse_view.ui.limitSpinBox.value(),
@@ -65,9 +64,7 @@ class AppController:
         self.pulse_view.clear_plot()
         self.pulse_view.draw_zero_line()
 
-        # Early exit if duration is 0!
-        target_dur = self.app_model.stimulus_generator.t_bounds(sr_hz=1000)[1]
-
+        target_dur = self.app_model.stimulus_generator.config.stim.dur_s
         train_plot_sr = TARGET_N_SAMPLES / target_dur
 
         cur_step = self.pulse_view.ui.stepSlider.value()
