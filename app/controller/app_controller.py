@@ -47,7 +47,13 @@ class AppController:
                     | {"is_monophasic": widget.monophasic_checkbox.isChecked()},
                 )
 
-        params = {"N": self.pulse_view.ui.nSpinBox.value(), "segments": segments}
+        params = {
+            "name": self.pulse_view.ui.nameLineEdit.text().strip(),
+            "N": self.pulse_view.ui.nSpinBox.value(),
+            "dur_s": self.pulse_view.ui.durSpinBox.value(),
+            "limit_v": self.pulse_view.ui.limitSpinBox.value(),
+            "segments": segments,
+        }
 
         self.app_model.update_pulse_config(params)
         self.pulse_view.update_step_slider(params["N"])
@@ -60,18 +66,16 @@ class AppController:
         self.pulse_view.draw_zero_line()
 
         # Early exit if duration is 0!
-        target_dur = self.app_model.stimulus_generator.target_dur_s()
-        if target_dur == 0:
-            return
+        target_dur = self.app_model.stimulus_generator.t_bounds(sr_hz=1000)[1]
 
         train_plot_sr = TARGET_N_SAMPLES / target_dur
 
         cur_step = self.pulse_view.ui.stepSlider.value()
-        y, t = self.app_model.stimulus_generator.sample_section(train_plot_sr, cur_step)
+        y, t = self.app_model.stimulus_generator.sample_at_idx(train_plot_sr, cur_step)
         self.pulse_view.update_train_plot((t, y), color="k", width=1)
 
         cur_tab = self.pulse_view.ui.segmentTabWidget.currentIndex()
-        y, t = self.app_model.stimulus_generator.sample_section(
+        y, t = self.app_model.stimulus_generator.sample_at_idx(
             train_plot_sr, cur_step, cur_tab
         )
         self.pulse_view.update_train_plot((t, y), color="b", width=2)

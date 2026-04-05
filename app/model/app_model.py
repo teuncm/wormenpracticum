@@ -2,6 +2,8 @@ from app.model.stimulus.pulse import Pulse
 from app.model.stimulus.stimulus_config import StimulusConfig
 from app.model.stimulus.stimulus_generator import StimulusGenerator
 
+DEFAULT_LIMIT_V = 1.5
+
 
 class AppModel:
     # To do: add default generator
@@ -18,9 +20,9 @@ class AppModel:
         stim_config = StimulusConfig(
             pulses=pulses,
             n_steps=stim_form_data["N"],
-            name="Custom Stimulus",
-            dur_s=3.0,
-            limit_v=1.0,
+            name=stim_form_data.get("name", "Custom Stimulus") or "Custom Stimulus",
+            dur_s=stim_form_data.get("dur_s", 3.0),
+            limit_v=stim_form_data.get("limit_v", DEFAULT_LIMIT_V),
         )
         stim_generator = StimulusGenerator(stim_config)
 
