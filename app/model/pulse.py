@@ -126,7 +126,7 @@ class Stimulus(Signal):
         return t_min, t_max
 
     def n_samples(self, sr_hz: float) -> int:
-        """Get the number of samples in each step of the stimulus preset."""
+        """Get the number of samples in each step of the stimulus config."""
         n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
         return max(n_samples, 0)
@@ -161,32 +161,42 @@ class Stimulus(Signal):
             pulse._step()
 
 
-class StimulusPreset:
+class StimulusConfig:
     name: str
     n_steps: int
-    stimulus: Stimulus
+    # Voltage limiting is only applied to samples in the generator.
+    limit_v: float
+    stim: Stimulus
 
-    def __init__(self, name: str, dur_s: float, pulses: list[Pulse], n_steps: int = 1):
+    def __init__(
+        self,
+        name: str,
+        dur_s: float,
+        limit_v: float,
+        pulses: list[Pulse],
+        n_steps: int = 1,
+    ):
         self.name = name
         self.n_steps = n_steps
-        self.stimulus = Stimulus(dur_s=dur_s, pulses=pulses)
+        self.limit_v = limit_v
+        self.stim = Stimulus(dur_s=dur_s, pulses=pulses)
 
 
 class StimulusGenerator:
-    preset: StimulusPreset
-    stimuli: list[Stimulus]
+    config: StimulusConfig
+    stims: list[Stimulus]
 
-    def __init__(self, preset: StimulusPreset):
-        self.preset = preset
-        self.stimuli = []
+    def __init__(self, config: StimulusConfig):
+        self.config = config
+        self.stims = []
         self._expand()
 
     def v_bounds(self) -> tuple[float, float]:
         """Voltage bounds of the stimulus generator."""
         v_mins = []
         v_maxs = []
-        for stimulus in self.stimuli:
-            for pulse in stimulus.pulses:
+        for stim in self.stims:
+            for pulse in stim.pulses:
                 v_min, v_max = pulse.v_bounds()
                 v_mins.append(v_min)
                 v_maxs.append(v_max)
@@ -195,48 +205,62 @@ class StimulusGenerator:
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the stimulus generator."""
-        return self.preset.stimulus.t_bounds(sr_hz=sr_hz)
+        return self.config.stim.t_bounds(sr_hz=sr_hz)
 
-    def sample_section(
-        self, sr_hz: float, stimulus_idx: int, pulse_idx: int = -1
+    def sample_at_idx(
+        self, sr_hz: float, stim_idx: int, pulse_idx: int = -1
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Get stimulus or pulse at specified index."""
-        if pulse_idx >= len(self.preset.stimulus.pulses):
+        """Sample and clip stimulus or pulse at specified index.
+        samples are supplied with timeframe.
+
+        Args:
+            sr_hz: Sample rate in Hz.
+            stimulus_idx: Index of the stimulus to sample. Must be in [0, n_steps).
+            pulse_idx: Index of the pulse to sample. Must be in [-1, n_pulses), where -1 indicates the entire stimulus.
+
+            Returns:
+            Tuple of (samples, timeframe_s), where samples is a 1D array of voltage samples, and timeframe_s is a 1D array of time points corresponding to each sample.
+        """
+        if pulse_idx >= len(self.config.stim.pulses):
             raise ValueError("Pulse index out of range.")
-        if stimulus_idx >= self.preset.n_steps:
+        if stim_idx >= self.config.n_steps:
             raise ValueError("Stimulus index out of range.")
 
         # Get stimulus at index.
-        stimulus = self.stimuli[stimulus_idx]
+        stim = self.stims[stim_idx]
 
         if pulse_idx == -1:
             # Sample this stimulus.
-            samples_stim = stimulus.sample(sr_hz=sr_hz)
+            samples_stim = self.clip_samples(stim.sample(sr_hz=sr_hz))
             timeframe_stim = get_time_frame_s(len(samples_stim), sr_hz)
 
             return samples_stim, timeframe_stim
 
         # Get pulse at requested index within the stimulus.
-        pulse = stimulus.pulses[pulse_idx]
+        pulse = stim.pulses[pulse_idx]
 
         # Determine pulse sample offset within this stimulus.
         pulse_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
 
         # Sample this pulse.
-        samples_pulse = pulse.sample(sr_hz=sr_hz)
+        samples_pulse = self.clip_samples(pulse.sample(sr_hz=sr_hz))
         timeframe_pulse = get_time_frame_s(
             len(samples_pulse), sr_hz, sample_offset=pulse_offset
         )
 
         return samples_pulse, timeframe_pulse
 
+    def clip_samples(self, samples: np.ndarray) -> np.ndarray:
+        """Clip the samples to the voltage limits set in the stimulus config."""
+        return np.clip(samples, -self.config.limit_v, self.config.limit_v)
+
     def _expand(self) -> None:
         """Expand the stimulus for each step."""
         # Since _step() is in-place, we need to deepcopy the base stimulus to avoid modifying it.
-        cur_stimulus = copy.deepcopy(self.preset.stimulus)
-        stimuli = []
-        for _ in range(self.preset.n_steps):
-            stimuli.append(copy.deepcopy(cur_stimulus))
-            cur_stimulus._step()
+        cur_stim = copy.deepcopy(self.config.stim)
+        expanded_stims = []
+        for _ in range(self.config.n_steps):
+            expanded_stims.append(copy.deepcopy(cur_stim))
+            cur_stim._step()
 
-        self.stimuli = stimuli
+        self.stims = expanded_stims
