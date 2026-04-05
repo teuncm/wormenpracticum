@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from app.model.signal import (
+from app.model.stimulus.signal import (
     get_time_bounds_s,
     get_time_frame_s,
     get_time_point_s,

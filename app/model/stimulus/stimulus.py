@@ -65,3 +65,6 @@ class Stimulus(Signal):
         """Advance the stimulus state in-place."""
         for pulse in self.pulses:
             pulse._step()
+
+    def __repr__(self) -> str:
+        return str(vars(self))

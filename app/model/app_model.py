@@ -1,4 +1,4 @@
-from app.model.pulse import Pulse, PulseGenerator, PulseTrain
+from app.model.stimulus.pulse import Pulse, PulseGenerator, PulseTrain
 
 
 class AppModel:

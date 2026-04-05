@@ -92,3 +92,6 @@ class Pulse(Signal):
         self.amp_v += self.step_amp_v
         self.start_s += self.step_start_s
         self.dur_s += self.step_dur_s
+
+    def __repr__(self) -> str:
+        return str(vars(self))

@@ -1,5 +1,6 @@
 import pytest
-from app.model.pulse import Pulse, Stimulus
+from app.model.stimulus.pulse import Pulse
+from app.model.stimulus.stimulus import Stimulus
 
 TEST_SR_HZ = 4.0
 
