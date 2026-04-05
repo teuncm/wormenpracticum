@@ -18,13 +18,16 @@ class PulseSegmentWidget(QWidget):
 
         params = {
             "Amplitude (V)": ("amp_v", "step_amp_v"),
+            "Start (s)": ("start_s", "step_start_s"),
             "Duration (s)": ("dur_s", "step_dur_s"),
         }
 
         defaults = {
             "amp_v": (1.0, -1.0, 1.0, 0.1),
+            "start_s": (0.0, 0.0, 100.0, 0.1),
             "dur_s": (1.0, 0.0, 1.0, 0.1),
             "step_amp_v": (0.0, -1.0, 1.0, 0.1),
+            "step_start_s": (0.0, -1.0, 1.0, 0.1),
             "step_dur_s": (0.0, -1.0, 1.0, 0.1),
         }
 
@@ -48,4 +51,4 @@ class PulseSegmentWidget(QWidget):
         self.monophasic_checkbox = QCheckBox("Monophasic")
         self.monophasic_checkbox.stateChanged.connect(self.segmentChanged)
 
-        layout.addWidget(self.monophasic_checkbox, 3, 0, 1, 3)
+        layout.addWidget(self.monophasic_checkbox, 4, 0, 1, 3)
