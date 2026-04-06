@@ -11,20 +11,17 @@ class StimulusConfig:
 
     def __init__(
         self,
-        name: str,
         dur_s: float,
         limit_v: float,
         pulses: list[Pulse],
         n_steps: int = 1,
     ):
-        self.name = name
         self.n_steps = n_steps
         self.limit_v = limit_v
         self.stim = Stimulus(dur_s=dur_s, pulses=pulses)
 
 
 DEFAULT_STIMULUS_CONFIG = StimulusConfig(
-    name="Default Stimulus",
     dur_s=3.0,
     limit_v=1.0,
     pulses=[
