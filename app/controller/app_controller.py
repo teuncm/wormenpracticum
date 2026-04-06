@@ -64,6 +64,10 @@ class AppController:
         self.pulse_view.clear_plot()
         self.pulse_view.draw_zero_line()
 
+        self.pulse_view.draw_voltage_limit(
+            self.app_model.stimulus_generator.config.limit_v
+        )
+
         target_dur = self.app_model.stimulus_generator.config.stim.dur_s
         train_plot_sr = TARGET_N_SAMPLES / target_dur
 

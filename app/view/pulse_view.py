@@ -35,7 +35,7 @@ class PulseView(QDialog):
             y_units="V",
         )
 
-        spacer(self.ui.horizontalLayout)
+        # spacer(self.ui.horizontalLayout)
         self.ui.parameterLayout.insertWidget(0, create_title("Parameters"))
         self.ui.parameterLayout.insertWidget(4, create_title("Plot options"))
         self.ui.plotLayout.addWidget(create_title("Pulse train plot"))
@@ -134,6 +134,22 @@ class PulseView(QDialog):
         self.plotWidget.addItem(create_guide_line(rt, 90, guide_color))
         self.plotWidget.addItem(create_guide_line(tp, 0, guide_color))
         self.plotWidget.addItem(create_guide_line(bt, 0, guide_color))
+
+    def draw_voltage_limit(self, limit_v):
+        self.plotWidget.addItem(
+            create_guide_line(
+                limit_v, 0, color="r", style=Qt.PenStyle.DashLine, alpha=150
+            )
+        )
+        self.plotWidget.addItem(
+            create_guide_line(
+                -limit_v,
+                0,
+                color="r",
+                style=Qt.PenStyle.DashLine,
+                alpha=150,
+            )
+        )
 
     def showEvent(self, event):
         super().showEvent(event)

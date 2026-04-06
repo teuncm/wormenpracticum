@@ -20,7 +20,6 @@ class AppModel:
         stim_config = StimulusConfig(
             pulses=pulses,
             n_steps=stim_form_data["N"],
-            name=stim_form_data.get("name", "Custom Stimulus") or "Custom Stimulus",
             dur_s=stim_form_data.get("dur_s", 3.0),
             limit_v=stim_form_data.get("limit_v", DEFAULT_LIMIT_V),
         )
@@ -32,9 +31,9 @@ class AppModel:
         if self.stimulus_generator is None:
             return None
 
-        t_min, t_max = self.stimulus_generator.t_bounds(sr_hz=1000)
+        t_max = self.stimulus_generator.config.stim.dur_s
 
-        return (t_min, t_max)
+        return (0, t_max)
 
     def get_y_bounds(self):
         if self.stimulus_generator is None:
