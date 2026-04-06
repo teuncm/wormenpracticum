@@ -4,7 +4,6 @@ from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
     create_title,
-    spacer,
 )
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
