@@ -43,6 +43,8 @@ class PulseView(QDialog):
 
         self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
+        self.ui.limitSpinBox.valueChanged.connect(self.pulseChanged)
+        self.ui.durSpinBox.valueChanged.connect(self.pulseChanged)
 
         self.pulseChanged.emit()
 
