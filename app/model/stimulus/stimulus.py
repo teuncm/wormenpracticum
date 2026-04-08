@@ -37,6 +37,34 @@ class Stimulus(Signal):
 
         return max(n_samples, 0)
 
+    def pulse_overlap(self, pulse: Pulse, sr_hz: float):
+        """Find where the pulse overlaps with the stimulus in terms of sample indices.
+        Return the start index within the pulse, the start index within the stimulus, and the number of samples in the overlap.
+        """
+        stim_start_idx = 0
+        pulse_start_idx = 0
+        n_overlap = 0
+
+        pulse_lt = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+        pulse_rt = pulse_lt + pulse.n_samples(sr_hz=sr_hz) - 1
+        stim_lt = 0
+        stim_rt = self.n_samples(sr_hz=sr_hz) - 1
+
+        max_lt = max(pulse_lt, stim_lt)
+        min_rt = min(pulse_rt, stim_rt)
+
+        if max_lt <= min_rt:
+            n_overlap = min_rt - max_lt + 1
+
+        if pulse_lt < stim_lt:
+            stim_start_idx = 0
+            pulse_start_idx = stim_lt - pulse_lt
+        else:
+            stim_start_idx = pulse_lt - stim_lt
+            pulse_start_idx = 0
+
+        return pulse_start_idx, stim_start_idx, n_overlap
+
     def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the stimulus."""
         # Initialize the sample array.
@@ -58,8 +86,6 @@ class Stimulus(Signal):
             samples_stim[pulse_offset : pulse_offset + n_samples_pulse_truncated] = (
                 pulse_samples[:n_samples_pulse_truncated]
             )
-
-            print(samples_stim)
 
         return samples_stim
 
