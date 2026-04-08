@@ -59,6 +59,8 @@ class Stimulus(Signal):
                 pulse_samples[:n_samples_pulse_truncated]
             )
 
+            print(samples_stim)
+
         return samples_stim
 
     def _step(self) -> None:

@@ -15,6 +15,11 @@ def simple_time_frame_s():
     return [0.0, 0.25, 0.5, 0.75]
 
 
+@pytest.fixture
+def simple_negative_time_frame_s():
+    return [-0.75, -0.5, -0.25, 0.0]
+
+
 def test_quantize_time_point():
     """Verify that the time point is quantized correctly."""
     assert -1 == quantize_time_point(time_s=-0.2, sr_hz=TEST_SR_HZ)
@@ -30,6 +35,16 @@ def test_get_time_frame_s(simple_time_frame_s):
     time_frame = get_time_frame_s(n_samples=len(simple_time_frame_s), sr_hz=TEST_SR_HZ)
 
     expected_time_frame = np.array(simple_time_frame_s)
+    assert np.allclose(time_frame, expected_time_frame)
+
+
+def test_get_negative_time_frame_s(simple_negative_time_frame_s):
+    """Verify that the sample timeframe is calculated correctly for negative time."""
+    time_frame = get_time_frame_s(
+        n_samples=len(simple_negative_time_frame_s), sr_hz=TEST_SR_HZ, sample_offset=-3
+    )
+
+    expected_time_frame = np.array(simple_negative_time_frame_s)
     assert np.allclose(time_frame, expected_time_frame)
 
 

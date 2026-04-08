@@ -31,7 +31,7 @@ class Signal(ABC):
 
 def quantize_time_point(time_s: float, sr_hz: float) -> int:
     """Quantize a time point to a sample offset."""
-    sample_offset = math.floor(time_s * sr_hz)
+    sample_offset = int(math.floor(time_s * sr_hz))
 
     return sample_offset
 

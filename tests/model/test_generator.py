@@ -10,7 +10,6 @@ TEST_SR_HZ = 4.0
 def gen_basic() -> StimulusGenerator:
     return StimulusGenerator(
         config=StimulusConfig(
-            name="basic",
             dur_s=2.0,
             limit_v=3.0,
             pulses=[

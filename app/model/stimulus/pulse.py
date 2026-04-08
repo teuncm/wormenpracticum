@@ -38,7 +38,7 @@ class Pulse(Signal):
         if self.is_monophasic:
             return self.amp_v, self.amp_v
         else:
-            return -self.amp_v, self.amp_v
+            return -abs(self.amp_v), abs(self.amp_v)
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the quantized pulse."""
