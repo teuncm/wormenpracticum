@@ -1,12 +1,8 @@
+import app.model.stimulus.signal as sgn
 import numpy as np
-from app.model.stimulus.signal import (
-    Signal,
-    get_time_bounds_s,
-    quantize_time_point,
-)
 
 
-class Pulse(Signal):
+class Pulse(sgn.Signal):
     amp_v: float
     start_s: float
     dur_s: float
@@ -42,10 +38,10 @@ class Pulse(Signal):
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the quantized pulse."""
-        sample_offset = quantize_time_point(time_s=self.start_s, sr_hz=sr_hz)
+        sample_offset = sgn.quantize_time_point(time_s=self.start_s, sr_hz=sr_hz)
         n_samples = self.n_samples(sr_hz=sr_hz)
 
-        t_min, t_max = get_time_bounds_s(
+        t_min, t_max = sgn.get_time_bounds_s(
             n_samples=n_samples, sr_hz=sr_hz, sample_offset=sample_offset
         )
 
@@ -57,7 +53,7 @@ class Pulse(Signal):
         if self.dur_s <= 0:
             return 0
 
-        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
+        n_samples = sgn.quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
         if not self.is_monophasic:
             # Guarantee that biphasic pulses have an even number of samples.

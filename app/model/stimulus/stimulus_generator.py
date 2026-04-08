@@ -1,10 +1,7 @@
 import copy
 
+import app.model.stimulus.signal as sgn
 import numpy as np
-from app.model.stimulus.signal import (
-    get_time_frame_s,
-    quantize_time_point,
-)
 from app.model.stimulus.stimulus import Stimulus
 from app.model.stimulus.stimulus_config import StimulusConfig
 
@@ -59,7 +56,7 @@ class StimulusGenerator:
         if pulse_idx == -1:
             # Sample this stimulus.
             samples_stim = self.clip_samples(stim.sample(sr_hz=sr_hz))
-            timeframe_stim = get_time_frame_s(len(samples_stim), sr_hz)
+            timeframe_stim = sgn.get_time_frame_s(len(samples_stim), sr_hz)
 
             return samples_stim, timeframe_stim
 
@@ -67,11 +64,11 @@ class StimulusGenerator:
         pulse = stim.pulses[pulse_idx]
 
         # Determine pulse sample offset within this stimulus.
-        pulse_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+        pulse_offset = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
 
         # Sample this pulse.
         samples_pulse = self.clip_samples(pulse.sample(sr_hz=sr_hz))
-        timeframe_pulse = get_time_frame_s(
+        timeframe_pulse = sgn.get_time_frame_s(
             len(samples_pulse), sr_hz, sample_offset=pulse_offset
         )
 

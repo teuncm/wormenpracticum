@@ -1,9 +1,9 @@
+import app.model.stimulus.signal as sgn
 import numpy as np
 from app.model.stimulus.pulse import Pulse
-from app.model.stimulus.signal import Signal, get_time_bounds_s, quantize_time_point
 
 
-class Stimulus(Signal):
+class Stimulus(sgn.Signal):
     dur_s: float
     pulses: list[Pulse]
 
@@ -25,7 +25,7 @@ class Stimulus(Signal):
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the stimulus."""
         n_samples = self.n_samples(sr_hz=sr_hz)
-        t_min, t_max = get_time_bounds_s(
+        t_min, t_max = sgn.get_time_bounds_s(
             n_samples=n_samples, sr_hz=sr_hz, sample_offset=0
         )
 
@@ -33,7 +33,7 @@ class Stimulus(Signal):
 
     def n_samples(self, sr_hz: float) -> int:
         """Get the number of samples in each step of the stimulus config."""
-        n_samples = quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
+        n_samples = sgn.quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
         return max(n_samples, 0)
 
@@ -45,7 +45,7 @@ class Stimulus(Signal):
         pulse_start_idx = 0
         n_overlap = 0
 
-        pulse_lt = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+        pulse_lt = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
         pulse_rt = pulse_lt + pulse.n_samples(sr_hz=sr_hz) - 1
         stim_lt = 0
         stim_rt = self.n_samples(sr_hz=sr_hz) - 1
@@ -74,7 +74,7 @@ class Stimulus(Signal):
         # Sample each pulse and add it to the overall stimulus.
         for pulse in self.pulses:
             # Get the pulse's sample offset within the stimulus.
-            pulse_offset = quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+            pulse_offset = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
             n_samples_pulse = pulse.n_samples(sr_hz=sr_hz)
             n_samples_pulse_truncated = min(
                 n_samples_pulse, n_samples_stim - pulse_offset
