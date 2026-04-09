@@ -113,9 +113,15 @@
       </spacer>
      </item>
      <item>
-      <widget class="QSlider" name="stepSlider">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
+      <widget class="QDial" name="stepSlider">
+       <property name="minimum">
+        <number>0</number>
+       </property>
+       <property name="wrapping">
+        <bool>false</bool>
+       </property>
+       <property name="notchesVisible">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
