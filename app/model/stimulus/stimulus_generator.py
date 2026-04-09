@@ -63,14 +63,15 @@ class StimulusGenerator:
         # Get pulse at requested index within the stimulus.
         pulse = stim.pulses[pulse_idx]
 
-        # Determine pulse sample offset within this stimulus.
-        pulse_offset = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+        pulse_start_idx, stim_start_idx, n_overlap = stim.pulse_overlap(pulse, sr_hz)
 
         # Sample this pulse.
         samples_pulse = self.clip_samples(pulse.sample(sr_hz=sr_hz))
         timeframe_pulse = sgn.get_time_frame_s(
-            len(samples_pulse), sr_hz, sample_offset=pulse_offset
+            n_overlap, sr_hz, sample_offset=stim_start_idx
         )
+
+        samples_pulse = samples_pulse[pulse_start_idx : pulse_start_idx + n_overlap]
 
         return samples_pulse, timeframe_pulse
 

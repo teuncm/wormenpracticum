@@ -45,10 +45,10 @@ class Stimulus(sgn.Signal):
         pulse_start_idx = 0
         n_overlap = 0
 
-        pulse_lt = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
-        pulse_rt = pulse_lt + pulse.n_samples(sr_hz=sr_hz) - 1
         stim_lt = 0
         stim_rt = self.n_samples(sr_hz=sr_hz) - 1
+        pulse_lt = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
+        pulse_rt = pulse_lt + pulse.n_samples(sr_hz=sr_hz) - 1
 
         max_lt = max(pulse_lt, stim_lt)
         min_rt = min(pulse_rt, stim_rt)
@@ -56,12 +56,14 @@ class Stimulus(sgn.Signal):
         if max_lt <= min_rt:
             n_overlap = min_rt - max_lt + 1
 
-        if pulse_lt < stim_lt:
-            stim_start_idx = 0
-            pulse_start_idx = stim_lt - pulse_lt
+            if pulse_lt < stim_lt:
+                stim_start_idx = 0
+                pulse_start_idx = stim_lt - pulse_lt
+            else:
+                stim_start_idx = pulse_lt - stim_lt
+                pulse_start_idx = 0
         else:
-            stim_start_idx = pulse_lt - stim_lt
-            pulse_start_idx = 0
+            n_overlap = 0
 
         return pulse_start_idx, stim_start_idx, n_overlap
 
@@ -73,21 +75,29 @@ class Stimulus(sgn.Signal):
 
         # Sample each pulse and add it to the overall stimulus.
         for pulse in self.pulses:
-            # Get the pulse's sample offset within the stimulus.
-            pulse_offset = sgn.quantize_time_point(time_s=pulse.start_s, sr_hz=sr_hz)
-            n_samples_pulse = pulse.n_samples(sr_hz=sr_hz)
-            n_samples_pulse_truncated = min(
-                n_samples_pulse, n_samples_stim - pulse_offset
+            pulse_start_idx, stim_start_idx, n_overlap = self.pulse_overlap(
+                pulse, sr_hz
             )
 
             # Sample the pulse.
             pulse_samples = pulse.sample(sr_hz=sr_hz)
 
-            samples_stim[pulse_offset : pulse_offset + n_samples_pulse_truncated] = (
-                pulse_samples[:n_samples_pulse_truncated]
-            )
+            samples_stim[stim_start_idx : stim_start_idx + n_overlap] = pulse_samples[
+                pulse_start_idx : pulse_start_idx + n_overlap
+            ]
 
         return samples_stim
+
+    def get_latest_pulse_time(self) -> float:
+        """Convenience function for pulse creation. Get the latest pulse time as the endpoint of the furthermost pulse."""
+        latest_end_time = 0.0
+
+        for pulse in self.pulses:
+            pulse_end_time = pulse.start_s + pulse.dur_s
+            if pulse_end_time > latest_end_time:
+                latest_end_time = pulse_end_time
+
+        return latest_end_time
 
     def _step(self) -> None:
         """Advance the stimulus state in-place."""
