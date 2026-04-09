@@ -27,7 +27,7 @@ class PulseView(QDialog):
         self.setup_tabs()
 
         frame, plot = create_plot_widget(
-            title="Pulse train",
+            title="Stimulus",
             x_label="Time",
             x_units="s",
             y_label="Voltage",
@@ -37,7 +37,7 @@ class PulseView(QDialog):
         # spacer(self.ui.horizontalLayout)
         self.ui.parameterLayout.insertWidget(0, create_title("Parameters"))
         self.ui.parameterLayout.insertWidget(4, create_title("Plot options"))
-        self.ui.plotLayout.addWidget(create_title("Pulse train plot"))
+        self.ui.plotLayout.addWidget(create_title("Stimulus plot"))
         self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
 
@@ -125,7 +125,7 @@ class PulseView(QDialog):
                 time_points,
                 voltage_points,
                 pen=pg.mkPen(color=color, width=width),
-                name="Pulse",
+                name="Stimulus",
             )
 
     def draw_pulse_bounds(self, lt, rt, tp, bt):

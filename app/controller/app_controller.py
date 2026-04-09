@@ -92,4 +92,4 @@ class AppController:
             self.pulse_view.plotWidget.setXRange(*x_bounds)
             self.pulse_view.plotWidget.setYRange(*y_bounds)
 
-        self.pulse_view.plotWidget.setTitle(f"Step {cur_step + 1}")
+        self.pulse_view.plotWidget.setTitle(f"Stimulus {cur_step + 1}")
