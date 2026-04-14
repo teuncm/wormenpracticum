@@ -18,18 +18,18 @@ def gen_dummy_data(
 
     print(timestamps)
 
-    t = pd.Series(timestamps, name="t (s)")
+    t = pd.Series(timestamps, name="t_(s)")
 
     stim_list = []
     for i in range(num_stims):
         for j in range(num_i_chan):
             signal = 0 * timestamps
-            stim_list.append(pd.Series(signal, name=f"s{i}_i{j} (V)"))
+            stim_list.append(pd.Series(signal, name=f"s{i}_i{j}_(V)"))
 
         for j in range(num_o_chan):
             for k in range(num_reps):
                 signal = 0 * timestamps
-                stim_list.append(pd.Series(signal, name=f"s{i}_o{j}_r{k} (V)"))
+                stim_list.append(pd.Series(signal, name=f"s{i}_o{j}_r{k}_(V)"))
 
     df = pd.concat([t, *stim_list], axis=1)
 
