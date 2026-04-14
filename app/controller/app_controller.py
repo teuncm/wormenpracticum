@@ -78,13 +78,22 @@ class AppController:
         # Optionally draw the pulse
         if self.pulse_view.highlightPulseCheckbox.isChecked():
             cur_tab = self.pulse_view.ui.segmentTabWidget.currentIndex()
+            current_pulse = self.app_model.stimulus_generator.stims[cur_step].pulses[
+                cur_tab
+            ]
             y, t = self.app_model.stimulus_generator.sample_at_idx(
                 train_plot_sr, cur_step, cur_tab
             )
             self.pulse_view.update_train_plot((t, y), color="b", width=2)
 
             if len(t) > 0 and len(y) > 0:
-                self.pulse_view.draw_pulse_bounds(t[0], t[-1], y.max(), y.min())
+                center = None
+                if not current_pulse.is_monophasic:
+                    center = (t[0] + t[-1]) / 2
+
+                self.pulse_view.draw_pulse_bounds(
+                    t[0], t[-1], y.max(), y.min(), center
+                )
 
         # Set plot boundaries based on the signal.
         x_bounds = self.app_model.get_x_bounds()

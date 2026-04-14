@@ -174,7 +174,7 @@ class PulseView(QDialog):
                 name="Stimulus",
             )
 
-    def draw_pulse_bounds(self, lt, rt, tp, bt):
+    def draw_pulse_bounds(self, lt, rt, tp, bt, center=None):
         guide_color = "b"
 
         # Mark the start of the pulse more clearly.
@@ -182,6 +182,8 @@ class PulseView(QDialog):
             create_guide_line(lt, 90, guide_color, style=Qt.PenStyle.DashLine)
         )
         self.plotWidget.addItem(create_guide_line(rt, 90, guide_color))
+        if center is not None:
+            self.plotWidget.addItem(create_guide_line(center, 90, guide_color))
         self.plotWidget.addItem(create_guide_line(tp, 0, guide_color))
         self.plotWidget.addItem(create_guide_line(bt, 0, guide_color))
 
