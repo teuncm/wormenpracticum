@@ -9,9 +9,9 @@ def show_save_dialog() -> str | None:
     """
     dialog = QFileDialog()
     dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
-    dialog.setNameFilter("Parquet Files (*.parquet)")
-    dialog.setDefaultSuffix("parquet")
-    dialog.setWindowTitle("Save Parquet File")
+    dialog.setNameFilter("CSV Files (*.csv)")
+    dialog.setDefaultSuffix("csv")
+    dialog.setWindowTitle("Save CSV File")
 
     if dialog.exec():
         file_path = dialog.selectedFiles()[0]
@@ -28,7 +28,7 @@ def show_load_dialog() -> str | None:
         str: The selected file path.
     """
     file_path, _ = QFileDialog.getOpenFileName(
-        caption="Open Parquet File", filter="Parquet Files (*.parquet)"
+        caption="Open CSV File", filter="CSV Files (*.csv)"
     )
 
     return file_path or None

@@ -10,9 +10,9 @@ def test_save_load_data(tmp_path):
         {"Timestamp (s)": [0.0, 0.001, 0.002], "Channel 1 (V)": [0.1, 0.2, 0.3]}
     )
 
-    file_path = Path(tmp_path) / "test_data.parquet"
+    file_path = Path(tmp_path) / "test_data.csv"
 
     write_data(file_path, test_df)
     loaded_df = read_data(file_path)
 
-    assert test_df.equals(loaded_df)
+    pd.testing.assert_frame_equal(test_df, loaded_df)

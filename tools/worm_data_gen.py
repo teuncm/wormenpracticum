@@ -14,7 +14,9 @@ def gen_dummy_data(
     """Generate matrix with 16 sine waves for testing."""
     # Total number of samples
     N = sgn.quantize_time_point(time_s=t_max, sr_hz=sample_rate)
-    timestamps = np.linspace(0, t_max, num=N, endpoint=False)
+    timestamps = np.round(np.linspace(0, t_max, num=N, endpoint=False), 5)
+
+    print(timestamps)
 
     t = pd.Series(timestamps, name="t (s)")
 
@@ -38,7 +40,7 @@ def main():
         t_max=0.0010, sample_rate=10000, num_i_chan=2, num_o_chan=2, num_stims=3
     )
 
-    file_path = Path("data/test_data.parquet")
+    file_path = Path("data/test_data.csv")
     if file_path:
         write_data(file_path, dummy_df)
 
