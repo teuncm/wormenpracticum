@@ -1,11 +1,9 @@
+from app.constants import SEGMENT_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
 from app.model.app_model import AppModel
 from app.view.main_view import MainView
 from app.view.protocol_view import ProtocolView
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
-
-SEGMENT_ROUND_DECIMALS = 5
-TARGET_N_SAMPLES = 9001
 
 
 class AppController:
@@ -41,7 +39,7 @@ class AppController:
             if isinstance(widget, PulseSegmentWidget):
                 segments.append(
                     {
-                        name: round(spin.value(), SEGMENT_ROUND_DECIMALS)
+                        name: round(spin.value(), SEGMENT_PARSE_ROUND_DECIMALS)
                         for name, spin in widget.spinboxes.items()
                     }
                     | {"is_monophasic": widget.monophasic_checkbox.isChecked()},
@@ -69,7 +67,7 @@ class AppController:
         )
 
         target_dur = self.app_model.stimulus_generator.config.stim.dur_s
-        train_plot_sr = TARGET_N_SAMPLES / target_dur
+        train_plot_sr = TARGET_N_SAMPLES_PULSE_PLOT / target_dur
 
         cur_step = self.pulse_view.ui.stepSlider.value()
         y, t = self.app_model.stimulus_generator.sample_at_idx(train_plot_sr, cur_step)

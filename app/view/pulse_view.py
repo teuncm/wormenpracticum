@@ -1,9 +1,17 @@
 import pyqtgraph as pg
+from app.constants import (
+    DEFAULT_DUR_S,
+    DEFAULT_LIMIT_V,
+    SEGMENT_VIEW_MAX_V,
+    SEGMENT_VIEW_STEP_S,
+    SEGMENT_VIEW_STEP_V,
+)
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
     create_title,
+    spin_value_helper,
 )
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
@@ -45,6 +53,22 @@ class PulseView(QDialog):
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
         self.ui.limitSpinBox.valueChanged.connect(self.pulseChanged)
         self.ui.durSpinBox.valueChanged.connect(self.pulseChanged)
+
+        spin_value_helper(
+            self.ui.durSpinBox,
+            default_val=DEFAULT_DUR_S,
+            min_val=0.0001,
+            max_val=1,
+            step=SEGMENT_VIEW_STEP_S,
+        )
+
+        spin_value_helper(
+            self.ui.limitSpinBox,
+            default_val=DEFAULT_LIMIT_V,
+            min_val=0.0,
+            max_val=SEGMENT_VIEW_MAX_V,
+            step=SEGMENT_VIEW_STEP_V,
+        )
 
         self.pulseChanged.emit()
 
@@ -131,7 +155,10 @@ class PulseView(QDialog):
     def draw_pulse_bounds(self, lt, rt, tp, bt):
         guide_color = "b"
 
-        self.plotWidget.addItem(create_guide_line(lt, 90, guide_color))
+        # Mark the start of the pulse more clearly.
+        self.plotWidget.addItem(
+            create_guide_line(lt, 90, guide_color, style=Qt.PenStyle.DashLine)
+        )
         self.plotWidget.addItem(create_guide_line(rt, 90, guide_color))
         self.plotWidget.addItem(create_guide_line(tp, 0, guide_color))
         self.plotWidget.addItem(create_guide_line(bt, 0, guide_color))

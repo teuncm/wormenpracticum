@@ -1,3 +1,10 @@
+from app.constants import (
+    SEGMENT_VIEW_MAX_S,
+    SEGMENT_VIEW_MAX_V,
+    SEGMENT_VIEW_STEP_S,
+    SEGMENT_VIEW_STEP_V,
+)
+from app.view.view_helpers import spin_value_helper
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QGridLayout, QLabel, QWidget
 
@@ -22,26 +29,43 @@ class PulseSegmentWidget(QWidget):
             "Duration (s)": ("dur_s", "step_dur_s"),
         }
 
-        defaults = {
-            "amp_v": (1.0, -1.0, 1.0, 0.1),
-            "start_s": (0.0, 0.0, 100.0, 0.1),
-            "dur_s": (1.0, 0.0, 1.0, 0.1),
-            "step_amp_v": (0.0, -1.0, 1.0, 0.1),
-            "step_start_s": (0.0, -1.0, 1.0, 0.1),
-            "step_dur_s": (0.0, -1.0, 1.0, 0.1),
+        spinbox_configs = {
+            "amp_v": (
+                0.5,
+                -SEGMENT_VIEW_MAX_V,
+                SEGMENT_VIEW_MAX_V,
+                SEGMENT_VIEW_STEP_V,
+            ),
+            "start_s": (0.001, 0.0, SEGMENT_VIEW_MAX_S, SEGMENT_VIEW_STEP_S),
+            "dur_s": (0.002, 0.0, SEGMENT_VIEW_MAX_S, SEGMENT_VIEW_STEP_S),
+            "step_amp_v": (
+                0.0,
+                -SEGMENT_VIEW_MAX_V,
+                SEGMENT_VIEW_MAX_V,
+                SEGMENT_VIEW_STEP_V,
+            ),
+            "step_start_s": (
+                0.0,
+                -SEGMENT_VIEW_MAX_S,
+                SEGMENT_VIEW_MAX_S,
+                SEGMENT_VIEW_STEP_S,
+            ),
+            "step_dur_s": (
+                0.0,
+                -SEGMENT_VIEW_MAX_S,
+                SEGMENT_VIEW_MAX_S,
+                SEGMENT_VIEW_STEP_S,
+            ),
         }
 
         for row, (label, (base_key, step_key)) in enumerate(params.items(), start=1):
             layout.addWidget(QLabel(label), row, 0)
 
             for col, key in enumerate([base_key, step_key], start=1):
-                default_val, min_val, max_val, step = defaults[key]
+                default_val, min_val, max_val, step = spinbox_configs[key]
 
                 spin = QDoubleSpinBox()
-                spin.setRange(min_val, max_val)
-                spin.setSingleStep(step)
-                spin.setDecimals(3)
-                spin.setValue(default_val)
+                spin_value_helper(spin, default_val, min_val, max_val, step)
 
                 spin.valueChanged.connect(self.segmentChanged)
 
