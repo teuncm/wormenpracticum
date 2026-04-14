@@ -6,7 +6,15 @@ from app.constants import (
     VIEW_SPACING_DEFAULT,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QBoxLayout, QDoubleSpinBox, QFrame, QLabel, QVBoxLayout
+from PySide6.QtWidgets import (
+    QBoxLayout,
+    QDoubleSpinBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 def set_global_plot_config() -> None:
@@ -88,6 +96,22 @@ def create_title(title_text, bold=True) -> QLabel:
     title.setFont(font)
 
     return title
+
+
+def create_attribution_row(name_text: str, description_text: str) -> QWidget:
+    """Create a single attribution row with a bold name and neutral description."""
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(10)
+
+    layout.addWidget(create_title(name_text))
+
+    description = QLabel(description_text)
+    description.setWordWrap(True)
+    layout.addWidget(description, 1)
+
+    return row
 
 
 def spacer(

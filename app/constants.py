@@ -9,12 +9,18 @@ PLOT_GRID_ALPHA_DEFAULT = 0.07
 DEFAULT_LIMIT_V = 1.5
 DEFAULT_DUR_S = 0.01
 
+# Segment parameter precision
 SEGMENT_VIEW_NUM_DECIMALS = 4
 SEGMENT_PARSE_ROUND_DECIMALS = 7
+
+# Resolution for pulse plot sampling
 TARGET_N_SAMPLES_PULSE_PLOT = 9001
 
+# Voltage and second magnitudes for pulse segment parameters
 SEGMENT_VIEW_STEP_S = 0.0001
 SEGMENT_VIEW_STEP_V = 0.1
 SEGMENT_VIEW_MAX_S = 1.0
 SEGMENT_VIEW_MAX_V = 2.0
+
+# Segment highlighting
 SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT = True

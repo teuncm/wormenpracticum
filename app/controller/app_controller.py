@@ -1,9 +1,12 @@
 from app.constants import SEGMENT_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
 from app.model.app_model import AppModel
+from app.view.about_view import AboutView
+from app.view.analyze_view import AnalyzeView
 from app.view.main_view import MainView
 from app.view.protocol_view import ProtocolView
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.pulse_view import PulseView
+from app.view.smooth_view import SmoothView
 
 
 class AppController:
@@ -13,9 +16,15 @@ class AppController:
         self.main_view = MainView()
         self.pulse_view = PulseView()
         self.protocol_view = ProtocolView()
+        self.about_view = AboutView()
+        self.analyze_view = AnalyzeView()
+        self.smooth_view = SmoothView()
 
         self.main_view.editImpulseRequested.connect(self.open_impulse_window)
         self.main_view.editProtocolRequested.connect(self.open_protocol_window)
+        self.main_view.ui.actionAbout.triggered.connect(self.open_about_window)
+        self.main_view.ui.actionAnalyze.triggered.connect(self.open_analyze_window)
+        self.main_view.ui.actionSmoothing.triggered.connect(self.open_smooth_window)
         self.pulse_view.pulseChanged.connect(self.update_pulse_state)
         self.pulse_view.stepChanged.connect(self.update_plot)
         self.pulse_view.pulseHighlightChanged.connect(self.update_plot)
@@ -28,6 +37,15 @@ class AppController:
 
     def open_protocol_window(self):
         self.protocol_view.show()
+
+    def open_about_window(self):
+        self.about_view.show()
+
+    def open_analyze_window(self):
+        self.analyze_view.show()
+
+    def open_smooth_window(self):
+        self.smooth_view.show()
 
     def update_pulse_state(self):
         """Update pulse data and plot"""
@@ -91,9 +109,7 @@ class AppController:
                 if not current_pulse.is_monophasic:
                     center = (t[0] + t[-1]) / 2
 
-                self.pulse_view.draw_pulse_bounds(
-                    t[0], t[-1], y.max(), y.min(), center
-                )
+                self.pulse_view.draw_pulse_bounds(t[0], t[-1], y.max(), y.min(), center)
 
         # Set plot boundaries based on the signal.
         x_bounds = self.app_model.get_x_bounds()

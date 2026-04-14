@@ -19,8 +19,8 @@ class AppModel:
         stim_config = StimulusConfig(
             pulses=pulses,
             n_steps=stim_form_data["N"],
-            dur_s=stim_form_data.get("dur_s", 3.0),
-            limit_v=stim_form_data.get("limit_v", DEFAULT_LIMIT_V),
+            dur_s=stim_form_data["dur_s"],
+            limit_v=stim_form_data["limit_v"],
         )
         stim_generator = StimulusGenerator(stim_config)
 
