@@ -28,7 +28,7 @@ def create_plot_widget(
     plot.showGrid(x=True, y=True, alpha=PLOT_GRID_ALPHA_DEFAULT)
     plot.setMouseEnabled(x=False, y=False)
     plot.setClipToView(True)
-    plot.setDownsampling(auto=True)
+    plot.setDownsampling(auto=False)
     plot.hideButtons()
 
     if title:

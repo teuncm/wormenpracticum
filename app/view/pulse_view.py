@@ -3,6 +3,7 @@ from app.constants import (
     DEFAULT_DUR_S,
     DEFAULT_LIMIT_V,
     SEGMENT_VIEW_MAX_V,
+    SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT,
     SEGMENT_VIEW_STEP_S,
     SEGMENT_VIEW_STEP_V,
 )
@@ -16,6 +17,7 @@ from app.view.view_helpers import (
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QPushButton,
     QSizePolicy,
@@ -25,6 +27,7 @@ from PySide6.QtWidgets import (
 class PulseView(QDialog):
     pulseChanged = Signal()
     stepChanged = Signal()
+    pulseHighlightChanged = Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -33,6 +36,9 @@ class PulseView(QDialog):
         self.ui.setupUi(self)
 
         self.setup_tabs()
+
+        self.highlightPulseCheckbox = QCheckBox("Highlight selected pulse")
+        self.highlightPulseCheckbox.setChecked(SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT)
 
         frame, plot = create_plot_widget(
             title="Stimulus",
@@ -43,8 +49,22 @@ class PulseView(QDialog):
         )
 
         # spacer(self.ui.horizontalLayout)
-        self.ui.parameterLayout.insertWidget(0, create_title("Parameters"))
-        self.ui.parameterLayout.insertWidget(4, create_title("Plot options"))
+        self.ui.parameterLayout.insertWidget(0, create_title("Stimulus parameters"))
+        self.ui.parameterLayout.insertWidget(
+            self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget),
+            create_title("Pulse parameters"),
+        )
+        self.ui.parameterLayout.insertWidget(
+            self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget) + 1,
+            self.highlightPulseCheckbox,
+        )
+        self.ui.parameterLayout.insertWidget(
+            self.ui.parameterLayout.indexOf(self.ui.stepSlider),
+            create_title("Stimulus dial"),
+        )
+        self.ui.parameterLayout.setAlignment(
+            self.ui.stepSlider, Qt.AlignmentFlag.AlignLeft
+        )
         self.ui.plotLayout.addWidget(create_title("Stimulus plot"))
         self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
@@ -53,6 +73,7 @@ class PulseView(QDialog):
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
         self.ui.limitSpinBox.valueChanged.connect(self.pulseChanged)
         self.ui.durSpinBox.valueChanged.connect(self.pulseChanged)
+        self.highlightPulseCheckbox.toggled.connect(self.pulseHighlightChanged.emit)
 
         spin_value_helper(
             self.ui.durSpinBox,
@@ -70,6 +91,7 @@ class PulseView(QDialog):
             step=SEGMENT_VIEW_STEP_V,
         )
 
+        self.pulseHighlightChanged.emit(self.highlightPulseCheckbox.isChecked())
         self.pulseChanged.emit()
 
     def setup_tabs(self):

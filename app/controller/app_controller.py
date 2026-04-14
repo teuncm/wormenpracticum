@@ -18,6 +18,7 @@ class AppController:
         self.main_view.editProtocolRequested.connect(self.open_protocol_window)
         self.pulse_view.pulseChanged.connect(self.update_pulse_state)
         self.pulse_view.stepChanged.connect(self.update_plot)
+        self.pulse_view.pulseHighlightChanged.connect(self.update_plot)
 
     def start(self):
         self.main_view.show()
@@ -55,7 +56,7 @@ class AppController:
         self.app_model.update_pulse_config(params)
         self.pulse_view.update_step_slider(params["N"])
 
-    def update_plot(self):
+    def update_plot(self, *_):
         if self.app_model.stimulus_generator is None:
             return
 
@@ -69,18 +70,21 @@ class AppController:
         target_dur = self.app_model.stimulus_generator.config.stim.dur_s
         train_plot_sr = TARGET_N_SAMPLES_PULSE_PLOT / target_dur
 
+        # Draw the stimulus
         cur_step = self.pulse_view.ui.stepSlider.value()
         y, t = self.app_model.stimulus_generator.sample_at_idx(train_plot_sr, cur_step)
         self.pulse_view.update_train_plot((t, y), color="k", width=1)
 
-        cur_tab = self.pulse_view.ui.segmentTabWidget.currentIndex()
-        y, t = self.app_model.stimulus_generator.sample_at_idx(
-            train_plot_sr, cur_step, cur_tab
-        )
-        self.pulse_view.update_train_plot((t, y), color="b", width=2)
+        # Optionally draw the pulse
+        if self.pulse_view.highlightPulseCheckbox.isChecked():
+            cur_tab = self.pulse_view.ui.segmentTabWidget.currentIndex()
+            y, t = self.app_model.stimulus_generator.sample_at_idx(
+                train_plot_sr, cur_step, cur_tab
+            )
+            self.pulse_view.update_train_plot((t, y), color="b", width=2)
 
-        if len(t) > 0 and len(y) > 0:
-            self.pulse_view.draw_pulse_bounds(t[0], t[-1], y.max(), y.min())
+            if len(t) > 0 and len(y) > 0:
+                self.pulse_view.draw_pulse_bounds(t[0], t[-1], y.max(), y.min())
 
         # Set plot boundaries based on the signal.
         x_bounds = self.app_model.get_x_bounds()

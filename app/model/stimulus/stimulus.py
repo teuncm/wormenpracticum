@@ -82,7 +82,7 @@ class Stimulus(sgn.Signal):
             # Sample the pulse.
             pulse_samples = pulse.sample(sr_hz=sr_hz)
 
-            samples_stim[stim_start_idx : stim_start_idx + n_overlap] += pulse_samples[
+            samples_stim[stim_start_idx : stim_start_idx + n_overlap] = pulse_samples[
                 pulse_start_idx : pulse_start_idx + n_overlap
             ]
 
