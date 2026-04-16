@@ -8,7 +8,6 @@ dependencies = [
     "nidaqmx>=1.4.1",
     "numpy>=2.4.2",
     "pandas>=3.0.1",
-    "pyarrow>=23.0.1",
     "pyqtgraph>=0.14.0",
     "pyside6>=6.10.2",
 ]

@@ -1,10 +1,20 @@
 import pyqtgraph as pg
+from app.constants import (
+    PLOT_GRID_ALPHA_DEFAULT,
+    SEGMENT_VIEW_NUM_DECIMALS,
+    VIEW_MARGIN_DEFAULT,
+    VIEW_SPACING_DEFAULT,
+)
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QBoxLayout, QFrame, QLabel, QVBoxLayout
-
-MARGIN_DEFAULT = 20
-SPACING_DEFAULT = 18
-GRID_ALPHA_DEFAULT = 0.07
+from PySide6.QtWidgets import (
+    QBoxLayout,
+    QDoubleSpinBox,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 def set_global_plot_config() -> None:
@@ -23,10 +33,10 @@ def create_plot_widget(
     layout.setContentsMargins(0, 0, 0, 0)
 
     plot = pg.PlotWidget()
-    plot.showGrid(x=True, y=True, alpha=GRID_ALPHA_DEFAULT)
+    plot.showGrid(x=True, y=True, alpha=PLOT_GRID_ALPHA_DEFAULT)
     plot.setMouseEnabled(x=False, y=False)
     plot.setClipToView(True)
-    plot.setDownsampling(auto=True)
+    plot.setDownsampling(auto=False)
     plot.hideButtons()
 
     if title:
@@ -39,6 +49,20 @@ def create_plot_widget(
     layout.addWidget(plot)
 
     return frame, plot
+
+
+def spin_value_helper(
+    spinbox: QDoubleSpinBox,
+    default_val: float,
+    min_val: float,
+    max_val: float,
+    step: float,
+    decimals: int = SEGMENT_VIEW_NUM_DECIMALS,
+):
+    spinbox.setRange(min_val, max_val)
+    spinbox.setSingleStep(step)
+    spinbox.setDecimals(decimals)
+    spinbox.setValue(default_val)
 
 
 def create_guide_line(
@@ -74,14 +98,30 @@ def create_title(title_text, bold=True) -> QLabel:
     return title
 
 
+def create_attribution_row(name_text: str, description_text: str) -> QWidget:
+    """Create a single attribution row with a bold name and neutral description."""
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(10)
+
+    layout.addWidget(create_title(name_text))
+
+    description = QLabel(description_text)
+    description.setWordWrap(True)
+    layout.addWidget(description, 1)
+
+    return row
+
+
 def spacer(
     layout,
     margin=None,
-    margin_left=MARGIN_DEFAULT,
-    margin_top=MARGIN_DEFAULT,
-    margin_right=MARGIN_DEFAULT,
-    margin_bottom=MARGIN_DEFAULT,
-    spacing=SPACING_DEFAULT,
+    margin_left=VIEW_MARGIN_DEFAULT,
+    margin_top=VIEW_MARGIN_DEFAULT,
+    margin_right=VIEW_MARGIN_DEFAULT,
+    margin_bottom=VIEW_MARGIN_DEFAULT,
+    spacing=VIEW_SPACING_DEFAULT,
 ) -> QBoxLayout:
     """Set margins and spacing for a layout."""
     if margin is not None:

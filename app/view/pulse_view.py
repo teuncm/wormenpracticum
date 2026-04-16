@@ -1,14 +1,23 @@
 import pyqtgraph as pg
+from app.constants import (
+    DEFAULT_DUR_S,
+    DEFAULT_LIMIT_V,
+    SEGMENT_VIEW_MAX_V,
+    SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT,
+    SEGMENT_VIEW_STEP_S,
+    SEGMENT_VIEW_STEP_V,
+)
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
     create_title,
-    spacer,
+    spin_value_helper,
 )
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QPushButton,
     QSizePolicy,
@@ -18,6 +27,7 @@ from PySide6.QtWidgets import (
 class PulseView(QDialog):
     pulseChanged = Signal()
     stepChanged = Signal()
+    pulseHighlightChanged = Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -27,24 +37,61 @@ class PulseView(QDialog):
 
         self.setup_tabs()
 
+        self.highlightPulseCheckbox = QCheckBox("Highlight selected pulse")
+        self.highlightPulseCheckbox.setChecked(SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT)
+
         frame, plot = create_plot_widget(
-            title="Pulse train",
+            title="Stimulus",
             x_label="Time",
             x_units="s",
             y_label="Voltage",
             y_units="V",
         )
 
-        spacer(self.ui.horizontalLayout)
-        self.ui.parameterLayout.insertWidget(0, create_title("Parameters"))
-        self.ui.parameterLayout.insertWidget(4, create_title("Plot options"))
-        self.ui.plotLayout.addWidget(create_title("Pulse train plot"))
+        # spacer(self.ui.horizontalLayout)
+        self.ui.parameterLayout.insertWidget(0, create_title("Stimulus parameters"))
+        self.ui.parameterLayout.insertWidget(
+            self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget),
+            create_title("Pulse parameters"),
+        )
+        self.ui.parameterLayout.insertWidget(
+            self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget) + 1,
+            self.highlightPulseCheckbox,
+        )
+        self.ui.parameterLayout.insertWidget(
+            self.ui.parameterLayout.indexOf(self.ui.stepSlider),
+            create_title("Stimulus dial"),
+        )
+        self.ui.stepSlider.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        self.ui.plotLayout.addWidget(create_title("Stimulus plot"))
         self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
 
         self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
+        self.ui.limitSpinBox.valueChanged.connect(self.pulseChanged)
+        self.ui.durSpinBox.valueChanged.connect(self.pulseChanged)
+        self.highlightPulseCheckbox.toggled.connect(self.pulseHighlightChanged.emit)
 
+        spin_value_helper(
+            self.ui.durSpinBox,
+            default_val=DEFAULT_DUR_S,
+            min_val=0.0001,
+            max_val=1,
+            step=SEGMENT_VIEW_STEP_S,
+        )
+
+        spin_value_helper(
+            self.ui.limitSpinBox,
+            default_val=DEFAULT_LIMIT_V,
+            min_val=0.0,
+            max_val=SEGMENT_VIEW_MAX_V,
+            step=SEGMENT_VIEW_STEP_V,
+        )
+
+        self.pulseHighlightChanged.emit(self.highlightPulseCheckbox.isChecked())
         self.pulseChanged.emit()
 
     def setup_tabs(self):
@@ -124,16 +171,37 @@ class PulseView(QDialog):
                 time_points,
                 voltage_points,
                 pen=pg.mkPen(color=color, width=width),
-                name="Pulse",
+                name="Stimulus",
             )
 
-    def draw_pulse_bounds(self, lt, rt, tp, bt):
+    def draw_pulse_bounds(self, lt, rt, tp, bt, center=None):
         guide_color = "b"
 
-        self.plotWidget.addItem(create_guide_line(lt, 90, guide_color))
+        # Mark the start of the pulse more clearly.
+        self.plotWidget.addItem(
+            create_guide_line(lt, 90, guide_color, style=Qt.PenStyle.DashLine)
+        )
         self.plotWidget.addItem(create_guide_line(rt, 90, guide_color))
+        if center is not None:
+            self.plotWidget.addItem(create_guide_line(center, 90, guide_color))
         self.plotWidget.addItem(create_guide_line(tp, 0, guide_color))
         self.plotWidget.addItem(create_guide_line(bt, 0, guide_color))
+
+    def draw_voltage_limit(self, limit_v):
+        self.plotWidget.addItem(
+            create_guide_line(
+                limit_v, 0, color="r", style=Qt.PenStyle.DashLine, alpha=150
+            )
+        )
+        self.plotWidget.addItem(
+            create_guide_line(
+                -limit_v,
+                0,
+                color="r",
+                style=Qt.PenStyle.DashLine,
+                alpha=150,
+            )
+        )
 
     def showEvent(self, event):
         super().showEvent(event)
