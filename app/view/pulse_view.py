@@ -62,8 +62,8 @@ class PulseView(QDialog):
             self.ui.parameterLayout.indexOf(self.ui.stepSlider),
             create_title("Stimulus dial"),
         )
-        self.ui.parameterLayout.setAlignment(
-            self.ui.stepSlider, Qt.AlignmentFlag.AlignLeft
+        self.ui.stepSlider.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.ui.plotLayout.addWidget(create_title("Stimulus plot"))
         self.ui.plotLayout.addWidget(frame)
