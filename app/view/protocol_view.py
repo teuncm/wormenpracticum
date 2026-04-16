@@ -1,10 +1,10 @@
 from app.window.ui_protocol_window import Ui_ProtocolWindow
 from PySide6.QtWidgets import (
-    QDialog,
+    QWidget,
 )
 
 
-class ProtocolView(QDialog):
+class ProtocolView(QWidget):
     def __init__(self):
         super().__init__()
 

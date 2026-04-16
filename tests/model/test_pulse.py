@@ -1,178 +1,56 @@
 import numpy as np
 import pytest
-from app.model.pulse import Pulse, PulseGenerator, PulseTrain
-from app.model.signal import get_time_bounds_s
+from app.model.stimulus.pulse import Pulse
 
 TEST_SR_HZ = 4.0
 
 
 @pytest.fixture
-def neg_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=7.0, dur_s=1, step_amp_v=1, step_dur_s=-0.5)
-
-
-@pytest.fixture
-def zero_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=-2, dur_s=0.5, step_amp_v=0, step_dur_s=0, is_monophasic=True)
-
-
-@pytest.fixture
-def pos_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=5, dur_s=0, step_amp_v=0, step_dur_s=0.5, is_monophasic=True)
-
-
-@pytest.fixture
-def overflow_step_dur_pulse() -> Pulse:
-    return Pulse(amp_v=67, dur_s=0, step_amp_v=0, step_dur_s=67, is_monophasic=True)
-
-
-@pytest.fixture
-def get_train_decreasing(neg_step_dur_pulse, zero_step_dur_pulse) -> PulseTrain:
-    return PulseTrain(pulses=[neg_step_dur_pulse, zero_step_dur_pulse], n_steps=2)
-
-
-@pytest.fixture
-def get_train_equal(neg_step_dur_pulse, pos_step_dur_pulse) -> PulseTrain:
-    return PulseTrain(pulses=[neg_step_dur_pulse, pos_step_dur_pulse], n_steps=2)
-
-
-@pytest.fixture
-def get_train_overflow(neg_step_dur_pulse, overflow_step_dur_pulse) -> PulseTrain:
-    return PulseTrain(pulses=[neg_step_dur_pulse, overflow_step_dur_pulse], n_steps=2)
-
-
-def test_pulse_sample(neg_step_dur_pulse):
-    """Verify that pulse sampling produces the expected samples."""
-    samples = neg_step_dur_pulse.sample(sr_hz=TEST_SR_HZ)
-
-    assert np.allclose(samples, np.array([7.0, 7.0, -7.0, -7.0]))
-
-
-def test_train_sample(get_train_decreasing):
-    """Verify that train sampling produces the expected samples."""
-    samples = get_train_decreasing.sample(sr_hz=TEST_SR_HZ)
-
-    assert np.allclose(samples, np.array([7.0, 7.0, -7.0, -7.0, -2, -2]))
-
-
-def test_generator_sample(get_train_decreasing, get_train_equal, get_train_overflow):
-    """Verify that generator sampling produces the expected samples."""
-    samples = PulseGenerator(get_train_decreasing).sample_mat(sr_hz=TEST_SR_HZ)
-    expected_samples = np.array(
-        [[7.0, 7.0, -7.0, -7.0, -2, -2], [8.0, -8.0, -2, -2, 0, 0]]
+def pulse_basic() -> Pulse:
+    return Pulse(
+        amp_v=1.0,
+        start_s=0.6,
+        dur_s=0.8,
     )
 
-    assert np.allclose(samples, expected_samples)
-
-    samples = PulseGenerator(get_train_equal).sample_mat(sr_hz=TEST_SR_HZ)
-    expected_samples = np.array([[7.0, 7.0, -7.0, -7.0], [8.0, -8.0, 5, 5]])
-
-    assert np.allclose(samples, expected_samples)
-
-    samples = PulseGenerator(get_train_overflow).sample_mat(sr_hz=TEST_SR_HZ)
-    expected_samples = np.array([[7.0, 7.0, -7.0, -7.0], [8.0, -8.0, 67, 67]])
-
-    assert np.allclose(samples, expected_samples)
-
 
 @pytest.fixture
-def round_down_dur_neg_v_pulse() -> Pulse:
-    return Pulse(amp_v=-5.0, dur_s=0.7, step_amp_v=0, step_dur_s=0)
-
-
-@pytest.fixture
-def round_up_dur_neg_v_pulse() -> Pulse:
-    return Pulse(amp_v=-5.0, dur_s=0.8, step_amp_v=0, step_dur_s=0)
-
-
-def test_min_v(round_down_dur_neg_v_pulse):
-    """Verify that min_v calculations are correct."""
-    pulse = round_down_dur_neg_v_pulse
-    assert pulse.min_v() == -5.0
-
-    train = PulseTrain(pulses=[pulse], n_steps=1)
-    assert train.min_v() == -5.0
-
-
-def test_max_v(round_down_dur_neg_v_pulse):
-    """Verify that max_v calculations are correct."""
-    pulse = round_down_dur_neg_v_pulse
-    assert pulse.max_v() == 5.0
-
-    train = PulseTrain(pulses=[pulse], n_steps=1)
-    assert train.max_v() == 5.0
-
-
-def test_duration_round_down(round_down_dur_neg_v_pulse):
-    """Verify that downwards duration rounding works."""
-    pulse = round_down_dur_neg_v_pulse
-    assert pulse.actual_dur_s(sr_hz=TEST_SR_HZ) == 0.5
-
-    train = PulseTrain(pulses=[pulse], n_steps=1)
-    assert train.actual_dur_s(sr_hz=TEST_SR_HZ) == 0.5
-
-
-def test_duration_round_up(round_up_dur_neg_v_pulse):
-    """Verify that upwards duration rounding works."""
-    pulse = round_up_dur_neg_v_pulse
-    assert pulse.actual_dur_s(sr_hz=TEST_SR_HZ) == 1.0
-
-    train = PulseTrain(pulses=[pulse], n_steps=1)
-    assert train.actual_dur_s(sr_hz=TEST_SR_HZ) == 1.0
-
-
-def test_duration_train(round_up_dur_neg_v_pulse):
-    """Verify that the train duration is calculated correctly."""
-    train = PulseTrain(pulses=[round_up_dur_neg_v_pulse, round_up_dur_neg_v_pulse])
-
-    train_dur_s = train.actual_dur_s(sr_hz=TEST_SR_HZ)
-    left, right = get_time_bounds_s(
-        n_samples=train.n_samples(sr_hz=TEST_SR_HZ), sr_hz=TEST_SR_HZ
+def pulse_basic_monophasic() -> Pulse:
+    return Pulse(
+        amp_v=-1.0,
+        start_s=0.6,
+        dur_s=0.8,
+        is_monophasic=True,
     )
 
-    calculated_dur = right - left
 
-    assert train_dur_s == 2.0
-    assert train_dur_s == calculated_dur
+def test_v_bounds(pulse_basic: Pulse) -> None:
+    v_min, v_max = pulse_basic.v_bounds()
+    sampler = pulse_basic.sample(sr_hz=TEST_SR_HZ)
 
-
-def test_n_samples(round_down_dur_neg_v_pulse):
-    """Verify that n_samples calculations are correct."""
-    pulse = round_down_dur_neg_v_pulse
-    assert pulse.n_samples(sr_hz=TEST_SR_HZ) == 2
-    assert pulse.sample(sr_hz=TEST_SR_HZ).shape[0] == 2
-
-    train = PulseTrain(pulses=[pulse, pulse], n_steps=1)
-    assert train.n_samples(sr_hz=TEST_SR_HZ) == 4
-    assert train.sample(sr_hz=TEST_SR_HZ).shape[0] == 4
+    assert v_min == -1.0 == np.min(sampler)
+    assert v_max == 1.0 == np.max(sampler)
 
 
-@pytest.fixture
-def monophasic_pulse() -> Pulse:
-    return Pulse(amp_v=5, dur_s=2, step_amp_v=0, step_dur_s=0, is_monophasic=True)
+def test_v_bounds_monophasic(pulse_basic_monophasic: Pulse) -> None:
+    v_min, v_max = pulse_basic_monophasic.v_bounds()
+    sampler = pulse_basic_monophasic.sample(sr_hz=TEST_SR_HZ)
+
+    assert v_min == -1.0 == np.min(sampler)
+    assert v_max == -1.0 == np.max(sampler)
 
 
-def test_zero_sum(round_up_dur_neg_v_pulse, monophasic_pulse):
-    """Test that all sampled pulses sum to zero."""
-    pulse = round_up_dur_neg_v_pulse
-    samples = pulse.sample(sr_hz=TEST_SR_HZ)
-    assert np.isclose(np.sum(samples), 0.0)
-
-    train = PulseTrain(pulses=[pulse, pulse], n_steps=1)
-    samples = train.sample(sr_hz=TEST_SR_HZ)
-    assert np.isclose(np.sum(samples), 0.0)
+def test_n_samples(pulse_basic: Pulse) -> None:
+    assert pulse_basic.n_samples(sr_hz=TEST_SR_HZ) == 2
 
 
-def test_monophasic_sample(monophasic_pulse):
-    """Verify that monophasic pulse sampling produces the expected samples."""
-    pulse = monophasic_pulse
-    train = PulseTrain(pulses=[pulse], n_steps=2)
-    generator = PulseGenerator(train)
-    samples = generator.sample_mat(sr_hz=TEST_SR_HZ)
-
-    assert np.isclose(np.sum(samples), 5 * 2 * 2 * TEST_SR_HZ)
-    assert np.allclose(samples.flatten(), [5.0] * 16)
+def test_n_samples_monophasic(pulse_basic_monophasic: Pulse) -> None:
+    assert pulse_basic_monophasic.n_samples(sr_hz=TEST_SR_HZ) == 3
 
 
-def standard_pulse() -> Pulse:
-    return Pulse(amp_v=1, dur_s=1, step_amp_v=0, step_dur_s=0, is_monophasic=False)
+def test_t_bounds(pulse_basic: Pulse) -> None:
+    assert pulse_basic.t_bounds(sr_hz=TEST_SR_HZ) == (0.5, 1.0)
+
+
+def test_t_bounds_monophasic(pulse_basic_monophasic: Pulse) -> None:
+    assert pulse_basic_monophasic.t_bounds(sr_hz=TEST_SR_HZ) == (0.5, 1.25)

@@ -21,7 +21,7 @@
        <item row="0" column="0">
         <widget class="QLabel" name="nLabel">
          <property name="text">
-          <string>Number of steps</string>
+          <string>Number of stimuli</string>
          </property>
         </widget>
        </item>
@@ -32,6 +32,52 @@
          </property>
          <property name="value">
           <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="durLabel">
+         <property name="text">
+          <string>Total duration (s)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QDoubleSpinBox" name="durSpinBox">
+         <property name="decimals">
+          <number>3</number>
+         </property>
+         <property name="minimum">
+          <double>0.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>1000000.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>3.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="limitLabel">
+         <property name="text">
+          <string>Voltage limit (V)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QDoubleSpinBox" name="limitSpinBox">
+         <property name="decimals">
+          <number>3</number>
+         </property>
+         <property name="minimum">
+          <double>0.000000000000000</double>
+         </property>
+         <property name="maximum">
+          <double>1000000.000000000000000</double>
+         </property>
+         <property name="value">
+          <double>1.500000000000000</double>
          </property>
         </widget>
        </item>

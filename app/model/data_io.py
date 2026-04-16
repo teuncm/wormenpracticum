@@ -2,22 +2,22 @@ import pandas as pd
 
 
 def write_data(file_path, df) -> None:
-    """Write experiment data to a Parquet file.
+    """Write experiment data to a CSV file.
 
     Args:
-        file_path (str): The path to the Parquet file to write.
-        df (pd.DataFrame): The DataFrame to write to the Parquet file.
+        file_path (str): The path to the CSV file to write.
+        df (pd.DataFrame): The DataFrame to write to the CSV file.
     """
-    df.to_parquet(file_path, index=False)
+    df.to_csv(file_path, index=False, float_format="%.9g")
 
 
 def read_data(file_path) -> pd.DataFrame:
-    """Read experiment data in Parquet format from file path
+    """Read experiment data in CSV format from file path.
 
     Args:
-        file_path (str): The path to the Parquet file to read.
+        file_path (str): The path to the CSV file to read.
 
     Returns:
-        pd.DataFrame: The DataFrame read from the Parquet file.
+        pd.DataFrame: The DataFrame read from the CSV file.
     """
-    return pd.read_parquet(file_path)
+    return pd.read_csv(file_path)

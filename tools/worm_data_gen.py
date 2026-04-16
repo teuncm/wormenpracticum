@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import app.model.stimulus.signal as sgn
 import numpy as np
 import pandas as pd
 from app.model.data_io import (
@@ -7,37 +8,45 @@ from app.model.data_io import (
 )
 
 
-def gen_dummy_data(t_max, sample_rate, num_channels) -> pd.DataFrame:
+def gen_dummy_data(
+    t_max, sample_rate, num_i_chan, num_o_chan, num_stims, num_reps=1
+) -> pd.DataFrame:
     """Generate matrix with 16 sine waves for testing."""
-    # Wave frequency in Hz
-    WAVE_FREQ = 10000
     # Total number of samples
-    N = int(t_max * sample_rate)
-    # Samples are measured in milliseconds
-    timestamps = np.linspace(0, t_max, num=N, endpoint=False)
+    N = sgn.quantize_time_point(time_s=t_max, sr_hz=sample_rate)
+    timestamps = np.round(np.linspace(0, t_max, num=N, endpoint=False), 5)
 
-    waves = np.array(
-        [np.sin(2 * np.pi * WAVE_FREQ * timestamps) for _ in range(num_channels)]
-    )
+    print(timestamps)
 
-    waves += np.random.normal(scale=0.1, size=waves.shape)
+    t = pd.Series(timestamps, name="t_(s)")
 
-    data = np.array([timestamps] + [waves[i] for i in range(num_channels)]).T
+    stim_list = []
+    for i in range(num_stims):
+        for j in range(num_i_chan):
+            signal = 0 * timestamps
+            stim_list.append(pd.Series(signal, name=f"s{i}_i{j}_(V)"))
 
-    df = pd.DataFrame(
-        data,
-        columns=["Timestamp (s)"] + [f"Channel {i} (V)" for i in range(num_channels)],
-    )
+        for j in range(num_o_chan):
+            for k in range(num_reps):
+                signal = 0 * timestamps
+                stim_list.append(pd.Series(signal, name=f"s{i}_o{j}_r{k}_(V)"))
+
+    df = pd.concat([t, *stim_list], axis=1)
 
     return df
 
 
 def main():
-    dummy_df = gen_dummy_data(t_max=0.0010, sample_rate=100000, num_channels=2)
+    dummy_df = gen_dummy_data(
+        t_max=0.0010,
+        sample_rate=10000,
+        num_i_chan=3,
+        num_o_chan=2,
+        num_stims=3,
+        num_reps=3,
+    )
 
-    print(dummy_df)
-
-    file_path = Path("data/test_data.parquet")
+    file_path = Path("data/test_data.csv")
     if file_path:
         write_data(file_path, dummy_df)
 
