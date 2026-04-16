@@ -2,17 +2,17 @@ import pyqtgraph as pg
 from app.constants import (
     DEFAULT_DUR_S,
     DEFAULT_LIMIT_V,
-    SEGMENT_VIEW_MAX_V,
+    DOUBLE_SPIN_MAX_V,
+    DOUBLE_SPIN_STEP_S,
+    DOUBLE_SPIN_STEP_V,
     SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT,
-    SEGMENT_VIEW_STEP_S,
-    SEGMENT_VIEW_STEP_V,
 )
 from app.view.pulse_segment import PulseSegmentWidget
 from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
     create_title,
-    spin_value_helper,
+    double_spin_helper,
 )
 from app.window.ui_pulse_window import Ui_PulseWindow
 from PySide6.QtCore import Qt, Signal
@@ -75,20 +75,20 @@ class PulseView(QDialog):
         self.ui.durSpinBox.valueChanged.connect(self.pulseChanged)
         self.highlightPulseCheckbox.toggled.connect(self.pulseHighlightChanged.emit)
 
-        spin_value_helper(
+        double_spin_helper(
             self.ui.durSpinBox,
             default_val=DEFAULT_DUR_S,
             min_val=0.0001,
             max_val=1,
-            step=SEGMENT_VIEW_STEP_S,
+            step=DOUBLE_SPIN_STEP_S,
         )
 
-        spin_value_helper(
+        double_spin_helper(
             self.ui.limitSpinBox,
             default_val=DEFAULT_LIMIT_V,
             min_val=0.0,
-            max_val=SEGMENT_VIEW_MAX_V,
-            step=SEGMENT_VIEW_STEP_V,
+            max_val=DOUBLE_SPIN_MAX_V,
+            step=DOUBLE_SPIN_STEP_V,
         )
 
         self.pulseHighlightChanged.emit(self.highlightPulseCheckbox.isChecked())

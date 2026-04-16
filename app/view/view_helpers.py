@@ -1,17 +1,18 @@
 import pyqtgraph as pg
 from app.constants import (
+    DOUBLE_SPIN_NUM_DECIMALS,
     PLOT_GRID_ALPHA_DEFAULT,
-    SEGMENT_VIEW_NUM_DECIMALS,
     VIEW_MARGIN_DEFAULT,
     VIEW_SPACING_DEFAULT,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtWidgets import (
     QBoxLayout,
     QDoubleSpinBox,
     QFrame,
     QHBoxLayout,
     QLabel,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
 )
@@ -49,20 +50,6 @@ def create_plot_widget(
     layout.addWidget(plot)
 
     return frame, plot
-
-
-def spin_value_helper(
-    spinbox: QDoubleSpinBox,
-    default_val: float,
-    min_val: float,
-    max_val: float,
-    step: float,
-    decimals: int = SEGMENT_VIEW_NUM_DECIMALS,
-):
-    spinbox.setRange(min_val, max_val)
-    spinbox.setSingleStep(step)
-    spinbox.setDecimals(decimals)
-    spinbox.setValue(default_val)
 
 
 def create_guide_line(
@@ -114,6 +101,32 @@ def create_attribution_row(name_text: str, description_text: str) -> QWidget:
     return row
 
 
+def double_spin_helper(
+    spinbox: QDoubleSpinBox,
+    default_val: float,
+    min_val: float,
+    max_val: float,
+    step: float,
+    decimals: int = DOUBLE_SPIN_NUM_DECIMALS,
+):
+    spinbox.setRange(min_val, max_val)
+    spinbox.setSingleStep(step)
+    spinbox.setValue(default_val)
+    spinbox.setDecimals(decimals)
+
+
+def spin_helper(
+    spinbox: QSpinBox,
+    default_val: int,
+    min_val: int,
+    max_val: int,
+    step: int,
+):
+    spinbox.setRange(min_val, max_val)
+    spinbox.setSingleStep(step)
+    spinbox.setValue(default_val)
+
+
 def spacer(
     layout,
     margin=None,
@@ -131,3 +144,16 @@ def spacer(
     layout.setSpacing(spacing)
 
     return layout
+
+
+class Blocker:
+    """Context manager to block signals for multiple widgets."""
+
+    def __init__(self, *widgets):
+        self._blocker = [QSignalBlocker(widget) for widget in widgets]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        del self._blocker

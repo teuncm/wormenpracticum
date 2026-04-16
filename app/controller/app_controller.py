@@ -1,4 +1,4 @@
-from app.constants import SEGMENT_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
+from app.constants import DOUBLE_SPIN_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
 from app.model.app_model import AppModel
 from app.model.nidaq_constants import NI_DAQ_DISCOVERY_POLL_INTERVAL_MS
 from app.model.nidaq_model import NidaqModel
@@ -25,11 +25,6 @@ class AppController:
         self.analyze_view = AnalyzeView()
         self.smooth_view = SmoothView()
 
-        self.main_view.editImpulseRequested.connect(self.open_impulse_window)
-        self.main_view.editProtocolRequested.connect(self.open_protocol_window)
-        self.main_view.ui.actionAbout.triggered.connect(self.open_about_window)
-        self.main_view.ui.actionAnalyze.triggered.connect(self.open_analyze_window)
-        self.main_view.ui.actionSmoothing.triggered.connect(self.open_smooth_window)
         self.pulse_view.pulseChanged.connect(self.update_pulse_state)
         self.pulse_view.stepChanged.connect(self.update_plot)
         self.pulse_view.pulseHighlightChanged.connect(self.update_plot)
@@ -54,23 +49,17 @@ class AppController:
         if app is not None:
             app.aboutToQuit.connect(self.shutdown)
 
+        self.connect_open_signals()
+
+    def connect_open_signals(self):
+        self.main_view.ui.actionAbout.triggered.connect(self.about_view.show)
+        self.main_view.ui.actionAnalyze.triggered.connect(self.analyze_view.show)
+        self.main_view.ui.actionSmoothing.triggered.connect(self.smooth_view.show)
+        self.main_view.editImpulseRequested.connect(self.pulse_view.show)
+        self.main_view.editProtocolRequested.connect(self.protocol_view.show)
+
     def start(self):
         self.main_view.show()
-
-    def open_impulse_window(self):
-        self.pulse_view.show()
-
-    def open_protocol_window(self):
-        self.protocol_view.show()
-
-    def open_about_window(self):
-        self.about_view.show()
-
-    def open_analyze_window(self):
-        self.analyze_view.show()
-
-    def open_smooth_window(self):
-        self.smooth_view.show()
 
     def refresh_nidaq_status(self):
         self.nidaq_model.refresh_discovery_status()
@@ -90,7 +79,7 @@ class AppController:
             if isinstance(widget, PulseSegmentWidget):
                 segments.append(
                     {
-                        name: round(spin.value(), SEGMENT_PARSE_ROUND_DECIMALS)
+                        name: round(spin.value(), DOUBLE_SPIN_PARSE_ROUND_DECIMALS)
                         for name, spin in widget.spinboxes.items()
                     }
                     | {"is_monophasic": widget.monophasic_checkbox.isChecked()},
