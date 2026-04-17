@@ -1,5 +1,7 @@
 from app.constants import DOUBLE_SPIN_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
 from app.model.app_model import AppModel
+from app.model.stimulus.pulse import Pulse
+from app.model.stimulus.stimulus_config import StimulusConfig
 from app.view.pulse_tab_view import PulseTabView
 
 
@@ -8,12 +10,18 @@ class StimulusController:
         self.app_model = app_model
         self.stimulus_view = stimulus_view
 
-        self.stimulus_view.stimulusChanged.connect(self.update_stimulus_state)
+        self.stimulus_view.stimulusChanged.connect(self.on_view_stim_config_changed)
         self.stimulus_view.stepChanged.connect(self.update_plot)
         self.stimulus_view.stimulusHighlightChanged.connect(self.update_plot)
 
-    def update_stimulus_state(self):
-        """Update stimulus data from the stimulus view and refresh the plot."""
+    def _on_model_stim_config_changed(self):
+        # Reflect model change in view parameter fields
+        stim_config = self.app_model.stim_generator.config
+
+        # Update plot to reflect new stimulus config
+
+    def on_view_stim_config_changed(self):
+        """Update stimulus model data from the stimulus view and refresh the plot."""
         segments = []
 
         tab_widget = self.stimulus_view.ui.segmentTabWidget
@@ -29,40 +37,40 @@ class StimulusController:
                     | {"is_monophasic": widget.monophasic_checkbox.isChecked()},
                 )
 
-        params = {
-            "N": self.stimulus_view.ui.nSpinBox.value(),
-            "dur_s": self.stimulus_view.ui.durSpinBox.value(),
-            "limit_v": self.stimulus_view.ui.limitSpinBox.value(),
-            "segments": segments,
-        }
+        pulses = [Pulse(**segment) for segment in segments]
+        stim_config = StimulusConfig(
+            pulses=pulses,
+            n_steps=self.stimulus_view.ui.nSpinBox.value(),
+            dur_s=self.stimulus_view.ui.durSpinBox.value(),
+            limit_v=self.stimulus_view.ui.limitSpinBox.value(),
+        )
 
-        self.app_model.update_stim_config(params)
-        self.stimulus_view.update_step_slider(params["N"])
+        print(pulses)
+
+        self.app_model.update_stim_config(stim_config)
+        self.stimulus_view.update_step_slider(stim_config.n_steps)
 
     def update_plot(self, *_):
-        if self.app_model.stimulus_generator is None:
-            return
-
         self.stimulus_view.clear_plot()
         self.stimulus_view.draw_zero_line()
 
         self.stimulus_view.draw_voltage_limit(
-            self.app_model.stimulus_generator.config.limit_v
+            self.app_model.stim_generator.config.limit_v
         )
 
-        target_dur = self.app_model.stimulus_generator.config.stim.dur_s
+        target_dur = self.app_model.stim_generator.config.stim.dur_s
         train_plot_sr = TARGET_N_SAMPLES_PULSE_PLOT / target_dur
 
         cur_step = self.stimulus_view.ui.stepSlider.value()
-        y, t = self.app_model.stimulus_generator.sample_at_idx(train_plot_sr, cur_step)
+        y, t = self.app_model.stim_generator.sample_at_idx(train_plot_sr, cur_step)
         self.stimulus_view.update_train_plot((t, y), color="k", width=1)
 
         if self.stimulus_view.highlightStimulusCheckbox.isChecked():
             cur_tab = self.stimulus_view.ui.segmentTabWidget.currentIndex()
-            current_pulse = self.app_model.stimulus_generator.stims[cur_step].pulses[
+            current_pulse = self.app_model.stim_generator.stims[cur_step].pulses[
                 cur_tab
             ]
-            y, t = self.app_model.stimulus_generator.sample_at_idx(
+            y, t = self.app_model.stim_generator.sample_at_idx(
                 train_plot_sr, cur_step, cur_tab
             )
             self.stimulus_view.update_train_plot((t, y), color="b", width=2)

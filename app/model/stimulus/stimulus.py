@@ -1,8 +1,11 @@
+from dataclasses import dataclass
+
 import app.model.stimulus.signal as sgn
 import numpy as np
 from app.model.stimulus.pulse import Pulse
 
 
+@dataclass
 class Stimulus(sgn.Signal):
     dur_s: float
     pulses: list[Pulse]
@@ -103,6 +106,3 @@ class Stimulus(sgn.Signal):
         """Advance the stimulus state in-place."""
         for pulse in self.pulses:
             pulse._step()
-
-    def __repr__(self) -> str:
-        return str(vars(self))

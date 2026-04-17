@@ -1,9 +1,11 @@
+from dataclasses import dataclass
+
 from app.model.stimulus.pulse import Pulse
 from app.model.stimulus.stimulus import Stimulus
 
 
+@dataclass
 class StimulusConfig:
-    name: str
     n_steps: int
     # Voltage limiting is only applied to samples in the generator.
     limit_v: float

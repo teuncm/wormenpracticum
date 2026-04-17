@@ -1,7 +1,10 @@
+from dataclasses import dataclass
+
 import app.model.stimulus.signal as sgn
 import numpy as np
 
 
+@dataclass
 class Pulse(sgn.Signal):
     amp_v: float
     start_s: float
@@ -88,6 +91,3 @@ class Pulse(sgn.Signal):
         self.amp_v += self.step_amp_v
         self.start_s += self.step_start_s
         self.dur_s += self.step_dur_s
-
-    def __repr__(self) -> str:
-        return str(vars(self))
