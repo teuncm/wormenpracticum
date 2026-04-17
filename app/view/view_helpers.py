@@ -147,7 +147,13 @@ def spacer(
 
 
 class Blocker:
-    """Context manager to block signals for multiple widgets."""
+    """Context manager to block signals for multiple widgets.
+    Useful when updating view components from the model.
+    Usage:
+        with Blocker(widget1, widget2, ...):
+            # Signals from these widgets are blocked in this block
+            ...
+    """
 
     def __init__(self, *widgets):
         self._blocker = [QSignalBlocker(widget) for widget in widgets]
