@@ -39,16 +39,6 @@ class AppController:
         if app is not None:
             app.aboutToQuit.connect(self.shutdown)
 
-        self.refresh_nidaq_status()
-        self.nidaq_status_timer = QTimer(self.main_view)
-        self.nidaq_status_timer.setInterval(NI_DAQ_DISCOVERY_POLL_INTERVAL_MS)
-        self.nidaq_status_timer.timeout.connect(self.refresh_nidaq_status)
-        self.nidaq_status_timer.start()
-
-        app = QApplication.instance()
-        if app is not None:
-            app.aboutToQuit.connect(self.shutdown)
-
         self.connect_open_signals()
 
     def connect_open_signals(self):
