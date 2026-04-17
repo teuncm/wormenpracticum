@@ -1,4 +1,3 @@
-from app.constants import DEFAULT_LIMIT_V
 from app.model.stimulus.pulse import Pulse
 from app.model.stimulus.stimulus_config import StimulusConfig
 from app.model.stimulus.stimulus_generator import StimulusGenerator

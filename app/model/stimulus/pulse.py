@@ -69,7 +69,7 @@ class Pulse(sgn.Signal):
 
         samples = np.zeros(n_samples)
 
-        # If pulse has no sample, exit early
+        # If pulse has no samples, exit early
         if n_samples == 0:
             return samples
 

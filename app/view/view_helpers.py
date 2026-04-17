@@ -109,10 +109,10 @@ def double_spin_helper(
     step: float,
     decimals: int = DOUBLE_SPIN_NUM_DECIMALS,
 ):
+    spinbox.setDecimals(decimals)
     spinbox.setRange(min_val, max_val)
     spinbox.setSingleStep(step)
     spinbox.setValue(default_val)
-    spinbox.setDecimals(decimals)
 
 
 def spin_helper(
