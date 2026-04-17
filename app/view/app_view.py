@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 AMP_SLIDER_SCALE_FACTOR = 100
 
 
-class MainView(QMainWindow):
+class AppView(QMainWindow):
     def __init__(self):
         super().__init__()
 
