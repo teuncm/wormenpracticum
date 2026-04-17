@@ -7,7 +7,7 @@ from app.constants import (
     DOUBLE_SPIN_STEP_V,
     SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT,
 )
-from app.view.pulse_segment import PulseSegmentWidget
+from app.view.stimulus_segment import StimulusSegmentWidget
 from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
@@ -24,10 +24,10 @@ from PySide6.QtWidgets import (
 )
 
 
-class PulseView(QDialog):
-    pulseChanged = Signal()
+class StimulusView(QDialog):
+    stimulusChanged = Signal()
     stepChanged = Signal()
-    pulseHighlightChanged = Signal(bool)
+    stimulusHighlightChanged = Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -37,8 +37,8 @@ class PulseView(QDialog):
 
         self.setup_tabs()
 
-        self.highlightPulseCheckbox = QCheckBox("Highlight selected pulse")
-        self.highlightPulseCheckbox.setChecked(SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT)
+        self.highlightStimulusCheckbox = QCheckBox("Highlight selected stimulus")
+        self.highlightStimulusCheckbox.setChecked(SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT)
 
         frame, plot = create_plot_widget(
             title="Stimulus",
@@ -52,11 +52,11 @@ class PulseView(QDialog):
         self.ui.parameterLayout.insertWidget(0, create_title("Stimulus parameters"))
         self.ui.parameterLayout.insertWidget(
             self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget),
-            create_title("Pulse parameters"),
+            create_title("Stimulus segment parameters"),
         )
         self.ui.parameterLayout.insertWidget(
             self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget) + 1,
-            self.highlightPulseCheckbox,
+            self.highlightStimulusCheckbox,
         )
         self.ui.parameterLayout.insertWidget(
             self.ui.parameterLayout.indexOf(self.ui.stepSlider),
@@ -69,11 +69,13 @@ class PulseView(QDialog):
         self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
 
-        self.ui.nSpinBox.valueChanged.connect(self.pulseChanged)
+        self.ui.nSpinBox.valueChanged.connect(self.stimulusChanged)
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
-        self.ui.limitSpinBox.valueChanged.connect(self.pulseChanged)
-        self.ui.durSpinBox.valueChanged.connect(self.pulseChanged)
-        self.highlightPulseCheckbox.toggled.connect(self.pulseHighlightChanged.emit)
+        self.ui.limitSpinBox.valueChanged.connect(self.stimulusChanged)
+        self.ui.durSpinBox.valueChanged.connect(self.stimulusChanged)
+        self.highlightStimulusCheckbox.toggled.connect(
+            self.stimulusHighlightChanged.emit
+        )
 
         double_spin_helper(
             self.ui.durSpinBox,
@@ -91,8 +93,8 @@ class PulseView(QDialog):
             step=DOUBLE_SPIN_STEP_V,
         )
 
-        self.pulseHighlightChanged.emit(self.highlightPulseCheckbox.isChecked())
-        self.pulseChanged.emit()
+        self.stimulusHighlightChanged.emit(self.highlightStimulusCheckbox.isChecked())
+        self.stimulusChanged.emit()
 
     def setup_tabs(self):
         self.ui.segmentTabWidget.setTabsClosable(True)
@@ -121,7 +123,7 @@ class PulseView(QDialog):
         for i in range(self.ui.segmentTabWidget.count()):
             self.ui.segmentTabWidget.setTabText(i, f"{i + 1}")
 
-        self.pulseChanged.emit()
+        self.stimulusChanged.emit()
         self.stepChanged.emit()
 
     def handle_move_tab(self, *_):
@@ -136,12 +138,12 @@ class PulseView(QDialog):
         self.renumber_tabs()
 
     def add_segment_tab(self):
-        segment = PulseSegmentWidget()
+        segment = StimulusSegmentWidget()
 
         index = self.ui.segmentTabWidget.addTab(segment, "")
         self.ui.segmentTabWidget.setCurrentIndex(index)
 
-        segment.segmentChanged.connect(self.pulseChanged)
+        segment.segmentChanged.connect(self.stimulusChanged)
         self.renumber_tabs()
 
     def update_step_slider(self, n_steps):
@@ -174,10 +176,10 @@ class PulseView(QDialog):
                 name="Stimulus",
             )
 
-    def draw_pulse_bounds(self, lt, rt, tp, bt, center=None):
+    def draw_segment_bounds(self, lt, rt, tp, bt, center=None):
         guide_color = "b"
 
-        # Mark the start of the pulse more clearly.
+        # Mark segment bounds more clearly.
         self.plotWidget.addItem(
             create_guide_line(lt, 90, guide_color, style=Qt.PenStyle.DashLine)
         )
@@ -205,4 +207,8 @@ class PulseView(QDialog):
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.pulseChanged.emit()
+        self.stimulusChanged.emit()
+
+
+# Backward compatibility alias
+PulseView = StimulusView

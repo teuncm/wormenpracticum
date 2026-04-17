@@ -1,4 +1,4 @@
-from app.controller.pulse_controller import PulseController
+from app.controller.stimulus_controller import StimulusController
 from app.model.app_model import AppModel
 from app.model.nidaq_constants import NI_DAQ_DISCOVERY_POLL_INTERVAL_MS
 from app.model.nidaq_model import NidaqModel
@@ -6,8 +6,8 @@ from app.view.about_view import AboutView
 from app.view.analyze_view import AnalyzeView
 from app.view.main_view import MainView
 from app.view.protocol_view import ProtocolView
-from app.view.pulse_view import PulseView
 from app.view.smooth_view import SmoothView
+from app.view.stimulus_view import StimulusView
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
@@ -27,20 +27,22 @@ class AppController:
         self.nidaq_model = NidaqModel()
 
         self.main_view = MainView()
-        self.pulse_view = PulseView()
+        self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
         self.about_view = AboutView()
         self.analyze_view = AnalyzeView()
         self.smooth_view = SmoothView()
 
-        self.pulse_controller = PulseController(self.app_model, self.pulse_view)
+        self.stimulus_controller = StimulusController(
+            self.app_model, self.stimulus_view
+        )
 
     def connect_main_view_open_signals(self):
         """Connect signals for opening views from the main view."""
         self.main_view.ui.actionAbout.triggered.connect(self.about_view.show)
         self.main_view.ui.actionAnalyze.triggered.connect(self.analyze_view.show)
         self.main_view.ui.actionSmoothing.triggered.connect(self.smooth_view.show)
-        self.main_view.ui.actionImpulse.triggered.connect(self.pulse_view.show)
+        self.main_view.ui.actionImpulse.triggered.connect(self.stimulus_view.show)
         self.main_view.ui.actionProtocol.triggered.connect(self.protocol_view.show)
 
     def connect_data_signals(self):
