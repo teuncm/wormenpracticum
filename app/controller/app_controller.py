@@ -16,7 +16,6 @@ class AppController:
     def __init__(self):
         self.init_mvc()
 
-        self.connect_data_signals()
         self.connect_app_view_open_signals()
 
         self.init_nidaq()
@@ -44,10 +43,6 @@ class AppController:
         self.app_view.ui.actionSmoothing.triggered.connect(self.smooth_view.show)
         self.app_view.ui.actionImpulse.triggered.connect(self.stimulus_view.show)
         self.app_view.ui.actionProtocol.triggered.connect(self.protocol_view.show)
-
-    def connect_data_signals(self):
-        """Data signals are owned by feature controllers."""
-        return
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""

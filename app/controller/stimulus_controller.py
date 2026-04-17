@@ -3,6 +3,7 @@ from app.model.app_model import AppModel
 from app.model.stimulus.pulse import Pulse
 from app.model.stimulus.stimulus_config import StimulusConfig
 from app.view.pulse_tab_view import PulseTabView
+from app.view.view_helpers import Blocker
 
 
 class StimulusController:
@@ -10,17 +11,24 @@ class StimulusController:
         self.app_model = app_model
         self.stimulus_view = stimulus_view
 
-        self.stimulus_view.stimulusChanged.connect(self.on_view_stim_config_changed)
+        self.connect_data_signals()
+        self._on_model_stim_config_changed()
+
+    def connect_data_signals(self):
+        """Data signals are owned by feature controllers."""
+        self.stimulus_view.stimulusChanged.connect(self._on_view_stim_config_changed)
+        self.app_model.stim_config_changed.connect(self._on_model_stim_config_changed)
         self.stimulus_view.stepChanged.connect(self.update_plot)
         self.stimulus_view.stimulusHighlightChanged.connect(self.update_plot)
 
     def _on_model_stim_config_changed(self):
         # Reflect model change in view parameter fields
-        stim_config = self.app_model.stim_generator.config
+        self.update_ui_from_model()
 
-        # Update plot to reflect new stimulus config
+        # Reflect model change in plot
+        self.update_plot()
 
-    def on_view_stim_config_changed(self):
+    def _on_view_stim_config_changed(self):
         """Update stimulus model data from the stimulus view and refresh the plot."""
         segments = []
 
@@ -45,10 +53,37 @@ class StimulusController:
             limit_v=self.stimulus_view.ui.limitSpinBox.value(),
         )
 
-        print(pulses)
-
         self.app_model.update_stim_config(stim_config)
         self.stimulus_view.update_step_slider(stim_config.n_steps)
+
+    def update_ui_from_model(self):
+        """Update stimulus view parameter fields from the stimulus model."""
+        stim_config = self.app_model.stim_generator.config
+
+        with Blocker(self.stimulus_view):
+            self.stimulus_view.ui.durSpinBox.setValue(stim_config.stim.dur_s)
+            self.stimulus_view.ui.nSpinBox.setValue(stim_config.n_steps)
+            self.stimulus_view.ui.limitSpinBox.setValue(stim_config.limit_v)
+
+            # Remove all tabs first
+            while self.stimulus_view.ui.segmentTabWidget.count() > 0:
+                self.stimulus_view.ui.segmentTabWidget.removeTab(0)
+
+            # Generate as many tabs as needed
+            while self.stimulus_view.ui.segmentTabWidget.count() < len(
+                stim_config.stim.pulses
+            ):
+                self.stimulus_view.add_segment_tab()
+
+            for i, pulse in enumerate(stim_config.stim.pulses):
+                widget = self.stimulus_view.ui.segmentTabWidget.widget(i)
+                widget.spinboxes["amp_v"].setValue(pulse.amp_v)
+                widget.spinboxes["start_s"].setValue(pulse.start_s)
+                widget.spinboxes["dur_s"].setValue(pulse.dur_s)
+                widget.spinboxes["step_amp_v"].setValue(pulse.step_amp_v)
+                widget.spinboxes["step_start_s"].setValue(pulse.step_start_s)
+                widget.spinboxes["step_dur_s"].setValue(pulse.step_dur_s)
+                widget.monophasic_checkbox.setChecked(pulse.is_monophasic)
 
     def update_plot(self, *_):
         self.stimulus_view.clear_plot()

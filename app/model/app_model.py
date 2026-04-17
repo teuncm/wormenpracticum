@@ -18,8 +18,7 @@ class AppModel(QObject):
         self.protocol = None
 
     def init_stim_config(self):
-        stim_config = DEFAULT_STIMULUS_CONFIG
-        self.stim_generator = StimulusGenerator(stim_config)
+        self.stim_generator = StimulusGenerator(DEFAULT_STIMULUS_CONFIG)
 
     def update_stim_config(self, stim_config):
         # If no change was made, return
