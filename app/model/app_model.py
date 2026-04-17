@@ -13,7 +13,7 @@ class AppModel:
         self.stimulus_generator = None
         self.protocol = None
 
-    def update_pulse_config(self, stim_form_data):
+    def update_stimulus_config(self, stim_form_data):
         pulses = [Pulse(**segment) for segment in stim_form_data["segments"]]
         stim_config = StimulusConfig(
             pulses=pulses,

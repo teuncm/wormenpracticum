@@ -5,16 +5,16 @@ from app.constants import (
     DOUBLE_SPIN_MAX_V,
     DOUBLE_SPIN_STEP_S,
     DOUBLE_SPIN_STEP_V,
-    SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT,
+    SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT,
 )
-from app.view.stimulus_segment import StimulusSegmentWidget
+from app.view.pulse_tab_view import PulseTabView
 from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
     create_title,
     double_spin_helper,
 )
-from app.window.ui_pulse_window import Ui_PulseWindow
+from app.window.ui_stimulus_window import Ui_StimulusWindow
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -32,13 +32,15 @@ class StimulusView(QDialog):
     def __init__(self):
         super().__init__()
 
-        self.ui = Ui_PulseWindow()
+        self.ui = Ui_StimulusWindow()
         self.ui.setupUi(self)
 
         self.setup_tabs()
 
         self.highlightStimulusCheckbox = QCheckBox("Highlight selected stimulus")
-        self.highlightStimulusCheckbox.setChecked(SEGMENT_VIEW_PULSE_HIGHLIGHT_DEFAULT)
+        self.highlightStimulusCheckbox.setChecked(
+            SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
+        )
 
         frame, plot = create_plot_widget(
             title="Stimulus",
@@ -138,7 +140,7 @@ class StimulusView(QDialog):
         self.renumber_tabs()
 
     def add_segment_tab(self):
-        segment = StimulusSegmentWidget()
+        segment = PulseTabView()
 
         index = self.ui.segmentTabWidget.addTab(segment, "")
         self.ui.segmentTabWidget.setCurrentIndex(index)
@@ -208,7 +210,3 @@ class StimulusView(QDialog):
     def showEvent(self, event):
         super().showEvent(event)
         self.stimulusChanged.emit()
-
-
-# Backward compatibility alias
-PulseView = StimulusView

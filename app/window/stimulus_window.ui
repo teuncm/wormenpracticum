@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PulseWindow</class>
- <widget class="QDialog" name="PulseWindow">
+ <class>StimulusWindow</class>
+ <widget class="QDialog" name="StimulusWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Pulse Editor</string>
+   <string>Stimulus Editor</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2">
    <item>

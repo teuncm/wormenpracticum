@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QGridLayout, QLabel, QWidget
 
 
-class StimulusSegmentWidget(QWidget):
+class PulseTabView(QWidget):
     segmentChanged = Signal()
 
     def __init__(self):

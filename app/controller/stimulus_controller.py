@@ -1,6 +1,6 @@
 from app.constants import DOUBLE_SPIN_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
 from app.model.app_model import AppModel
-from app.view.stimulus_segment import StimulusSegmentWidget
+from app.view.pulse_tab_view import PulseTabView
 
 
 class StimulusController:
@@ -20,7 +20,7 @@ class StimulusController:
 
         for i in range(tab_widget.count()):
             widget = tab_widget.widget(i)
-            if isinstance(widget, StimulusSegmentWidget):
+            if isinstance(widget, PulseTabView):
                 segments.append(
                     {
                         name: round(spin.value(), DOUBLE_SPIN_PARSE_ROUND_DECIMALS)
@@ -36,7 +36,7 @@ class StimulusController:
             "segments": segments,
         }
 
-        self.app_model.update_pulse_config(params)
+        self.app_model.update_stimulus_config(params)
         self.stimulus_view.update_step_slider(params["N"])
 
     def update_plot(self, *_):
