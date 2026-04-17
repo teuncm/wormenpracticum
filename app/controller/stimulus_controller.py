@@ -36,7 +36,7 @@ class StimulusController:
             "segments": segments,
         }
 
-        self.app_model.update_stimulus_config(params)
+        self.app_model.update_stim_config(params)
         self.stimulus_view.update_step_slider(params["N"])
 
     def update_plot(self, *_):

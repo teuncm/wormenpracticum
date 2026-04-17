@@ -1,19 +1,24 @@
 from app.model.stimulus.pulse import Pulse
 from app.model.stimulus.stimulus_config import StimulusConfig
 from app.model.stimulus.stimulus_generator import StimulusGenerator
+from PySide6.QtCore import QObject, Signal
 
 
-class AppModel:
+class AppModel(QObject):
     # To do: add default generator
     stimulus_generator: StimulusGenerator | None
     # To do: implement experiment protocol
     protocol: None
 
+    # Signal to emit when stimulus config changed
+    stim_config_changed = Signal()
+
     def __init__(self):
+        super().__init__()
         self.stimulus_generator = None
         self.protocol = None
 
-    def update_stimulus_config(self, stim_form_data):
+    def update_stim_config(self, stim_form_data):
         pulses = [Pulse(**segment) for segment in stim_form_data["segments"]]
         stim_config = StimulusConfig(
             pulses=pulses,
@@ -24,6 +29,7 @@ class AppModel:
         stim_generator = StimulusGenerator(stim_config)
 
         self.stimulus_generator = stim_generator
+        self.stim_config_changed.emit()
 
     def get_x_bounds(self):
         if self.stimulus_generator is None:
