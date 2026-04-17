@@ -10,7 +10,6 @@ from app.view.view_helpers import (
     spacer,
 )
 from app.window.ui_main_window import Ui_MainWindow
-from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QMainWindow,
 )
@@ -19,9 +18,6 @@ AMP_SLIDER_SCALE_FACTOR = 100
 
 
 class MainView(QMainWindow):
-    editImpulseRequested = Signal()
-    editProtocolRequested = Signal()
-
     def __init__(self):
         super().__init__()
 
@@ -33,15 +29,8 @@ class MainView(QMainWindow):
         self.ui.ampSlider.setValue(0)
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
-        self.ui.actionLoad_data.triggered.connect(
-            lambda: self.load_data_with_dialog()
-        )
+        self.ui.actionLoad_data.triggered.connect(lambda: self.load_data_with_dialog())
         # self.ui.actionSave_data.triggered.connect()
-
-        self.ui.actionImpulse.triggered.connect(lambda: self.editImpulseRequested.emit())
-        self.ui.actionProtocol.triggered.connect(
-            lambda: self.editProtocolRequested.emit()
-        )
 
         frame, plot = create_plot_widget(
             title="Evoked Response",
