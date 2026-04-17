@@ -1,4 +1,4 @@
-from app.model.protocol_mapping import (
+from app.model.nidaq.protocol_mapping import (
     encode_stim_channel_pair,
     get_logical_channel_labels,
 )
@@ -43,3 +43,4 @@ class ProtocolView(QWidget):
     def get_encoded_stim_port_values(self):
         positive_channel, negative_channel = self.get_selected_stim_channels()
         return encode_stim_channel_pair(positive_channel, negative_channel)
+

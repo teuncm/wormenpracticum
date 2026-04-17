@@ -1,7 +1,7 @@
 import numpy as np
 import pyqtgraph as pg
 from app.model.data_io import read_data
-from app.model.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
+from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.view.data_dialog import show_load_dialog
 from app.view.view_helpers import (
     create_plot_widget,
@@ -10,8 +10,11 @@ from app.view.view_helpers import (
     spacer,
 )
 from app.window.ui_main_window import Ui_MainWindow
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QFormLayout,
     QMainWindow,
+    QSlider,
 )
 
 AMP_SLIDER_SCALE_FACTOR = 100
@@ -27,6 +30,7 @@ class AppView(QMainWindow):
 
         self.ui.ampSlider.setMaximum(2 * AMP_SLIDER_SCALE_FACTOR)
         self.ui.ampSlider.setValue(0)
+        self.ui.ampSlider.setEnabled(False)
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
         self.ui.actionLoad_data.triggered.connect(lambda: self.load_data_with_dialog())
@@ -53,6 +57,21 @@ class AppView(QMainWindow):
 
         self.plotMagnitude = 1.0
 
+        # Channel slider for data viewing
+        self.current_df = None
+        self.channel_slider = QSlider(Qt.Orientation.Horizontal)
+        self.channel_slider.setMinimum(0)
+        self.channel_slider.setValue(0)
+        self.channel_slider.setEnabled(False)
+        self.channel_slider.valueChanged.connect(self.on_channel_changed)
+
+        # Create form layout for sliders
+        form_layout = QFormLayout()
+        form_layout.addRow("Amplification:", self.ui.ampSlider)
+        form_layout.addRow("Channel:", self.channel_slider)
+
+        self.ui.optionsLayout.insertLayout(1, form_layout)
+
         # loaded_df = read_data("data/test.csv")
         # self.plot_data(loaded_df)
 
@@ -69,16 +88,20 @@ class AppView(QMainWindow):
         Args:
             df (DataFrame): DataFrame of data to plot
         """
-        for i in range(1, df.shape[1]):
-            color = pg.intColor(i, hues=df.shape[1] - 1)
-            color.setAlpha(100)
+        self.current_df = df
 
-            self.plotWidget.plot(
-                df.iloc[:, 0],
-                df.iloc[:, i],
-                name=f"Channel {i}",
-                pen=pg.mkPen(color=color, width=1),
-            )
+        # Set up channel slider
+        n_channels = df.shape[1] - 1  # Exclude time column
+        self.channel_slider.setMaximum(n_channels - 1)
+        self.channel_slider.setValue(0)
+        self.channel_slider.setEnabled(True)
+
+        # Plot the first channel
+        self.plotWidget.clear()
+        self.plot_channel(0)
+
+        # Enable amplitude slider now that data is loaded
+        self.ui.ampSlider.setEnabled(True)
 
         # Adjust x viewbox limits based on dataframe.
         self.plotWidget.getViewBox().setLimits(
@@ -86,6 +109,42 @@ class AppView(QMainWindow):
         )
 
         self.plotMagnitude = np.max(np.abs(df.iloc[:, 1:]))
+
+    def plot_channel(self, channel_idx):
+        """Plot a single channel from the loaded data.
+
+        Args:
+            channel_idx (int): Index of the channel to plot (0-based, excluding time)
+        """
+        if (
+            self.current_df is None
+            or channel_idx < 0
+            or channel_idx >= self.current_df.shape[1] - 1
+        ):
+            return
+
+        # Column index is channel_idx + 1 (since column 0 is time)
+        col_idx = channel_idx + 1
+        channel_name = self.current_df.columns[col_idx]
+
+        self.plotWidget.plot(
+            self.current_df.iloc[:, 0],
+            self.current_df.iloc[:, col_idx],
+            name=channel_name,
+            pen=pg.mkPen(color="b", width=2),
+        )
+
+        self.plotWidget.setTitle(f"Channel: {channel_name}")
+
+    def on_channel_changed(self, value):
+        """Handle channel slider changes.
+
+        Args:
+            value (int): New channel index
+        """
+        if self.current_df is not None:
+            self.plotWidget.clear()
+            self.plot_channel(value)
 
     def update_plot_amplitude(self, value):
         """Scale plot amplitude based on slider value.

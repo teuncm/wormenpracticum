@@ -20,15 +20,18 @@ def gen_dummy_data(
 
     t = pd.Series(timestamps, name="t_(s)")
 
+    dummy_idx = 0
     stim_list = []
     for i in range(num_stims):
         for j in range(num_i_chan):
-            signal = 0 * timestamps
+            dummy_idx += 1
+            signal = sin(timestamps, freq_hz=dummy_idx * 1000)
             stim_list.append(pd.Series(signal, name=f"s{i}_i{j}_(V)"))
 
         for j in range(num_o_chan):
             for k in range(num_reps):
-                signal = 0 * timestamps
+                dummy_idx += 1
+                signal = sin(timestamps, freq_hz=dummy_idx * 1000)
                 stim_list.append(pd.Series(signal, name=f"s{i}_o{j}_r{k}_(V)"))
 
     df = pd.concat([t, *stim_list], axis=1)
@@ -36,10 +39,15 @@ def gen_dummy_data(
     return df
 
 
+def sin(t, freq_hz, amp_v=1.0):
+    """Generate sine wave signal."""
+    return amp_v * np.sin(2 * np.pi * freq_hz * t)
+
+
 def main():
     dummy_df = gen_dummy_data(
         t_max=0.0010,
-        sample_rate=10000,
+        sample_rate=100000,
         num_i_chan=3,
         num_o_chan=2,
         num_stims=3,
