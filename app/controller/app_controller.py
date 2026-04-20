@@ -100,7 +100,7 @@ class AppController:
             info_box(message=f"Error saving data: {msg}").exec()
         else:
             success_box = info_box(
-                message="Data saved successfully. The saved file location has been copied to the clipboard.",
+                message="Data saved successfully. File location has been copied to the clipboard.",
             )
             success_box.setDetailedText(filename)
             success_box.exec()

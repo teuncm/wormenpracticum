@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.view.view_helpers import (
@@ -21,6 +22,7 @@ AMP_SLIDER_SCALE_FACTOR = 100
 class AppView(QMainWindow):
     requestDataLoad = Signal()
     requestDataSave = Signal()
+    _current_df: pd.DataFrame | None = None
 
     def __init__(self):
         super().__init__()
@@ -61,7 +63,7 @@ class AppView(QMainWindow):
         self.plotWidget = plot
 
         # Channel slider for data viewing
-        self.current_df = None
+        self._current_df = None
         self.channel_slider = QSlider(Qt.Orientation.Horizontal)
         self.channel_slider.setMinimum(0)
         self.channel_slider.setValue(0)
@@ -87,7 +89,7 @@ class AppView(QMainWindow):
         Args:
             df (DataFrame): DataFrame of data to plot
         """
-        self.current_df = df
+        self._current_df = df
 
         # Set up channel slider
         n_channels = df.shape[1] - 1  # Exclude time column
@@ -116,19 +118,19 @@ class AppView(QMainWindow):
             channel_idx (int): Index of the channel to plot (0-based, excluding time)
         """
         if (
-            self.current_df is None
+            self._current_df is None
             or channel_idx < 0
-            or channel_idx >= self.current_df.shape[1] - 1
+            or channel_idx >= self._current_df.shape[1] - 1
         ):
             return
 
         # Column index is channel_idx + 1 (since column 0 is time)
         col_idx = channel_idx + 1
-        channel_name = self.current_df.columns[col_idx]
+        channel_name = self._current_df.columns[col_idx]
 
         self.plotWidget.plot(
-            self.current_df.iloc[:, 0],
-            self.current_df.iloc[:, col_idx],
+            self._current_df.iloc[:, 0],
+            self._current_df.iloc[:, col_idx],
             name=channel_name,
             pen=pg.mkPen(color="b", width=2),
         )
@@ -141,7 +143,7 @@ class AppView(QMainWindow):
         Args:
             value (int): New channel index
         """
-        if self.current_df is not None:
+        if self._current_df is not None:
             self.plotWidget.clear()
             self.plot_channel(value)
 
