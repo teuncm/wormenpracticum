@@ -1,17 +1,12 @@
 import sys
 
 from app.controller.app_controller import AppController
-from app.utility_functions import resource_path
-from PySide6.QtGui import QFont, QGuiApplication, QIcon, Qt
+from app.resource_path import resource_path
+from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import QApplication
 
 
 def main():
-    # Scale better on high-resolution displays
-    QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-    )
-
     app = QApplication(sys.argv)
     # Platform-independent style
     # app.setStyle("Fusion")
