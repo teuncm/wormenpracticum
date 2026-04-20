@@ -1,4 +1,4 @@
-from app.controller.nidaq.connect import get_first_ai_device
+from app.controller.nidaq.connect_controller import get_first_ai_device
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 
 
@@ -38,4 +38,3 @@ class NidaqModel:
         self.nidaq_discovered = discovered
         self.nidaq_device_name = device_name
         self.nidaq_status = status
-

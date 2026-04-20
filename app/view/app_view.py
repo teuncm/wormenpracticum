@@ -10,7 +10,7 @@ from app.view.view_helpers import (
     spacer,
 )
 from app.window.ui_main_window import Ui_MainWindow
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFormLayout,
     QMainWindow,
@@ -21,6 +21,9 @@ AMP_SLIDER_SCALE_FACTOR = 100
 
 
 class AppView(QMainWindow):
+    requestDataLoad = Signal()
+    requestDataSave = Signal()
+
     def __init__(self):
         super().__init__()
 
@@ -30,8 +33,8 @@ class AppView(QMainWindow):
 
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
-        self.ui.actionLoad_data.triggered.connect(lambda: self.load_data_with_dialog())
-        # self.ui.actionSave_data.triggered.connect()
+        self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
+        self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
 
         self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
 
@@ -73,13 +76,11 @@ class AppView(QMainWindow):
 
         self.ui.optionsLayout.insertLayout(1, form_layout)
 
-    def load_data_with_dialog(self):
-        """Load data from the file system using a dialog."""
-        filename = show_load_dialog()
+    def on_load_triggered(self, checked=False):
+        self.requestDataLoad.emit()
 
-        if filename:
-            loaded_df = read_data(filename)
-            self.plot_data(loaded_df)
+    def on_save_triggered(self, checked=False):
+        self.requestDataSave.emit()
 
     def plot_data(self, df):
         """Plot data from the file system.

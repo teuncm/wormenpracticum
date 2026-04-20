@@ -1,15 +1,18 @@
 from app.controller.stimulus_controller import StimulusController
+from app.model import data_io
 from app.model.app_model import AppModel
 from app.model.nidaq.nidaq_constants import NI_DAQ_DISCOVERY_POLL_INTERVAL_MS
 from app.model.nidaq.nidaq_model import NidaqModel
+from app.view import data_dialog
 from app.view.about_view import AboutView
 from app.view.analyze_view import AnalyzeView
 from app.view.app_view import AppView
 from app.view.protocol_view import ProtocolView
 from app.view.smooth_view import SmoothView
 from app.view.stimulus_view import StimulusView
+from app.view.view_helpers import info_box
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 
 class AppController:
@@ -48,6 +51,34 @@ class AppController:
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
+        self.app_view.requestDataLoad.connect(self.load_experiment_data)
+        self.app_view.requestDataSave.connect(self.save_experiment_data)
+
+    def save_experiment_data(self):
+        """Save experiment data to a file."""
+        filename = data_dialog.show_save_dialog()
+        if filename is None:
+            info_box(message="No file name was given.")
+            return
+
+        if self.app_model.experiment_df is None:
+            info_box(message="There is no data to save.")
+            return
+
+        data_io.write_data(self.app_model.experiment_df, filename)
+
+    def load_experiment_data(self):
+        filename = data_dialog.show_load_dialog()
+        if filename is None:
+            info_box(message="No file was selected.")
+            return
+
+        df = data_io.read_data(filename)
+        if isinstance(df, str):
+            info_box(message=f"Error loading data: {df}")
+            return
+
+        self.app_model.update_experiment_data(df)
 
     def update_main_plot(self):
         """Update the main plot with the latest experiment data."""

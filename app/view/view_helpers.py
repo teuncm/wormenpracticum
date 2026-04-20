@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -144,6 +145,11 @@ def spacer(
     layout.setSpacing(spacing)
 
     return layout
+
+
+def info_box(title="Info", message="This is an info message."):
+    """Show an information message box."""
+    QMessageBox.information(None, title, message)
 
 
 class Blocker:

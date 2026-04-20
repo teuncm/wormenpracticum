@@ -1,5 +1,5 @@
 import pandas as pd
-from app.model.stimulus.stimulus_config import DEFAULT_STIMULUS_CONFIG
+from app.model.stimulus.stimulus_config import DEFAULT_STIMULUS_CONFIG, StimulusConfig
 from app.model.stimulus.stimulus_generator import StimulusGenerator
 from PySide6.QtCore import QObject, Signal
 
@@ -24,15 +24,17 @@ class AppModel(QObject):
         self.experiment_df = None
         self.experiment_effect_df = None
 
-    def update_experiment_df(self, df):
+    def update_experiment_data(self, df: pd.DataFrame):
+        """Update experiment data with a new dataframe."""
         if self.experiment_df is not None and self.experiment_df.equals(df):
             return
 
         self.experiment_df = df
+        self.experiment_effect_df = df
         self.experiment_data_changed.emit()
 
-    def update_stim_config(self, stim_config):
-        # If no change was made, return
+    def update_stim_config(self, stim_config: StimulusConfig):
+        """Update the stimulus config with a new config object."""
         if self.stim_generator.config == stim_config:
             return
 
