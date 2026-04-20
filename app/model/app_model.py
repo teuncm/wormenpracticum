@@ -7,6 +7,7 @@ from PySide6.QtCore import QObject, Signal
 class AppModel(QObject):
     stim_generator: StimulusGenerator
     experiment_df: pd.DataFrame | None
+    experiment_effect_df: pd.DataFrame | None
 
     # Emit when stimulus config changed
     stim_config_changed = Signal()
@@ -21,6 +22,7 @@ class AppModel(QObject):
     def init_props(self):
         self.stim_generator = StimulusGenerator(DEFAULT_STIMULUS_CONFIG)
         self.experiment_df = None
+        self.experiment_effect_df = None
 
     def update_experiment_df(self, df):
         if self.experiment_df is not None and self.experiment_df.equals(df):

@@ -3,11 +3,12 @@ from app.model.app_model import AppModel
 from app.model.stimulus.pulse import Pulse
 from app.model.stimulus.stimulus_config import StimulusConfig
 from app.view.pulse_tab_view import PulseTabView
+from app.view.stimulus_view import StimulusView
 from app.view.view_helpers import Blocker
 
 
 class StimulusController:
-    def __init__(self, app_model: AppModel, stimulus_view):
+    def __init__(self, app_model: AppModel, stimulus_view: StimulusView):
         self.app_model = app_model
         self.stimulus_view = stimulus_view
 
@@ -59,6 +60,8 @@ class StimulusController:
     def update_ui_from_model(self):
         """Update stimulus view parameter fields from the stimulus model."""
         stim_config = self.app_model.stim_generator.config
+        tab_widget = self.stimulus_view.ui.segmentTabWidget
+        prev_index = tab_widget.currentIndex()
 
         with Blocker(self.stimulus_view):
             self.stimulus_view.ui.durSpinBox.setValue(stim_config.stim.dur_s)
@@ -66,17 +69,18 @@ class StimulusController:
             self.stimulus_view.ui.limitSpinBox.setValue(stim_config.limit_v)
 
             # Remove all tabs first
-            while self.stimulus_view.ui.segmentTabWidget.count() > 0:
-                self.stimulus_view.ui.segmentTabWidget.removeTab(0)
+            while tab_widget.count() > 0:
+                tab_widget.removeTab(0)
 
             # Generate as many tabs as needed
-            while self.stimulus_view.ui.segmentTabWidget.count() < len(
-                stim_config.stim.pulses
-            ):
+            while tab_widget.count() < len(stim_config.stim.pulses):
                 self.stimulus_view.add_segment_tab()
 
             for i, pulse in enumerate(stim_config.stim.pulses):
-                widget = self.stimulus_view.ui.segmentTabWidget.widget(i)
+                widget = tab_widget.widget(i)
+                if not isinstance(widget, PulseTabView):
+                    continue
+
                 widget.spinboxes["amp_v"].setValue(pulse.amp_v)
                 widget.spinboxes["start_s"].setValue(pulse.start_s)
                 widget.spinboxes["dur_s"].setValue(pulse.dur_s)
@@ -84,6 +88,10 @@ class StimulusController:
                 widget.spinboxes["step_start_s"].setValue(pulse.step_start_s)
                 widget.spinboxes["step_dur_s"].setValue(pulse.step_dur_s)
                 widget.monophasic_checkbox.setChecked(pulse.is_monophasic)
+
+            if tab_widget.count() > 0:
+                restore_index = min(max(prev_index, 0), tab_widget.count() - 1)
+                tab_widget.setCurrentIndex(restore_index)
 
     def update_plot(self, *_):
         self.stimulus_view.clear_plot()

@@ -28,13 +28,20 @@ class AppView(QMainWindow):
         self.ui.setupUi(self)
         set_global_plot_config()
 
-        self.ui.ampSlider.setMaximum(2 * AMP_SLIDER_SCALE_FACTOR)
-        self.ui.ampSlider.setValue(0)
-        self.ui.ampSlider.setEnabled(False)
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
         self.ui.actionLoad_data.triggered.connect(lambda: self.load_data_with_dialog())
         # self.ui.actionSave_data.triggered.connect()
+
+        self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
+
+        self.plotMagnitude = 1.0
+
+    def setup_widgets(self):
+        """Set up the main plot and controls."""
+        self.ui.ampSlider.setMaximum(2 * AMP_SLIDER_SCALE_FACTOR)
+        self.ui.ampSlider.setValue(0)
+        self.ui.ampSlider.setEnabled(False)
 
         frame, plot = create_plot_widget(
             title="Evoked Response",
@@ -50,12 +57,6 @@ class AppView(QMainWindow):
         self.ui.plotLayout.addWidget(frame)
         self.ui.optionsLayout.insertWidget(0, create_title("Plot options"))
         self.plotWidget = plot
-        self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
-
-        # legend.anchor((1, 0), (1, 0))
-        # legend.setBrush(pg.mkBrush(("w")))
-
-        self.plotMagnitude = 1.0
 
         # Channel slider for data viewing
         self.current_df = None
@@ -72,10 +73,8 @@ class AppView(QMainWindow):
 
         self.ui.optionsLayout.insertLayout(1, form_layout)
 
-        # loaded_df = read_data("data/test.csv")
-        # self.plot_data(loaded_df)
-
     def load_data_with_dialog(self):
+        """Load data from the file system using a dialog."""
         filename = show_load_dialog()
 
         if filename:
@@ -161,4 +160,5 @@ class AppView(QMainWindow):
         )
 
     def set_nidaq_status(self, status: str):
+        """Set the nidaq status label in the UI."""
         self.ui.nidaqStatusLabel.setText(f"Status: {status}")
