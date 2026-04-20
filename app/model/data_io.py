@@ -1,14 +1,20 @@
 import pandas as pd
 
 
-def write_data(file_path, df) -> None:
+def write_data(file_path, df) -> None | str:
     """Write experiment data to a CSV file.
 
     Args:
         file_path (str): The path to the CSV file to write.
         df (pd.DataFrame): The DataFrame to write to the CSV file.
+
+    Returns:
+        None | str: None if successful, or an error message if an error occurs.
     """
-    df.to_csv(file_path, index=False, float_format="%.9g")
+    try:
+        df.to_csv(file_path, index=False, float_format="%.9g")
+    except Exception as e:
+        return str(e)
 
 
 def read_data(file_path) -> pd.DataFrame | str:

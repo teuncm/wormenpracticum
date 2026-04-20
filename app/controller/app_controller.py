@@ -54,32 +54,6 @@ class AppController:
         self.app_view.requestDataLoad.connect(self.load_experiment_data)
         self.app_view.requestDataSave.connect(self.save_experiment_data)
 
-    def save_experiment_data(self):
-        """Save experiment data to a file."""
-        filename = data_dialog.show_save_dialog()
-        if filename is None:
-            info_box(message="No file name was given.")
-            return
-
-        if self.app_model.experiment_df is None:
-            info_box(message="There is no data to save.")
-            return
-
-        data_io.write_data(self.app_model.experiment_df, filename)
-
-    def load_experiment_data(self):
-        filename = data_dialog.show_load_dialog()
-        if filename is None:
-            info_box(message="No file was selected.")
-            return
-
-        df = data_io.read_data(filename)
-        if isinstance(df, str):
-            info_box(message=f"Error loading data: {df}")
-            return
-
-        self.app_model.update_experiment_data(df)
-
     def update_main_plot(self):
         """Update the main plot with the latest experiment data."""
         if self.app_model.experiment_df is not None:
@@ -109,3 +83,39 @@ class AppController:
     def shutdown(self):
         """Clean up resources on application shutdown."""
         self.nidaq_status_timer.stop()
+
+    def save_experiment_data(self):
+        """Save experiment data to a file."""
+        filename = data_dialog.show_save_dialog()
+        if filename is None:
+            info_box(message="No file name was given.").exec()
+            return
+
+        if self.app_model.experiment_df is None:
+            info_box(message="There is no data to save.").exec()
+            return
+
+        msg = data_io.write_data(filename, self.app_model.experiment_df)
+        if msg:
+            info_box(message=f"Error saving data: {msg}").exec()
+        else:
+            success_box = info_box(
+                message="Data saved successfully. The saved file location has been copied to the clipboard.",
+            )
+            success_box.setDetailedText(filename)
+            success_box.exec()
+
+            QApplication.clipboard().setText(filename)
+
+    def load_experiment_data(self):
+        filename = data_dialog.show_load_dialog()
+        if filename is None:
+            info_box(message="No file was selected.").exec()
+            return
+
+        df = data_io.read_data(filename)
+        if isinstance(df, str):
+            info_box(message=f"Error loading data: {df}").exec()
+            return
+
+        self.app_model.update_experiment_data(df)

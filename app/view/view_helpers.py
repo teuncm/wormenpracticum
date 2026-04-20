@@ -155,9 +155,17 @@ def spacer(
     return layout
 
 
-def info_box(title="Info", message="This is an info message."):
-    """Show an information message box."""
-    QMessageBox.information(None, title, message)
+def info_box(
+    message="This is an info message.",
+    title="Info",
+) -> QMessageBox:
+    """Create an information message box and return it."""
+    msg_box = QMessageBox()
+    msg_box.setIcon(QMessageBox.Icon.Information)
+    msg_box.setWindowTitle(title)
+    msg_box.setText(message)
+
+    return msg_box
 
 
 class Blocker:
