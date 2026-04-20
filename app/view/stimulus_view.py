@@ -36,7 +36,24 @@ class StimulusView(QDialog):
         self.ui.setupUi(self)
 
         self.setup_tabs()
+        self.setup_widgets()
+        self.connect_data_signals()
 
+        self.stimulusChanged.emit()
+
+    def connect_data_signals(self):
+
+        self.ui.nSpinBox.valueChanged.connect(self.stimulusChanged)
+        self.ui.stepSlider.valueChanged.connect(self.stepChanged)
+        self.ui.limitSpinBox.valueChanged.connect(self.stimulusChanged)
+        self.ui.durSpinBox.valueChanged.connect(self.stimulusChanged)
+        self.highlightStimulusCheckbox.toggled.connect(
+            self.stimulusHighlightChanged.emit
+        )
+
+        self.stimulusHighlightChanged.emit(self.highlightStimulusCheckbox.isChecked())
+
+    def setup_widgets(self):
         self.highlightStimulusCheckbox = QCheckBox("Highlight selected stimulus")
         self.highlightStimulusCheckbox.setChecked(
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
@@ -71,14 +88,6 @@ class StimulusView(QDialog):
         self.ui.plotLayout.addWidget(frame)
         self.plotWidget = plot
 
-        self.ui.nSpinBox.valueChanged.connect(self.stimulusChanged)
-        self.ui.stepSlider.valueChanged.connect(self.stepChanged)
-        self.ui.limitSpinBox.valueChanged.connect(self.stimulusChanged)
-        self.ui.durSpinBox.valueChanged.connect(self.stimulusChanged)
-        self.highlightStimulusCheckbox.toggled.connect(
-            self.stimulusHighlightChanged.emit
-        )
-
         double_spin_helper(
             self.ui.durSpinBox,
             default_val=DEFAULT_DUR_S,
@@ -94,9 +103,6 @@ class StimulusView(QDialog):
             max_val=DOUBLE_SPIN_MAX_V,
             step=DOUBLE_SPIN_STEP_V,
         )
-
-        self.stimulusHighlightChanged.emit(self.highlightStimulusCheckbox.isChecked())
-        self.stimulusChanged.emit()
 
     def setup_tabs(self):
         self.ui.segmentTabWidget.setTabsClosable(True)

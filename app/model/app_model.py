@@ -1,3 +1,4 @@
+import pandas as pd
 from app.model.stimulus.stimulus_config import DEFAULT_STIMULUS_CONFIG
 from app.model.stimulus.stimulus_generator import StimulusGenerator
 from PySide6.QtCore import QObject, Signal
@@ -5,17 +6,28 @@ from PySide6.QtCore import QObject, Signal
 
 class AppModel(QObject):
     stim_generator: StimulusGenerator
-    experiment_data = None
+    experiment_df: pd.DataFrame | None
 
-    # Signal to emit when stimulus config changed
+    # Emit when stimulus config changed
     stim_config_changed = Signal()
+
+    # Emit when experiment data changed
+    experiment_data_changed = Signal()
 
     def __init__(self):
         super().__init__()
-        self.init_stim_config()
+        self.init_props()
 
-    def init_stim_config(self):
+    def init_props(self):
         self.stim_generator = StimulusGenerator(DEFAULT_STIMULUS_CONFIG)
+        self.experiment_df = None
+
+    def update_experiment_df(self, df):
+        if self.experiment_df is not None and self.experiment_df.equals(df):
+            return
+
+        self.experiment_df = df
+        self.experiment_data_changed.emit()
 
     def update_stim_config(self, stim_config):
         # If no change was made, return

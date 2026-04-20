@@ -17,6 +17,7 @@ class AppController:
         self.init_mvc()
 
         self.connect_app_view_open_signals()
+        self.connect_data_signals()
 
         self.init_nidaq()
 
@@ -44,6 +45,15 @@ class AppController:
         self.app_view.ui.actionImpulse.triggered.connect(self.stimulus_view.show)
         self.app_view.ui.actionProtocol.triggered.connect(self.protocol_view.show)
 
+    def connect_data_signals(self):
+        """Connect signals for loading and saving data."""
+        self.app_model.experiment_data_changed.connect(self.update_main_plot)
+
+    def update_main_plot(self):
+        """Update the main plot with the latest experiment data."""
+        if self.app_model.experiment_df is not None:
+            self.app_view.plot_data(self.app_model.experiment_df)
+
     def init_nidaq(self):
         """Initialize nidaq connection polling."""
         self.refresh_nidaq_status()
@@ -57,7 +67,7 @@ class AppController:
             app.aboutToQuit.connect(self.shutdown)
 
     def start(self):
-        """Start the controller by showing the main view."""
+        """Start the application by showing the main view."""
         self.app_view.show()
 
     def refresh_nidaq_status(self):
