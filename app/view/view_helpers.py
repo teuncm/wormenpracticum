@@ -23,6 +23,14 @@ def set_global_plot_config() -> None:
     """Configure the plot style globally."""
     pg.setConfigOptions(background="w", foreground="k", antialias=True)
 
+    # Silently attempt to enable OpenGL for faster rendering.
+    try:
+        pg.setConfigOptions(useOpenGL=True)
+        print("OpenGL enabled for rendering")
+    except Exception:
+        pg.setConfigOptions(useOpenGL=False)
+        print("Falling back to CPU rendering")
+
 
 def create_plot_widget(
     title=None, x_label=None, x_units=None, y_label=None, y_units=None

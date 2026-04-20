@@ -12,7 +12,7 @@ from app.view.smooth_view import SmoothView
 from app.view.stimulus_view import StimulusView
 from app.view.view_helpers import info_box
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication
 
 
 class AppController:

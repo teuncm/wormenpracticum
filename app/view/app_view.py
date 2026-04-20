@@ -1,8 +1,6 @@
 import numpy as np
 import pyqtgraph as pg
-from app.model.data_io import read_data
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
-from app.view.data_dialog import show_load_dialog
 from app.view.view_helpers import (
     create_plot_widget,
     create_title,
@@ -39,6 +37,7 @@ class AppView(QMainWindow):
         self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
 
         self.plotMagnitude = 1.0
+        self.setup_widgets()
 
     def setup_widgets(self):
         """Set up the main plot and controls."""
