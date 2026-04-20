@@ -1,3 +1,4 @@
+from app.controller.protocol_controller import ProtocolController
 from app.controller.stimulus_controller import StimulusController
 from app.model import data_io
 from app.model.app_model import AppModel
@@ -38,6 +39,9 @@ class AppController:
 
         self.stimulus_controller = StimulusController(
             self.app_model, self.stimulus_view
+        )
+        self.protocol_controller = ProtocolController(
+            self.app_model, self.protocol_view
         )
 
     def connect_app_view_open_signals(self):

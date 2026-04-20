@@ -3,18 +3,25 @@ from app.model.nidaq.protocol_mapping import (
     get_logical_channel_labels,
 )
 from app.window.ui_protocol_window import Ui_ProtocolWindow
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QWidget,
 )
 
 
 class ProtocolView(QWidget):
+    run_requested = Signal()
+
     def __init__(self):
         super().__init__()
 
         self.ui = Ui_ProtocolWindow()
         self.ui.setupUi(self)
         self.populate_channel_dropdowns()
+        self.ui.pushButton.clicked.connect(self.request_run)
+
+    def request_run(self):
+        self.run_requested.emit()
 
     def populate_channel_dropdowns(self):
         channel_labels = get_logical_channel_labels()
@@ -43,4 +50,3 @@ class ProtocolView(QWidget):
     def get_encoded_stim_port_values(self):
         positive_channel, negative_channel = self.get_selected_stim_channels()
         return encode_stim_channel_pair(positive_channel, negative_channel)
-
