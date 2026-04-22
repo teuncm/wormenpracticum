@@ -5,9 +5,22 @@ from PySide6.QtCore import QObject, Signal
 
 
 class AppModel(QObject):
+    """AppModel contains all persistent app data and logic, acting as a single source of truth.
+    It emits signals when data changes, allowing views to react and update accordingly."""
+
+    # Configuration for the stimulus generator
+    stim_config: StimulusConfig
+    # The stimulus generator instance, created based on the current stimulus config
     stim_generator: StimulusGenerator
-    experiment_df: pd.DataFrame | None
-    experiment_effect_df: pd.DataFrame | None
+    # Experimental configuration
+    experiment_config: dict
+    # Experiment metadata
+    experiment_metadata: dict
+    # Raw experiment data as DataFrame
+    raw_data_df: pd.DataFrame | None
+    # Filtered experiment data as DataFrame, cached after applying filters to raw data
+    # If no filters have been applied, values are the same as raw_data_df
+    filtered_data_df: pd.DataFrame | None
 
     # Emit when stimulus config changed
     stim_config_changed = Signal()
@@ -20,25 +33,29 @@ class AppModel(QObject):
         self.init_props()
 
     def init_props(self):
-        self.stim_generator = StimulusGenerator(DEFAULT_STIMULUS_CONFIG)
-        self.experiment_df = None
-        self.experiment_effect_df = None
+        self.stim_config = DEFAULT_STIMULUS_CONFIG
+        self.stim_generator = StimulusGenerator(self.stim_config)
+        self.experiment_config = {}
+        self.experiment_metadata = {}
+        self.raw_data_df = None
+        self.filtered_data_df = None
 
     def update_experiment_data(self, df: pd.DataFrame):
         """Update experiment data with a new dataframe."""
-        if self.experiment_df is not None and self.experiment_df.equals(df):
+        if self.raw_data_df is not None and self.raw_data_df.equals(df):
             return
 
-        self.experiment_df = df
-        self.experiment_effect_df = df
+        self.raw_data_df = df
+        self.filtered_data_df = df
         self.experiment_data_changed.emit()
 
     def update_stim_config(self, stim_config: StimulusConfig):
         """Update the stimulus config with a new config object."""
-        if self.stim_generator.config == stim_config:
+        if self.stim_config == stim_config:
             return
 
-        self.stim_generator = StimulusGenerator(stim_config)
+        self.stim_config = stim_config
+        self.stim_generator = StimulusGenerator(self.stim_config)
         self.stim_config_changed.emit()
 
     def get_x_bounds(self):

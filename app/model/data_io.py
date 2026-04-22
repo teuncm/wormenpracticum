@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 
 
@@ -28,5 +30,22 @@ def read_data(file_path) -> pd.DataFrame | str:
     """
     try:
         return pd.read_csv(file_path)
+    except Exception as e:
+        return str(e)
+
+
+def write_metadata(file_path, metadata) -> None | str:
+    """Write experiment metadata to a JSON file.
+
+    Args:
+        file_path (str): The path to the JSON file to write.
+        metadata (dict): The metadata dictionary to write to the JSON file.
+
+    Returns:
+        None | str: None if successful, or an error message if an error occurs.
+    """
+    try:
+        with open(file_path, "w") as f:
+            json.dump(metadata, f, indent=4)
     except Exception as e:
         return str(e)
