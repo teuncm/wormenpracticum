@@ -131,7 +131,7 @@ class AppController:
 
     def save_experiment_metadata(self, filename):
         """Save experiment metadata to a file.
-        Automatically called when saving experiment metadata."""
+        Automatically called when saving experiment data."""
         base_filename = Path(filename).stem
         metadata_filename = str(Path(filename).with_suffix(".json"))
         now = datetime.now().astimezone()
