@@ -1,40 +1,50 @@
-from app.controller.nidaq.connect_controller import get_first_ai_device
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 
 
 class NidaqModel:
-    nidaq_discovered: bool
     nidaq_device_name: str | None
     nidaq_status: str
 
+    # daq_settings = {
+    #     # identity
+    #     "device_name": device.name,
+    #     "board_name": device.product_type,
+
+    #     # hardware capabilities
+    #     "ai_channel_count": len(device.ai_physical_chans),
+    #     "ao_channel_count": len(device.ao_physical_chans),
+    #     "ai_resolution": ai_channel.ai_resolution,
+    #     "ao_resolution": ao_channel.ao_resolution,
+    #     "ai_min_rate": device.ai_min_rate,
+    #     "ai_max_single_chan_rate": device.ai_max_single_chan_rate,
+    #     "ai_max_multi_chan_rate": device.ai_max_multi_chan_rate,
+    #     "ao_min_rate": device.ao_min_rate,
+    #     "ao_max_rate": device.ao_max_rate,
+    #     "ai_range_high": ai_channel.ai_rng_high,
+    #     "ao_range_high": ao_channel.ao_dac_rng_high,
+
+    #     # app settings
+    #     "ai_rate": ai_rate,
+    #     "ao_rate": ao_rate,
+    #     "ai_voltage_range": tuple(ai_voltage_range),
+    #     "ao_voltage_range": tuple(ao_voltage_range),
+    #     "output_duration": output_duration,
+
+    #     # routing settings
+    #     "positive_channel": 0,
+    #     "negative_channel": 0,
+    #     "routing_word": 0,
+    #     "routing_flags": 128,
+
+    #     # digital port names
+    #     "routing_select_port": f"{device.name}/port0",
+    #     "routing_flag_port": f"{device.name}/port2",
+    # }
+
     def __init__(self):
-        self.nidaq_discovered = False
         self.nidaq_device_name = None
         self.nidaq_status = NI_DAQ_UNAVAILABLE_STATUS
 
-    def discover_first_ai_device(self):
-        self.refresh_discovery_status()
-        return {
-            "discovered": self.nidaq_discovered,
-            "device_name": self.nidaq_device_name,
-            "status": self.nidaq_status,
-        }
-
-    def refresh_discovery_status(self):
-        try:
-            device_name = get_first_ai_device()
-        except Exception as exc:
-            self.set_discovery_state(False, None, f"NI-DAQ discovery error: {exc}")
-            return self.nidaq_status
-
-        if device_name is None:
-            self.set_discovery_state(False, None, NI_DAQ_UNAVAILABLE_STATUS)
-            return self.nidaq_status
-
-        self.set_discovery_state(True, device_name, f"NI-DAQ ready: {device_name}")
-        return self.nidaq_status
-
-    def set_discovery_state(self, discovered, device_name, status):
-        self.nidaq_discovered = discovered
+    def set_discovery_state(self, device_name, status):
         self.nidaq_device_name = device_name
         self.nidaq_status = status

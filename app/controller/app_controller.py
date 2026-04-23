@@ -2,6 +2,7 @@ import getpass
 from datetime import datetime
 from pathlib import Path
 
+from app.controller.nidaq_controller import NidaqController
 from app.controller.protocol_controller import ProtocolController
 from app.controller.stimulus_controller import StimulusController
 from app.model import data_io
@@ -27,12 +28,14 @@ class AppController:
         self.connect_app_view_open_signals()
         self.connect_data_signals()
 
-        self.init_nidaq()
+        # self.init_nidaq()
 
     def init_mvc(self):
         """Initialize mvc components."""
         self.app_model = AppModel()
+
         self.nidaq_model = NidaqModel()
+        self.nidaq_controller = NidaqController(self.nidaq_model)
 
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
@@ -61,6 +64,11 @@ class AppController:
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
         self.app_view.requestDataLoad.connect(self.load_experiment_data)
         self.app_view.requestDataSave.connect(self.save_experiment_data)
+        self.app_view.ui.magicButton.clicked.connect(self.run_magic)
+
+    def run_magic(self):
+        """In the magic function we will connect to a DAQ and send a hello world signal."""
+        self.nidaq_controller.magic()
 
     def update_main_plot(self):
         """Update the main plot with the latest experiment data."""
