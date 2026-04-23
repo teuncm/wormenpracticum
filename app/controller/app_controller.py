@@ -2,6 +2,7 @@ import getpass
 from datetime import datetime
 from pathlib import Path
 
+from app.controller.filter_controller import FilterController
 from app.controller.nidaq_controller import NidaqController
 from app.controller.protocol_controller import ProtocolController
 from app.controller.stimulus_controller import StimulusController
@@ -13,8 +14,8 @@ from app.view import data_dialog
 from app.view.about_view import AboutView
 from app.view.analyze_view import AnalyzeView
 from app.view.app_view import AppView
+from app.view.filter_view import FilterView
 from app.view.protocol_view import ProtocolView
-from app.view.smooth_view import SmoothView
 from app.view.stimulus_view import StimulusView
 from app.view.view_helpers import info_box
 from PySide6.QtCore import QTimer
@@ -37,12 +38,14 @@ class AppController:
         self.nidaq_model = NidaqModel()
         self.nidaq_controller = NidaqController(self.nidaq_model)
 
+        self.filter_controller = FilterController(self.app_model)
+
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
         self.about_view = AboutView()
         self.analyze_view = AnalyzeView()
-        self.smooth_view = SmoothView()
+        self.filter_view = FilterView()
 
         self.stimulus_controller = StimulusController(
             self.app_model, self.stimulus_view
@@ -57,7 +60,7 @@ class AppController:
         """Connect signals for opening views from the app view."""
         self.app_view.ui.actionAbout.triggered.connect(self.about_view.show)
         self.app_view.ui.actionAnalyze.triggered.connect(self.analyze_view.show)
-        self.app_view.ui.actionSmoothing.triggered.connect(self.smooth_view.show)
+        self.app_view.ui.actionSmoothing.triggered.connect(self.filter_view.show)
         self.app_view.ui.actionImpulse.triggered.connect(self.stimulus_view.show)
         self.app_view.ui.actionProtocol.triggered.connect(self.protocol_view.show)
 
