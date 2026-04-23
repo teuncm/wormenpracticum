@@ -43,6 +43,8 @@ class NidaqController:
         waveform = self.app_model.stimulus_generator.sample_at_idx(sr_hz=sr, stim_idx=0)
         n_samples = len(waveform)
 
+        # TODO: normalize samples for the buffer!
+
         routing_word, routing_flags = self.generate_routing_mask(
             positive_channel=3,
             negative_channel=4,
