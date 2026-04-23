@@ -51,6 +51,8 @@ class AppController:
             self.app_model, self.protocol_view
         )
 
+        self.init_nidaq()
+
     def connect_app_view_open_signals(self):
         """Connect signals for opening views from the app view."""
         self.app_view.ui.actionAbout.triggered.connect(self.about_view.show)
@@ -65,6 +67,7 @@ class AppController:
         self.app_view.requestDataLoad.connect(self.load_experiment_data)
         self.app_view.requestDataSave.connect(self.save_experiment_data)
         self.app_view.ui.magicButton.clicked.connect(self.run_magic)
+        self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 
     def run_magic(self):
         """In the magic function we will connect to a DAQ and send a hello world signal."""
@@ -77,10 +80,9 @@ class AppController:
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""
-        self.refresh_nidaq_status()
         self.nidaq_status_timer = QTimer(self.app_view)
         self.nidaq_status_timer.setInterval(NI_DAQ_DISCOVERY_POLL_INTERVAL_MS)
-        self.nidaq_status_timer.timeout.connect(self.refresh_nidaq_status)
+        self.nidaq_status_timer.timeout.connect(self.discover_nidaq_device)
         self.nidaq_status_timer.start()
 
         app = QApplication.instance()
@@ -91,10 +93,13 @@ class AppController:
         """Start the application by showing the main view."""
         self.app_view.show()
 
-    def refresh_nidaq_status(self):
-        """Refresh the nidaq discovery status and update the main view."""
-        self.nidaq_model.refresh_discovery_status()
-        self.app_view.set_nidaq_status(self.nidaq_model.nidaq_status)
+    def discover_nidaq_device(self):
+        """Refresh the nidaq discovery status."""
+        self.nidaq_controller.discover()
+
+    def update_nidaq_label(self):
+        """Update the nidaq status label in the app view."""
+        self.app_view.set_nidaq_status(self.nidaq_model.device_status)
 
     def shutdown(self):
         """Clean up resources on application shutdown."""
