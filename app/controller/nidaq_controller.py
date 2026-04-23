@@ -8,8 +8,9 @@ from nidaqmx.task import Task
 
 
 class NidaqController:
-    def __init__(self, nidaq_model):
+    def __init__(self, nidaq_model, app_model):
         self.nidaq_model = nidaq_model
+        self.app_model = app_model
 
     def discover(self) -> bool:
         """Discover NI-DAQ devices and update model state accordingly."""
@@ -31,12 +32,16 @@ class NidaqController:
         return False
 
     def execute(self):
-        sr = 1000
-        n_samples = 200
+        sr = 5000
+        # n_samples = 200
 
-        waveform = np.array(
-            [0.5 * (1 + np.sin(2 * np.pi * 5 * t / sr)) for t in range(n_samples)]
-        )
+        # waveform = np.array(
+        #     [0.5 * (1 + np.sin(2 * np.pi * 5 * t / sr)) for t in range(n_samples)]
+        # )
+
+        # Pull from the generator.
+        waveform = self.app_model.stimulus_generator.sample_at_idx(sr_hz=sr, stim_idx=0)
+        n_samples = len(waveform)
 
         routing_word, routing_flags = self.generate_routing_mask(
             positive_channel=3,

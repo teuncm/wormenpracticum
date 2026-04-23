@@ -36,7 +36,7 @@ class AppController:
         self.app_model = AppModel()
 
         self.nidaq_model = NidaqModel()
-        self.nidaq_controller = NidaqController(self.nidaq_model)
+        self.nidaq_controller = NidaqController(self.nidaq_model, self.app_model)
 
         self.filter_controller = FilterController(self.app_model)
 
