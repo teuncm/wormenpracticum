@@ -1,7 +1,56 @@
 from app.view.view_helpers import set_global_plot_config
 from app.window.ui_main_window import Ui_MainWindow
-from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QMainWindow, QWidget
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QStyle,
+    QStyleOptionTab,
+    QStylePainter,
+    QTabBar,
+    QTabWidget,
+    QWidget,
+)
+
+
+class HorizontalTabBar(QTabBar):
+    """Custom tab bar to display tabs on the left side of the window
+    with the correct text rotation."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setShape(QTabBar.Shape.RoundedWest)
+
+    def tabSizeHint(self, index):
+        size = super().tabSizeHint(index)
+        # Swap width/height because west tabs are normally vertical.
+        return QSize(size.height(), size.width() + 40)
+
+    def paintEvent(self, event):
+        painter = QStylePainter(self)
+        try:
+            for index in range(self.count()):
+                option = QStyleOptionTab()
+                self.initStyleOption(option, index)
+
+                # Important: draw the tab as a WEST tab.
+                # This makes the selected tab connect to the page on the east/right side.
+                option.shape = QTabBar.Shape.RoundedWest
+
+                painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
+
+                rect = option.rect.adjusted(8, 0, -8, 0)
+
+                painter.drawItemText(
+                    rect,
+                    Qt.AlignmentFlag.AlignCenter.value | Qt.TextFlag.TextWordWrap.value,
+                    option.palette,
+                    bool(option.state & QStyle.StateFlag.State_Enabled),
+                    option.text,
+                    QPalette.ColorRole.ButtonText,
+                )
+        finally:
+            painter.end()
 
 
 class AppView(QMainWindow):
@@ -16,32 +65,24 @@ class AppView(QMainWindow):
 
         set_global_plot_config()
 
-        self.ui.tabWidget.clear()
+        tabs = self.ui.tabWidget
+        tabs.clear()
+        tabs.setTabBar(HorizontalTabBar())
+        tabs.setTabPosition(QTabWidget.TabPosition.West)
+        tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
+        self.ui.actionExit.triggered.connect(self.close)
 
-    def set_tab_views(
-        self,
-        *,
-        stimulus_view: QWidget,
-        acquisition_view: QWidget,
-        overview_view: QWidget,
-        analyze_view: QWidget,
-    ):
-        """Populate the main window tabs with the application views."""
+    def clear_tabs(self):
         self.ui.tabWidget.clear()
-        self.ui.tabWidget.addTab(stimulus_view, "Stimulus")
-        self.ui.tabWidget.addTab(acquisition_view, "Data acquisition")
-        self.ui.tabWidget.addTab(overview_view, "Overview")
-        self.ui.tabWidget.addTab(analyze_view, "Analyse")
-        self.show_tab(overview_view)
 
-    def show_tab(self, widget: QWidget):
-        """Switch to the tab containing widget."""
-        index = self.ui.tabWidget.indexOf(widget)
-        if index >= 0:
-            self.ui.tabWidget.setCurrentIndex(index)
+    def add_tab(self, widget: QWidget, label: str):
+        self.ui.tabWidget.addTab(widget, label)
+
+    def set_current_tab_index(self, index: int):
+        self.ui.tabWidget.setCurrentIndex(index)
 
     def on_load_triggered(self, checked=False):
         self.requestDataLoad.emit()

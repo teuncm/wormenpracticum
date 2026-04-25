@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1061</width>
-    <height>507</height>
+    <width>1602</width>
+    <height>991</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,26 +36,11 @@
        <enum>QTabWidget::TabPosition::West</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Stimulus</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Data acquisition</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_3">
-       <attribute name="title">
-        <string>Overview</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string>Analyse</string>
+        <string>Placeholder vertical tab</string>
        </attribute>
       </widget>
      </widget>
@@ -67,7 +52,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1061</width>
+     <width>1602</width>
      <height>33</height>
     </rect>
    </property>
@@ -76,21 +61,17 @@
      <string>File</string>
     </property>
     <addaction name="actionNew"/>
+    <addaction name="separator"/>
     <addaction name="actionLoad_data"/>
     <addaction name="actionSave_data"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_stimulus"/>
+    <addaction name="actionSave_stimulus"/>
+    <addaction name="separator"/>
     <addaction name="actionAbout"/>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>Edit</string>
-    </property>
-    <addaction name="actionImpulse"/>
-    <addaction name="actionProtocol"/>
-    <addaction name="actionSmoothing"/>
-    <addaction name="actionAnalyze"/>
+    <addaction name="actionExit"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
   </widget>
   <action name="actionLoad_data">
    <property name="text">
@@ -135,6 +116,21 @@
   <action name="actionNew">
    <property name="text">
     <string>New</string>
+   </property>
+  </action>
+  <action name="actionLoad_stimulus">
+   <property name="text">
+    <string>Load stimulus...</string>
+   </property>
+  </action>
+  <action name="actionSave_stimulus">
+   <property name="text">
+    <string>Save stimulus...</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>

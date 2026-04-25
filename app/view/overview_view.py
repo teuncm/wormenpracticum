@@ -5,7 +5,6 @@ from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.view.view_helpers import (
     create_plot_widget,
     create_title,
-    set_global_plot_config,
     spacer,
 )
 from app.window.ui_overview_window import Ui_OverviewWindow
@@ -29,7 +28,6 @@ class OverviewView(QWidget):
 
         self.ui = Ui_OverviewWindow()
         self.ui.setupUi(self)
-        set_global_plot_config()
 
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 

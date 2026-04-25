@@ -27,7 +27,6 @@ class AppController:
     def __init__(self):
         self.init_mvc()
 
-        self.connect_app_view_open_signals()
         self.connect_data_signals()
 
         # self.init_nidaq()
@@ -49,12 +48,12 @@ class AppController:
         self.analyze_view = AnalyzeView()
         self.filter_view = FilterView()
 
-        self.app_view.set_tab_views(
-            stimulus_view=self.stimulus_view,
-            acquisition_view=self.protocol_view,
-            overview_view=self.overview_view,
-            analyze_view=self.analyze_view,
-        )
+        self.app_view.clear_tabs()
+        self.app_view.add_tab(self.stimulus_view, "Stimulus\nDesigner")
+        self.app_view.add_tab(self.protocol_view, "Data\nAcquisition")
+        self.app_view.add_tab(self.overview_view, "Filter")
+        self.app_view.add_tab(self.analyze_view, "Analyse")
+        self.app_view.set_current_tab_index(2)
 
         self.stimulus_controller = StimulusController(
             self.app_model, self.stimulus_view
@@ -64,20 +63,6 @@ class AppController:
         )
 
         self.init_nidaq()
-
-    def connect_app_view_open_signals(self):
-        """Connect signals for opening views from the app view."""
-        self.app_view.ui.actionAbout.triggered.connect(self.about_view.show)
-        self.app_view.ui.actionAnalyze.triggered.connect(
-            lambda _checked=False: self.app_view.show_tab(self.analyze_view)
-        )
-        self.app_view.ui.actionSmoothing.triggered.connect(self.filter_view.show)
-        self.app_view.ui.actionImpulse.triggered.connect(
-            lambda _checked=False: self.app_view.show_tab(self.stimulus_view)
-        )
-        self.app_view.ui.actionProtocol.triggered.connect(
-            lambda _checked=False: self.app_view.show_tab(self.protocol_view)
-        )
 
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
@@ -109,7 +94,7 @@ class AppController:
 
     def start(self):
         """Start the application by showing the main view."""
-        self.app_view.show()
+        self.app_view.showMaximized()
 
     def discover_nidaq_device(self):
         """Refresh the nidaq discovery status."""
