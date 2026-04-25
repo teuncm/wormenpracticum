@@ -16,6 +16,7 @@ from app.view.view_helpers import (
 )
 from app.window.ui_stimulus_window import Ui_StimulusWindow
 from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -30,6 +31,10 @@ SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX = 6
 
 
 class TallSegmentTabBar(QTabBar):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
         return QSize(
@@ -132,6 +137,7 @@ class StimulusView(QDialog):
         self.add_segment_tab()
 
         new_segment_button = QPushButton("+")
+        new_segment_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         button_height = max(
             tab_bar.tabSizeHint(0).height() - SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX,
             28,

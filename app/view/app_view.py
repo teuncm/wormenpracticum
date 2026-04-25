@@ -1,7 +1,7 @@
 from app.view.view_helpers import set_global_plot_config
 from app.window.ui_app_window import Ui_AppWindow
 from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QPalette
+from PySide6.QtGui import QCursor, QPalette
 from PySide6.QtWidgets import (
     QMainWindow,
     QStyle,
@@ -20,6 +20,7 @@ class HorizontalTabBar(QTabBar):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setShape(QTabBar.Shape.RoundedWest)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
@@ -71,6 +72,9 @@ class AppView(QMainWindow):
         tabs.setTabBar(HorizontalTabBar())
         tabs.setTabPosition(QTabWidget.TabPosition.West)
         tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
+
+        # self.ui.menuBar.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.ui.menuFile.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
