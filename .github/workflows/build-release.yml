@@ -1,0 +1,92 @@
+name: Build release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-latest
+            build-command: ./tools/build.ps1
+            build-shell: pwsh
+            artifact-name: wormenpracticum-windows
+            artifact-path: dist/wormenpracticum.exe
+          - platform: macos
+            runner: macos-latest
+            build-command: bash ./tools/build.sh
+            build-shell: bash
+            artifact-name: wormenpracticum-macos
+            artifact-path: wormenpracticum-macos.zip
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: Install dependencies
+        run: uv sync --locked --group dev
+
+      - name: Build ${{ matrix.platform }}
+        shell: ${{ matrix.build-shell }}
+        run: ${{ matrix.build-command }}
+
+      - name: Package macOS app
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          if [ -d "dist/wormenpracticum.app" ]; then
+            ditto -c -k --keepParent "dist/wormenpracticum.app" "wormenpracticum-macos.zip"
+          else
+            ditto -c -k "dist/wormenpracticum" "wormenpracticum-macos.zip"
+          fi
+
+      - name: Upload ${{ matrix.platform }} build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-path }}
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download builds
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}-build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          body: |
+            Automated build from `${{ github.ref_name }}`.
+
+            Commit: `${{ github.sha }}`
+          target_commitish: ${{ github.sha }}
+          files: |
+            release-assets/wormenpracticum-windows/wormenpracticum.exe
+            release-assets/wormenpracticum-macos/wormenpracticum-macos.zip
+          make_latest: true
