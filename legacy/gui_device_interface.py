@@ -1,12 +1,10 @@
 import nidaqmx
 import nidaqmx.system
 from nidaqmx.system import System
-from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE, VoltageUnits, TerminalConfiguration, LineGrouping
+from nidaqmx.constants import AcquisitionType, VoltageUnits, TerminalConfiguration, LineGrouping
 from nidaqmx.stream_readers import AnalogMultiChannelReader
 from nidaqmx.stream_writers import AnalogMultiChannelWriter
 import numpy as np
-import pickle
-import time
 from scipy.signal import convolve
 
 

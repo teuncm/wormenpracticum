@@ -4,11 +4,11 @@ import random
 import pickle
 import numpy as np
 import pyqtgraph as pg
-from gui_device_interface import check_if_device_is_connected, get_channels, read_device
+from gui_device_interface import check_if_device_is_connected, read_device
 from ui_GUI import Ui_Widget
-from PySide6.QtWidgets import QApplication, QWidget, QRadioButton, QVBoxLayout, QButtonGroup, QFileDialog, QMessageBox
-from PySide6.QtGui import QIcon, QPixmap, QFont, QColor, QTransform
-from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsTextItem, QLabel, QSlider, QHBoxLayout
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QFileDialog, QMessageBox
+from PySide6.QtGui import QPixmap, QFont, QColor, QTransform
+from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsTextItem, QLabel
 from PySide6.QtCore import QTimer
 from PySide6.QtCore import Qt, QFile
 from PySide6.QtUiTools import QUiLoader
@@ -36,7 +36,7 @@ class Widget(QWidget):
         
         deviceName = check_if_device_is_connected()
         if deviceName:
-            self.ui.DeviceLink.setText(f"Device connected")
+            self.ui.DeviceLink.setText("Device connected")
             self.ui.DeviceLink.setStyleSheet("color: green")
         
         self.layout = QVBoxLayout(self)
@@ -231,7 +231,7 @@ class Widget(QWidget):
         deviceName = check_if_device_is_connected()
         if not deviceName:
             QMessageBox.warning(self, "Warning", "No device connected. Please connect a device to proceed. Otherwise, load a file.")
-            self.ui.DeviceLink.setText(f"Disconnected")
+            self.ui.DeviceLink.setText("Disconnected")
             self.ui.DeviceLink.setStyleSheet("color: red")
             return
         print("selected button numbers:", selected_button_numbers)
@@ -296,10 +296,10 @@ class Widget(QWidget):
     def on_device_link_clicked(self):
         deviceName = check_if_device_is_connected()
         if deviceName:
-            self.ui.DeviceLink.setText(f"Device connected")
+            self.ui.DeviceLink.setText("Device connected")
             self.ui.DeviceLink.setStyleSheet("color: green")
         else:
-            self.ui.DeviceLink.setText(f"Disconnected")
+            self.ui.DeviceLink.setText("Disconnected")
             self.ui.DeviceLink.setStyleSheet("color: red")
             
     def on_save_button_clicked(self):

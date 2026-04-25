@@ -21,9 +21,9 @@ dev = [
 ]
 
 [tool.ruff]
-src = ["app", "tests", "tools"]
 exclude = [
     "app/window/",
+    "legacy",
 ]
 
 [tool.ruff.format]
