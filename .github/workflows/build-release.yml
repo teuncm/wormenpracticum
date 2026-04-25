@@ -18,14 +18,10 @@ jobs:
         include:
           - platform: windows
             runner: windows-latest
-            build-command: ./tools/build.ps1
-            build-shell: pwsh
             artifact-name: wormenpracticum-windows
             artifact-path: dist/wormenpracticum.exe
           - platform: macos
             runner: macos-latest
-            build-command: bash ./tools/build.sh
-            build-shell: bash
             artifact-name: wormenpracticum-macos
             artifact-path: wormenpracticum-macos.zip
 
@@ -44,9 +40,15 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --group dev
 
-      - name: Build ${{ matrix.platform }}
-        shell: ${{ matrix.build-shell }}
-        run: ${{ matrix.build-command }}
+      - name: Build Windows
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: ./tools/build.ps1
+
+      - name: Build macOS
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: bash ./tools/build.sh
 
       - name: Package macOS app
         if: matrix.platform == 'macos'
