@@ -7,14 +7,12 @@ from PySide6.QtWidgets import QApplication
 
 
 def main():
+    # Avoid scaling issues on high DPI displays.
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
 
     app = QApplication(sys.argv)
-
-    # Platform-independent style
-    # app.setStyle("Fusion")
 
     # Global window icon
     app.setWindowIcon(QIcon(resource_path("app/window/icon.ico")))

@@ -1,5 +1,5 @@
 from app.view.view_helpers import set_global_plot_config
-from app.window.ui_main_window import Ui_MainWindow
+from app.window.ui_app_window import Ui_AppWindow
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
@@ -60,7 +60,7 @@ class AppView(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.ui = Ui_MainWindow()
+        self.ui = Ui_AppWindow()
         self.ui.setupUi(self)
 
         set_global_plot_config()
