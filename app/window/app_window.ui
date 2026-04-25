@@ -68,6 +68,7 @@
     <addaction name="actionLoad_data"/>
     <addaction name="actionSave_data"/>
     <addaction name="separator"/>
+    <addaction name="actionDebug"/>
     <addaction name="actionAbout"/>
     <addaction name="actionExit"/>
    </widget>
@@ -131,6 +132,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionDebug">
+   <property name="text">
+    <string>Debug</string>
    </property>
   </action>
  </widget>

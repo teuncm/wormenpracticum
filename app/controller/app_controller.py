@@ -52,7 +52,7 @@ class AppController:
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
         self.app_view.add_tab(self.protocol_view, "Data\nacquisition")
         self.app_view.add_tab(self.overview_view, "Filter")
-        self.app_view.add_tab(self.analyze_view, "Analyse")
+        self.app_view.add_tab(self.analyze_view, "Analyze")
         self.app_view.set_current_tab_index(2)
 
         self.stimulus_controller = StimulusController(

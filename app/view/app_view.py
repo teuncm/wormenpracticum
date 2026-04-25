@@ -24,7 +24,7 @@ class HorizontalTabBar(QTabBar):
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
         # Swap width/height because west tabs are normally vertical.
-        return QSize(size.height(), size.width() + 60)
+        return QSize(size.height(), size.width() + 75)
 
     def paintEvent(self, event):
         painter = QStylePainter(self)
