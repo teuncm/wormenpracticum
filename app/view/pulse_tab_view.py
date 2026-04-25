@@ -18,6 +18,7 @@ class PulseTabView(QWidget):
         layout = QGridLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+        layout.addWidget(QLabel("Parameter"), 0, 0)
         layout.addWidget(QLabel("Base"), 0, 1)
         layout.addWidget(QLabel("Step"), 0, 2)
 

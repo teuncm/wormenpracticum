@@ -15,13 +15,27 @@ from app.view.view_helpers import (
     double_spin_helper,
 )
 from app.window.ui_stimulus_window import Ui_StimulusWindow
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
     QPushButton,
     QSizePolicy,
+    QTabBar,
 )
+
+SEGMENT_TAB_EXTRA_HEIGHT_PX = 12
+SEGMENT_TAB_MIN_HEIGHT_PX = 38
+SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX = 6
+
+
+class TallSegmentTabBar(QTabBar):
+    def tabSizeHint(self, index):
+        size = super().tabSizeHint(index)
+        return QSize(
+            size.width(),
+            max(size.height() + SEGMENT_TAB_EXTRA_HEIGHT_PX, SEGMENT_TAB_MIN_HEIGHT_PX),
+        )
 
 
 class StimulusView(QDialog):
@@ -54,7 +68,7 @@ class StimulusView(QDialog):
         self.stimulusHighlightChanged.emit(self.highlightStimulusCheckbox.isChecked())
 
     def setup_widgets(self):
-        self.highlightStimulusCheckbox = QCheckBox("Highlight selected stimulus")
+        self.highlightStimulusCheckbox = QCheckBox("Highlight selected pulse")
         self.highlightStimulusCheckbox.setChecked(
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
         )
@@ -105,18 +119,24 @@ class StimulusView(QDialog):
         )
 
     def setup_tabs(self):
+        self.ui.segmentTabWidget.setTabBar(TallSegmentTabBar())
         self.ui.segmentTabWidget.setTabsClosable(True)
         self.ui.segmentTabWidget.tabCloseRequested.connect(self.handle_close_tab)
         self.ui.segmentTabWidget.setMovable(True)
-        self.ui.segmentTabWidget.tabBar().setUsesScrollButtons(True)
-        self.ui.segmentTabWidget.tabBar().tabMoved.connect(self.handle_move_tab)
+        tab_bar = self.ui.segmentTabWidget.tabBar()
+        tab_bar.setUsesScrollButtons(True)
+        tab_bar.tabMoved.connect(self.handle_move_tab)
         self.ui.segmentTabWidget.currentChanged.connect(self.renumber_tabs)
 
         # Add base segment tab.
         self.add_segment_tab()
 
         new_segment_button = QPushButton("+")
-        new_segment_button.setFixedWidth(25)
+        button_height = max(
+            tab_bar.tabSizeHint(0).height() - SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX,
+            28,
+        )
+        new_segment_button.setFixedSize(30, button_height)
         new_segment_button.clicked.connect(self.add_segment_tab)
         self.ui.segmentTabWidget.setCornerWidget(
             new_segment_button, Qt.Corner.TopRightCorner
@@ -129,7 +149,7 @@ class StimulusView(QDialog):
 
     def renumber_tabs(self):
         for i in range(self.ui.segmentTabWidget.count()):
-            self.ui.segmentTabWidget.setTabText(i, f"{i + 1}")
+            self.ui.segmentTabWidget.setTabText(i, f"Pulse {i + 1}")
 
         self.stimulusChanged.emit()
         self.stepChanged.emit()
