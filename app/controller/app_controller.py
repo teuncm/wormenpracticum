@@ -49,8 +49,8 @@ class AppController:
         self.filter_view = FilterView()
 
         self.app_view.clear_tabs()
-        self.app_view.add_tab(self.stimulus_view, "Stimulus\nDesigner")
-        self.app_view.add_tab(self.protocol_view, "Data\nAcquisition")
+        self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
+        self.app_view.add_tab(self.protocol_view, "Data\nacquisition")
         self.app_view.add_tab(self.overview_view, "Filter")
         self.app_view.add_tab(self.analyze_view, "Analyse")
         self.app_view.set_current_tab_index(2)
