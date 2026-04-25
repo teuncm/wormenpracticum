@@ -1,168 +1,50 @@
-import numpy as np
-import pandas as pd
-import pyqtgraph as pg
-from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
-from app.view.view_helpers import (
-    create_plot_widget,
-    create_title,
-    set_global_plot_config,
-    spacer,
-)
+from app.view.view_helpers import set_global_plot_config
 from app.window.ui_main_window import Ui_MainWindow
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QFormLayout,
-    QMainWindow,
-    QSlider,
-)
-
-AMP_SLIDER_SCALE_FACTOR = 100
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QMainWindow, QWidget
 
 
 class AppView(QMainWindow):
     requestDataLoad = Signal()
     requestDataSave = Signal()
-    _current_df: pd.DataFrame | None = None
 
     def __init__(self):
         super().__init__()
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
         set_global_plot_config()
 
-        self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
+        self.ui.tabWidget.clear()
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
 
-        self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
+    def set_tab_views(
+        self,
+        *,
+        stimulus_view: QWidget,
+        acquisition_view: QWidget,
+        overview_view: QWidget,
+        analyze_view: QWidget,
+    ):
+        """Populate the main window tabs with the application views."""
+        self.ui.tabWidget.clear()
+        self.ui.tabWidget.addTab(stimulus_view, "Stimulus")
+        self.ui.tabWidget.addTab(acquisition_view, "Data acquisition")
+        self.ui.tabWidget.addTab(overview_view, "Overview")
+        self.ui.tabWidget.addTab(analyze_view, "Analyse")
+        self.show_tab(overview_view)
 
-        self.plotMagnitude = 1.0
-        self.setup_widgets()
-
-    def setup_widgets(self):
-        """Set up the main plot and controls."""
-        self.ui.ampSlider.setMaximum(2 * AMP_SLIDER_SCALE_FACTOR)
-        self.ui.ampSlider.setValue(0)
-        self.ui.ampSlider.setEnabled(False)
-
-        frame, plot = create_plot_widget(
-            title="Evoked Response",
-            x_label="Time",
-            x_units="s",
-            y_label="Voltage",
-            y_units="V",
-        )
-
-        spacer(self.ui.centralwidget.layout())
-
-        self.ui.plotLayout.addWidget(create_title("Evoked response plot"))
-        self.ui.plotLayout.addWidget(frame)
-        self.ui.optionsLayout.insertWidget(0, create_title("Plot options"))
-        self.plotWidget = plot
-
-        # Channel slider for data viewing
-        self._current_df = None
-        self.channel_slider = QSlider(Qt.Orientation.Horizontal)
-        self.channel_slider.setMinimum(0)
-        self.channel_slider.setValue(0)
-        self.channel_slider.setEnabled(False)
-        self.channel_slider.valueChanged.connect(self.on_channel_changed)
-
-        # Create form layout for sliders
-        form_layout = QFormLayout()
-        form_layout.addRow("Amplification:", self.ui.ampSlider)
-        form_layout.addRow("Channel:", self.channel_slider)
-
-        self.ui.optionsLayout.insertLayout(1, form_layout)
+    def show_tab(self, widget: QWidget):
+        """Switch to the tab containing widget."""
+        index = self.ui.tabWidget.indexOf(widget)
+        if index >= 0:
+            self.ui.tabWidget.setCurrentIndex(index)
 
     def on_load_triggered(self, checked=False):
         self.requestDataLoad.emit()
 
     def on_save_triggered(self, checked=False):
         self.requestDataSave.emit()
-
-    def plot_data(self, df):
-        """Plot data from the file system.
-
-        Args:
-            df (DataFrame): DataFrame of data to plot
-        """
-        self._current_df = df
-
-        # Set up channel slider
-        n_channels = df.shape[1] - 1  # Exclude time column
-        self.channel_slider.setMaximum(n_channels - 1)
-        self.channel_slider.setValue(0)
-        self.channel_slider.setEnabled(True)
-
-        # Plot the first channel
-        self.plotWidget.clear()
-        self.plot_channel(0)
-
-        # Enable amplitude slider now that data is loaded
-        self.ui.ampSlider.setEnabled(True)
-
-        # Adjust x viewbox limits based on dataframe.
-        self.plotWidget.getViewBox().setLimits(
-            xMin=df.iloc[:, 0].min(), xMax=df.iloc[:, 0].max()
-        )
-
-        self.plotMagnitude = np.max(np.abs(df.iloc[:, 1:]))
-
-    def plot_channel(self, channel_idx):
-        """Plot a single channel from the loaded data.
-
-        Args:
-            channel_idx (int): Index of the channel to plot (0-based, excluding time)
-        """
-        if (
-            self._current_df is None
-            or channel_idx < 0
-            or channel_idx >= self._current_df.shape[1] - 1
-        ):
-            return
-
-        # Column index is channel_idx + 1 (since column 0 is time)
-        col_idx = channel_idx + 1
-        channel_name = self._current_df.columns[col_idx]
-
-        self.plotWidget.plot(
-            self._current_df.iloc[:, 0],
-            self._current_df.iloc[:, col_idx],
-            name=channel_name,
-            pen=pg.mkPen(color="b", width=2),
-        )
-
-        self.plotWidget.setTitle(f"Channel: {channel_name}")
-
-    def on_channel_changed(self, value):
-        """Handle channel slider changes.
-
-        Args:
-            value (int): New channel index
-        """
-        if self._current_df is not None:
-            self.plotWidget.clear()
-            self.plot_channel(value)
-
-    def update_plot_amplitude(self, value):
-        """Scale plot amplitude based on slider value.
-
-        Args:
-            value (int): Slider value
-        """
-        view_scale_factor = value / float(AMP_SLIDER_SCALE_FACTOR)
-        self.plotWidget.getViewBox().setRange(
-            yRange=(
-                # -view_scale_factor * self.plotMagnitude,
-                # view_scale_factor * self.plotMagnitude,
-                -view_scale_factor * 2,
-                view_scale_factor * 2,
-            )
-        )
-
-    def set_nidaq_status(self, status: str):
-        """Set the nidaq status label in the UI."""
-        self.ui.nidaqStatusLabel.setText(f"Status: {status}")

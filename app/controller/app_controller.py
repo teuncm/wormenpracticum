@@ -15,6 +15,7 @@ from app.view.about_view import AboutView
 from app.view.analyze_view import AnalyzeView
 from app.view.app_view import AppView
 from app.view.filter_view import FilterView
+from app.view.overview_view import OverviewView
 from app.view.protocol_view import ProtocolView
 from app.view.stimulus_view import StimulusView
 from app.view.view_helpers import info_box
@@ -43,9 +44,17 @@ class AppController:
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
+        self.overview_view = OverviewView()
         self.about_view = AboutView()
         self.analyze_view = AnalyzeView()
         self.filter_view = FilterView()
+
+        self.app_view.set_tab_views(
+            stimulus_view=self.stimulus_view,
+            acquisition_view=self.protocol_view,
+            overview_view=self.overview_view,
+            analyze_view=self.analyze_view,
+        )
 
         self.stimulus_controller = StimulusController(
             self.app_model, self.stimulus_view
@@ -59,17 +68,23 @@ class AppController:
     def connect_app_view_open_signals(self):
         """Connect signals for opening views from the app view."""
         self.app_view.ui.actionAbout.triggered.connect(self.about_view.show)
-        self.app_view.ui.actionAnalyze.triggered.connect(self.analyze_view.show)
+        self.app_view.ui.actionAnalyze.triggered.connect(
+            lambda _checked=False: self.app_view.show_tab(self.analyze_view)
+        )
         self.app_view.ui.actionSmoothing.triggered.connect(self.filter_view.show)
-        self.app_view.ui.actionImpulse.triggered.connect(self.stimulus_view.show)
-        self.app_view.ui.actionProtocol.triggered.connect(self.protocol_view.show)
+        self.app_view.ui.actionImpulse.triggered.connect(
+            lambda _checked=False: self.app_view.show_tab(self.stimulus_view)
+        )
+        self.app_view.ui.actionProtocol.triggered.connect(
+            lambda _checked=False: self.app_view.show_tab(self.protocol_view)
+        )
 
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
         self.app_view.requestDataLoad.connect(self.load_experiment_data)
         self.app_view.requestDataSave.connect(self.save_experiment_data)
-        self.app_view.ui.magicButton.clicked.connect(self.run_magic)
+        self.overview_view.ui.magicButton.clicked.connect(self.run_magic)
         self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 
     def run_magic(self):
@@ -79,7 +94,7 @@ class AppController:
     def update_main_plot(self):
         """Update the main plot with the latest experiment data."""
         if self.app_model.raw_data_df is not None:
-            self.app_view.plot_data(self.app_model.raw_data_df)
+            self.overview_view.plot_data(self.app_model.raw_data_df)
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""
@@ -102,7 +117,7 @@ class AppController:
 
     def update_nidaq_label(self):
         """Update the nidaq status label in the app view."""
-        self.app_view.set_nidaq_status(self.nidaq_model.device_status)
+        self.overview_view.set_nidaq_status(self.nidaq_model.device_status)
 
     def shutdown(self):
         """Clean up resources on application shutdown."""
