@@ -85,7 +85,7 @@ class StimulusView(QDialog):
         self.ui.parameterLayout.insertWidget(0, create_title("Stimulus parameters"))
         self.ui.parameterLayout.insertWidget(
             self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget),
-            create_title("Stimulus segment parameters"),
+            create_title("Pulse parameters"),
         )
         self.ui.parameterLayout.insertWidget(
             self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget) + 1,
