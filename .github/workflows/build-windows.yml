@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     name: Build Windows executable
@@ -29,9 +32,15 @@ jobs:
         shell: pwsh
         run: ./tools/build.ps1
 
-      - name: Upload executable
-        uses: actions/upload-artifact@v4
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          name: wormenpracticum-windows
-          path: dist/wormenpracticum.exe
-          if-no-files-found: error
+          tag_name: ${{ github.ref_name }}-build-${{ github.run_number }}
+          name: Windows build ${{ github.run_number }}
+          body: |
+            Automated Windows build from `${{ github.ref_name }}`.
+
+            Commit: `${{ github.sha }}`
+          target_commitish: ${{ github.sha }}
+          files: dist/wormenpracticum.exe
+          make_latest: true
