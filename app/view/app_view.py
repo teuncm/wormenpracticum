@@ -56,6 +56,7 @@ class HorizontalTabBar(QTabBar):
 class AppView(QMainWindow):
     data_load_requested = Signal()
     data_save_requested = Signal()
+    debug_requested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -73,6 +74,7 @@ class AppView(QMainWindow):
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
+        self.ui.actionDebug.triggered.connect(self.debug_requested.emit)
         self.ui.actionExit.triggered.connect(self.close)
 
     def clear_tabs(self):

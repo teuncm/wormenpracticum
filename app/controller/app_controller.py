@@ -14,6 +14,7 @@ from app.view import data_dialog
 from app.view.about_view import AboutView
 from app.view.analyze_view import AnalyzeView
 from app.view.app_view import AppView
+from app.view.debug_view import DebugView
 from app.view.filter_view import FilterView
 from app.view.overview_view import OverviewView
 from app.view.protocol_view import ProtocolView
@@ -47,6 +48,7 @@ class AppController:
         self.about_view = AboutView()
         self.analyze_view = AnalyzeView()
         self.filter_view = FilterView()
+        self.debug_view = DebugView(self.app_model)
 
         self.app_view.clear_tabs()
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
@@ -67,8 +69,11 @@ class AppController:
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
+        self.app_model.experiment_data_changed.connect(self.debug_view.refresh)
+        self.app_model.stim_config_changed.connect(self.debug_view.refresh)
         self.app_view.data_load_requested.connect(self.load_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
+        self.app_view.debug_requested.connect(self.show_debug_view)
         self.protocol_view.run_requested.connect(self.run_magic)
         self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 
@@ -103,6 +108,13 @@ class AppController:
     def update_nidaq_label(self):
         """Update the nidaq status label in the app view."""
         self.overview_view.set_nidaq_status(self.nidaq_model.device_status)
+
+    def show_debug_view(self):
+        """Show the debug window and refresh its app model snapshot."""
+        self.debug_view.refresh()
+        self.debug_view.show()
+        self.debug_view.raise_()
+        self.debug_view.activateWindow()
 
     def shutdown(self):
         """Clean up resources on application shutdown."""
