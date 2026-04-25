@@ -73,7 +73,6 @@ class AppView(QMainWindow):
         tabs.setTabPosition(QTabWidget.TabPosition.West)
         tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
 
-        # self.ui.menuBar.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.ui.menuFile.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
