@@ -54,8 +54,8 @@ class HorizontalTabBar(QTabBar):
 
 
 class AppView(QMainWindow):
-    requestDataLoad = Signal()
-    requestDataSave = Signal()
+    data_load_requested = Signal()
+    data_save_requested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -85,7 +85,7 @@ class AppView(QMainWindow):
         self.ui.tabWidget.setCurrentIndex(index)
 
     def on_load_triggered(self, checked=False):
-        self.requestDataLoad.emit()
+        self.data_load_requested.emit()
 
     def on_save_triggered(self, checked=False):
-        self.requestDataSave.emit()
+        self.data_save_requested.emit()

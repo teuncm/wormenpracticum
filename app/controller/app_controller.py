@@ -67,8 +67,8 @@ class AppController:
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
-        self.app_view.requestDataLoad.connect(self.load_experiment_data)
-        self.app_view.requestDataSave.connect(self.save_experiment_data)
+        self.app_view.data_load_requested.connect(self.load_experiment_data)
+        self.app_view.data_save_requested.connect(self.save_experiment_data)
         self.overview_view.ui.magicButton.clicked.connect(self.run_magic)
         self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 

@@ -40,7 +40,7 @@
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
-        <string>Placeholder vertical tab</string>
+        <string>Vertical tab placeholder (tabs added in controller)</string>
        </attribute>
       </widget>
      </widget>
@@ -62,11 +62,11 @@
     </property>
     <addaction name="actionNew"/>
     <addaction name="separator"/>
-    <addaction name="actionLoad_data"/>
-    <addaction name="actionSave_data"/>
-    <addaction name="separator"/>
     <addaction name="actionLoad_stimulus"/>
     <addaction name="actionSave_stimulus"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoad_data"/>
+    <addaction name="actionSave_data"/>
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
     <addaction name="actionExit"/>
