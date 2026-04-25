@@ -43,20 +43,20 @@ class StimulusConfig:
 
 
 DEFAULT_STIMULUS_CONFIG = StimulusConfig(
-    dur_s=0.01,
+    dur_s=0.02,
     limit_v=1.5,
-    n_steps=8,
+    n_steps=10,
     pulses=[
         Pulse(
-            amp_v=0.5,
+            amp_v=1.5,
             start_s=0.001,
-            step_start_s=0.0002,
-            dur_s=0.002,
+            step_start_s=0.0001,
+            dur_s=0.0002,
         ),
         Pulse(
-            amp_v=0.5,
+            amp_v=1.5,
             start_s=0.006,
-            dur_s=0.002,
+            dur_s=0.0002,
         ),
     ],
 )

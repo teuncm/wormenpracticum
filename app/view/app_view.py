@@ -156,8 +156,10 @@ class AppView(QMainWindow):
         view_scale_factor = value / float(AMP_SLIDER_SCALE_FACTOR)
         self.plotWidget.getViewBox().setRange(
             yRange=(
-                -view_scale_factor * self.plotMagnitude,
-                view_scale_factor * self.plotMagnitude,
+                # -view_scale_factor * self.plotMagnitude,
+                # view_scale_factor * self.plotMagnitude,
+                -view_scale_factor * 2,
+                view_scale_factor * 2,
             )
         )
 

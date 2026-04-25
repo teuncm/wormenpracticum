@@ -1,6 +1,7 @@
 import numpy as np
+import pandas as pd
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
-from nidaqmx.constants import AcquisitionType
+from nidaqmx.constants import AcquisitionType, TerminalConfiguration
 from nidaqmx.stream_readers import AnalogMultiChannelReader
 from nidaqmx.stream_writers import AnalogMultiChannelWriter
 from nidaqmx.system import System
@@ -32,7 +33,7 @@ class NidaqController:
         return False
 
     def execute(self):
-        sr = 5000
+        sr = 15600
         # n_samples = 200
 
         # waveform = np.array(
@@ -40,14 +41,16 @@ class NidaqController:
         # )
 
         # Pull from the generator.
-        waveform = self.app_model.stimulus_generator.sample_at_idx(sr_hz=sr, stim_idx=0)
+        waveform, ts = self.app_model.stim_generator.sample_at_idx(sr_hz=sr, stim_idx=0)
+        # waveform = waveform * 0
+
         n_samples = len(waveform)
 
         # TODO: normalize samples for the buffer!
 
         routing_word, routing_flags = self.generate_routing_mask(
-            positive_channel=3,
-            negative_channel=4,
+            positive_channel=1,
+            negative_channel=2,
         )
 
         with Task() as digital_output_task, Task() as ai_task, Task() as ao_task:
@@ -62,19 +65,20 @@ class NidaqController:
 
             # Measurement is mapped 1:1 to ai
             ai_task.ai_channels.add_ai_voltage_chan(
-                f"{self.nidaq_model.device_name}/ai4:6"
+                f"{self.nidaq_model.device_name}/ai0:15",
+                terminal_config=TerminalConfiguration.RSE,
             )
 
             # Stimulation goes to ao0 and ao1, matching the MATLAB app's use of two channels for differential output.
             ao_task.ao_channels.add_ao_voltage_chan(
-                f"{self.nidaq_model.device_name}/ao0:1"
+                f"{self.nidaq_model.device_name}/ao0:1", min_val=-1, max_val=1
             )
 
             ao_data = np.zeros((2, n_samples))
             ao_data[0, :] = waveform
             ao_data[1, :] = -waveform
 
-            ai_data = np.zeros((3, n_samples))
+            ai_data = np.zeros((16, n_samples))
 
             # AO = master
             ao_task.timing.cfg_samp_clk_timing(
@@ -112,6 +116,18 @@ class NidaqController:
             )
 
             ao_task.wait_until_done(timeout=2.0)
+
+            # Update app model with new data
+            t = pd.Series(ts, name="t_(s)")
+
+            channels = [
+                pd.Series(ai_data[i, :], name=f"ai{i}_(V)")
+                for i in range(ai_data.shape[0])
+            ]
+
+            df = pd.concat([t, *channels], axis=1)
+
+            self.app_model.update_experiment_data(df)
 
     def magic(self):
         if self.discover():
