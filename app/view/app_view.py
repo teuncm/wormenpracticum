@@ -19,8 +19,10 @@ class HorizontalTabBar(QTabBar):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._hovered_index = -1
         self.setShape(QTabBar.Shape.RoundedWest)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setMouseTracking(True)
 
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
@@ -33,6 +35,10 @@ class HorizontalTabBar(QTabBar):
             for index in range(self.count()):
                 option = QStyleOptionTab()
                 self.initStyleOption(option, index)
+                if index == self._hovered_index and self.isTabEnabled(index):
+                    option.state |= QStyle.StateFlag.State_MouseOver
+                else:
+                    option.state &= ~QStyle.StateFlag.State_MouseOver
 
                 # Important: draw the tab as a WEST tab.
                 # This makes the selected tab connect to the page on the east/right side.
@@ -52,6 +58,26 @@ class HorizontalTabBar(QTabBar):
                 )
         finally:
             painter.end()
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self._set_hovered_index(self.tabAt(event.position().toPoint()))
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self._set_hovered_index(-1)
+
+    def _set_hovered_index(self, index):
+        if index == self._hovered_index:
+            return
+
+        previous_index = self._hovered_index
+        self._hovered_index = index
+
+        if previous_index >= 0:
+            self.update(self.tabRect(previous_index))
+        if index >= 0:
+            self.update(self.tabRect(index))
 
 
 class AppView(QMainWindow):
