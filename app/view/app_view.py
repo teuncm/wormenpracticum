@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class HorizontalTabBar(QTabBar):
+class VerticalTabBar(QTabBar):
     """Custom tab bar to display tabs on the left side of the window
     with the correct text rotation."""
 
@@ -95,7 +95,7 @@ class AppView(QMainWindow):
 
         tabs = self.ui.tabWidget
         tabs.clear()
-        tabs.setTabBar(HorizontalTabBar())
+        tabs.setTabBar(VerticalTabBar())
         tabs.setTabPosition(QTabWidget.TabPosition.West)
         tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
 

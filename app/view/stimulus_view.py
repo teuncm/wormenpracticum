@@ -30,7 +30,7 @@ SEGMENT_TAB_MIN_HEIGHT_PX = 38
 SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX = 6
 
 
-class TallSegmentTabBar(QTabBar):
+class PulseTabBar(QTabBar):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
@@ -124,7 +124,7 @@ class StimulusView(QDialog):
         )
 
     def setup_tabs(self):
-        self.ui.segmentTabWidget.setTabBar(TallSegmentTabBar())
+        self.ui.segmentTabWidget.setTabBar(PulseTabBar())
         self.ui.segmentTabWidget.setTabsClosable(True)
         self.ui.segmentTabWidget.tabCloseRequested.connect(self.handle_close_tab)
         self.ui.segmentTabWidget.setMovable(True)
