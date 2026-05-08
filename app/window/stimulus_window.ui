@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>934</width>
-    <height>524</height>
+    <width>815</width>
+    <height>485</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,6 +16,13 @@
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,5">
    <item>
     <layout class="QVBoxLayout" name="leftLayout">
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Stimulus parameters</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <layout class="QFormLayout" name="formLayout">
        <item row="0" column="0">
@@ -113,6 +120,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Stimulus slider</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QSlider" name="stepSlider">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
@@ -122,7 +136,15 @@
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="rightLayout"/>
+    <layout class="QVBoxLayout" name="rightLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Stimulus plot</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

@@ -24,6 +24,7 @@ from app.view.view_helpers import (
     create_title,
     double_spin_helper,
     main_layout_setup,
+    style_label,
 )
 from app.window.ui_stimulus_window import Ui_StimulusWindow
 
@@ -92,7 +93,6 @@ class StimulusView(QDialog):
         )
 
         # spacer(self.ui.horizontalLayout)
-        self.ui.leftLayout.insertWidget(0, create_title("Stimulus parameters"))
         self.ui.leftLayout.insertWidget(
             self.ui.leftLayout.indexOf(self.ui.segmentTabWidget),
             create_title("Pulse parameters"),
@@ -101,14 +101,14 @@ class StimulusView(QDialog):
             self.ui.leftLayout.indexOf(self.ui.segmentTabWidget) + 1,
             self.highlightStimulusCheckbox,
         )
-        self.ui.leftLayout.insertWidget(
-            self.ui.leftLayout.indexOf(self.ui.stepSlider),
-            create_title("Stimulus dial"),
-        )
         self.ui.stepSlider.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
-        self.ui.rightLayout.addWidget(create_title("Stimulus plot"))
+
+        style_label(self.ui.label, point_size_increase=3)
+        style_label(self.ui.label_2, point_size_increase=3)
+        style_label(self.ui.label_3, point_size_increase=3)
+
         self.ui.rightLayout.addWidget(frame)
         self.plotWidget = plot
 
