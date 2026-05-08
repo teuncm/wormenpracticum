@@ -1,12 +1,13 @@
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QGridLayout, QLabel, QWidget
+
 from app.constants import (
     DOUBLE_SPIN_MAX_S,
     DOUBLE_SPIN_MAX_V,
     DOUBLE_SPIN_STEP_S,
     DOUBLE_SPIN_STEP_V,
 )
-from app.view.view_helpers import double_spin_helper
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QGridLayout, QLabel, QWidget
+from app.view.view_helpers import double_spin_helper, style_label
 
 
 class PulseTabView(QWidget):
@@ -18,9 +19,9 @@ class PulseTabView(QWidget):
         layout = QGridLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        layout.addWidget(QLabel("Parameter"), 0, 0)
-        layout.addWidget(QLabel("Base"), 0, 1)
-        layout.addWidget(QLabel("Step"), 0, 2)
+        layout.addWidget(style_label(QLabel("Parameter"), point_size_increase=1), 0, 0)
+        layout.addWidget(style_label(QLabel("Base"), point_size_increase=1), 0, 1)
+        layout.addWidget(style_label(QLabel("Step"), point_size_increase=1), 0, 2)
 
         self.spinboxes = {}
 

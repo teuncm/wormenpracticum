@@ -86,15 +86,19 @@ def create_guide_line(
     return guide_line
 
 
-def create_title(title_text, bold=True) -> QLabel:
+def create_title(title_text, bold=True, bottom_margin=0) -> QWidget:
     """Create a section title."""
-    title = QLabel(title_text)
-    font = title.font()
-    font.setBold(bold)
-    # font.setPointSize(font.pointSize() + 1)
-    title.setFont(font)
+    container = QWidget()
+    layout = QVBoxLayout(container)
+    layout.setContentsMargins(0, 0, 0, bottom_margin)
+    layout.setSpacing(0)
 
-    return title
+    title = QLabel(title_text)
+    style_label(title, point_size_increase=3)
+
+    layout.addWidget(title)
+
+    return container
 
 
 def create_attribution_row(name_text: str, description_text: str) -> QWidget:
@@ -139,12 +143,28 @@ def spin_helper(
     spinbox.setValue(default_val)
 
 
+def style_label(label: QLabel, bold=False, point_size_increase=0) -> QLabel:
+    font = label.font()
+    font.setBold(bold)
+    font.setPointSize(font.pointSize() + point_size_increase)
+    label.setFont(font)
+
+    return label
+
+
 def main_layout_setup(layout) -> None:
     """Set stretch factors for the main layout to control how space is allocated.
     This is constant through the whole application to maintain consistency."""
     layout.setStretch(0, LEFT_LAYOUT_STRETCH)
     layout.setStretch(1, RIGHT_LAYOUT_STRETCH)
-    spacer(layout, 8, spacing=8)
+    spacer(
+        layout,
+        margin_left=8,
+        margin_top=8,
+        margin_right=8,
+        margin_bottom=8,
+        spacing=12,
+    )
 
 
 def spacer(

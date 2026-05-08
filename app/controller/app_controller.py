@@ -2,6 +2,9 @@ import getpass
 from datetime import datetime
 from pathlib import Path
 
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication
+
 from app.controller.filter_controller import FilterController
 from app.controller.nidaq_controller import NidaqController
 from app.controller.protocol_controller import ProtocolController
@@ -13,6 +16,7 @@ from app.model.nidaq.nidaq_model import NidaqModel
 from app.view import data_dialog
 from app.view.about_view import AboutView
 from app.view.analyze_view import AnalyzeView
+from app.view.analyze_view_2 import AnalyzeView2
 from app.view.app_view import AppView
 from app.view.debug_view import DebugView
 from app.view.filter_view import FilterView
@@ -20,8 +24,6 @@ from app.view.overview_view import OverviewView
 from app.view.protocol_view import ProtocolView
 from app.view.stimulus_view import StimulusView
 from app.view.view_helpers import info_box
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
 
 
 class AppController:
@@ -47,6 +49,7 @@ class AppController:
         self.overview_view = OverviewView()
         self.about_view = AboutView()
         self.analyze_view = AnalyzeView()
+        self.analyze_view_2 = AnalyzeView2()
         self.filter_view = FilterView()
         self.debug_view = DebugView(self.app_model)
 
@@ -54,7 +57,8 @@ class AppController:
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
         self.app_view.add_tab(self.protocol_view, "Data\nacquisition")
         self.app_view.add_tab(self.overview_view, "Filter")
-        self.app_view.add_tab(self.analyze_view, "Analyze")
+        self.app_view.add_tab(self.analyze_view, "Analyze\npeaks")
+        self.app_view.add_tab(self.analyze_view_2, "Analyze\nother")
         self.app_view.set_current_tab_index(2)
 
         self.stimulus_controller = StimulusController(
