@@ -28,7 +28,7 @@ class VerticalTabBar(QTabBar):
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
         # Swap width/height because west tabs are normally vertical.
-        return QSize(size.height(), size.width() + 60)
+        return QSize(size.height() - 16, size.width() + 50)
 
     def paintEvent(self, event):
         painter = QStylePainter(self)
@@ -48,6 +48,10 @@ class VerticalTabBar(QTabBar):
                 painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
 
                 rect = option.rect.adjusted(8, 0, -8, 0)
+
+                font = painter.font()
+                font.setPointSize(10)
+                painter.setFont(font)
 
                 painter.drawItemText(
                     rect,

@@ -4,11 +4,9 @@ from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
-    QHBoxLayout,
     QPushButton,
     QSizePolicy,
     QTabBar,
-    QVBoxLayout,
 )
 
 from app.constants import (

@@ -13,7 +13,6 @@ from app.view.view_helpers import (
     create_plot_widget,
     create_title,
     main_layout_setup,
-    spacer,
 )
 from app.window.ui_overview_window import Ui_OverviewWindow
 

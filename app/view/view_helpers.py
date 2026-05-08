@@ -144,7 +144,7 @@ def main_layout_setup(layout) -> None:
     This is constant through the whole application to maintain consistency."""
     layout.setStretch(0, LEFT_LAYOUT_STRETCH)
     layout.setStretch(1, RIGHT_LAYOUT_STRETCH)
-    spacer(layout, 5, spacing=5)
+    spacer(layout, 8, spacing=8)
 
 
 def spacer(
