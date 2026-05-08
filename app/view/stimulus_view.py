@@ -21,10 +21,8 @@ from app.view.pulse_tab_view import PulseTabView
 from app.view.view_helpers import (
     create_guide_line,
     create_plot_widget,
-    create_title,
     double_spin_helper,
-    main_layout_setup,
-    style_label,
+    setup_ui_custom,
 )
 from app.window.ui_stimulus_window import Ui_StimulusWindow
 
@@ -57,7 +55,7 @@ class StimulusView(QDialog):
         self.ui = Ui_StimulusWindow()
         self.ui.setupUi(self)
 
-        main_layout_setup(self.ui.horizontalLayout)
+        setup_ui_custom(self)
 
         self.setup_tabs()
         self.setup_widgets()
@@ -84,19 +82,8 @@ class StimulusView(QDialog):
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
         )
 
-        frame, plot = create_plot_widget(
-            title="Stimulus",
-            x_label="Time",
-            x_units="s",
-            y_label="Voltage",
-            y_units="V",
-        )
+        frame, plot = create_plot_widget()
 
-        # spacer(self.ui.horizontalLayout)
-        self.ui.leftLayout.insertWidget(
-            self.ui.leftLayout.indexOf(self.ui.segmentTabWidget),
-            create_title("Pulse parameters"),
-        )
         self.ui.leftLayout.insertWidget(
             self.ui.leftLayout.indexOf(self.ui.segmentTabWidget) + 1,
             self.highlightStimulusCheckbox,
@@ -104,10 +91,6 @@ class StimulusView(QDialog):
         self.ui.stepSlider.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
-
-        style_label(self.ui.label, point_size_increase=3)
-        style_label(self.ui.label_2, point_size_increase=3)
-        style_label(self.ui.label_3, point_size_increase=3)
 
         self.ui.rightLayout.addWidget(frame)
         self.plotWidget = plot

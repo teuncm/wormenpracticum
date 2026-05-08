@@ -152,13 +152,33 @@ def style_label(label: QLabel, bold=False, point_size_increase=0) -> QLabel:
     return label
 
 
-def main_layout_setup(layout) -> None:
+def setup_ui_custom(parent_widget) -> None:
+    """Apply custom UI setup for a widget. This is called in the __init__ of each view after setupUi."""
+    style_title_labels(parent_widget)
+    adjust_layout_flow(parent_widget)
+
+
+def style_title_labels(parent_widget) -> None:
+    """Automatically style all QLabel widgets with "title" in their object name as section titles."""
+    for widget in parent_widget.findChildren(QLabel):
+        if "title" in widget.objectName():
+            style_label(widget, point_size_increase=3)
+
+
+def adjust_layout_flow(parent_widget) -> None:
     """Set stretch factors for the main layout to control how space is allocated.
     This is constant through the whole application to maintain consistency."""
-    layout.setStretch(0, LEFT_LAYOUT_STRETCH)
-    layout.setStretch(1, RIGHT_LAYOUT_STRETCH)
+    flow_layout = parent_widget.layout()
+
+    if flow_layout is None:
+        flow_layout = parent_widget.findChild(QHBoxLayout, "flowLayout")
+
+    if flow_layout is not None:
+        flow_layout.setStretch(0, LEFT_LAYOUT_STRETCH)
+        flow_layout.setStretch(1, RIGHT_LAYOUT_STRETCH)
+
     spacer(
-        layout,
+        flow_layout,
         margin_left=8,
         margin_top=8,
         margin_right=8,

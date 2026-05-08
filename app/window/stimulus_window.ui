@@ -6,18 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>815</width>
-    <height>485</height>
+    <width>703</width>
+    <height>424</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Stimulus Editor</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,5">
+  <layout class="QHBoxLayout" name="flowLayout" stretch="3,5">
    <item>
     <layout class="QVBoxLayout" name="leftLayout">
      <item>
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="title_stimulus">
        <property name="text">
         <string>Stimulus parameters</string>
        </property>
@@ -91,6 +91,13 @@
       </layout>
      </item>
      <item>
+      <widget class="QLabel" name="title_pulse">
+       <property name="text">
+        <string>Pulse parameters</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QTabWidget" name="segmentTabWidget">
        <property name="minimumSize">
         <size>
@@ -120,7 +127,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="label_3">
+      <widget class="QLabel" name="title_slider">
        <property name="text">
         <string>Stimulus slider</string>
        </property>
@@ -138,7 +145,7 @@
    <item>
     <layout class="QVBoxLayout" name="rightLayout">
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="title_plot">
        <property name="text">
         <string>Stimulus plot</string>
        </property>

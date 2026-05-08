@@ -13,9 +13,16 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,5">
+  <layout class="QHBoxLayout" name="flowLayout" stretch="3,5">
    <item>
     <layout class="QVBoxLayout" name="leftLayout">
+     <item>
+      <widget class="QLabel" name="title_controls">
+       <property name="text">
+        <string>Controls</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="pushButton">
        <property name="text">
@@ -40,6 +47,13 @@
    </item>
    <item>
     <layout class="QVBoxLayout" name="rightLayout">
+     <item>
+      <widget class="QLabel" name="title_overview">
+       <property name="text">
+        <string>Overview</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="pushButton_2">
        <property name="text">

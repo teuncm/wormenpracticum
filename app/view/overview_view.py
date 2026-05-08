@@ -11,8 +11,7 @@ from PySide6.QtWidgets import (
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.view.view_helpers import (
     create_plot_widget,
-    create_title,
-    main_layout_setup,
+    setup_ui_custom,
 )
 from app.window.ui_overview_window import Ui_OverviewWindow
 
@@ -30,7 +29,7 @@ class OverviewView(QWidget):
         self.ui = Ui_OverviewWindow()
         self.ui.setupUi(self)
 
-        main_layout_setup(self.ui.horizontalLayout)
+        setup_ui_custom(self)
 
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
@@ -45,17 +44,9 @@ class OverviewView(QWidget):
         self.ui.ampSlider.setValue(0)
         self.ui.ampSlider.setEnabled(False)
 
-        frame, plot = create_plot_widget(
-            title="Evoked Response",
-            x_label="Time",
-            x_units="s",
-            y_label="Voltage",
-            y_units="V",
-        )
+        frame, plot = create_plot_widget()
 
-        self.ui.rightLayout.addWidget(create_title("Evoked response plot"))
         self.ui.rightLayout.addWidget(frame)
-        self.ui.leftLayout.insertWidget(0, create_title("Plot options"))
         self.plotWidget = plot
 
         # Channel slider for data viewing
@@ -68,8 +59,8 @@ class OverviewView(QWidget):
 
         # Create form layout for sliders
         form_layout = QFormLayout()
-        form_layout.addRow("Amplification:", self.ui.ampSlider)
-        form_layout.addRow("Channel:", self.channel_slider)
+        form_layout.addRow(self.ui.ampSlider)
+        form_layout.addRow(self.channel_slider)
 
         self.ui.leftLayout.insertLayout(1, form_layout)
 
@@ -130,8 +121,6 @@ class OverviewView(QWidget):
             name=channel_name,
             pen=pg.mkPen(color="b", width=2),
         )
-
-        self.plotWidget.setTitle(f"Channel: {channel_name}")
 
     def on_channel_changed(self, value):
         """Handle channel slider changes.

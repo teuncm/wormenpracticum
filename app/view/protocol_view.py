@@ -7,7 +7,7 @@ from app.model.nidaq.protocol_mapping import (
     encode_stim_channel_pair,
     get_logical_channel_labels,
 )
-from app.view.view_helpers import create_title, main_layout_setup
+from app.view.view_helpers import setup_ui_custom
 from app.window.ui_protocol_window import Ui_ProtocolWindow
 
 
@@ -20,10 +20,7 @@ class ProtocolView(QWidget):
         self.ui = Ui_ProtocolWindow()
         self.ui.setupUi(self)
 
-        main_layout_setup(self.ui.horizontalLayout)
-
-        self.ui.leftLayout.insertWidget(0, create_title("Controls"))
-        self.ui.rightLayout.insertWidget(0, create_title("Overview"))
+        setup_ui_custom(self)
 
         self.populate_channel_dropdowns()
         self.ui.pushButton.clicked.connect(self.request_run)
