@@ -1,4 +1,16 @@
 import pyqtgraph as pg
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QCursor
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QHBoxLayout,
+    QPushButton,
+    QSizePolicy,
+    QTabBar,
+    QVBoxLayout,
+)
+
 from app.constants import (
     DEFAULT_DUR_S,
     DEFAULT_LIMIT_V,
@@ -13,17 +25,9 @@ from app.view.view_helpers import (
     create_plot_widget,
     create_title,
     double_spin_helper,
+    main_layout_setup,
 )
 from app.window.ui_stimulus_window import Ui_StimulusWindow
-from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QCursor
-from PySide6.QtWidgets import (
-    QCheckBox,
-    QDialog,
-    QPushButton,
-    QSizePolicy,
-    QTabBar,
-)
 
 SEGMENT_TAB_EXTRA_HEIGHT_PX = 12
 SEGMENT_TAB_MIN_HEIGHT_PX = 38
@@ -54,6 +58,8 @@ class StimulusView(QDialog):
         self.ui = Ui_StimulusWindow()
         self.ui.setupUi(self)
 
+        main_layout_setup(self.ui.horizontalLayout)
+
         self.setup_tabs()
         self.setup_widgets()
         self.connect_data_signals()
@@ -73,6 +79,7 @@ class StimulusView(QDialog):
         self.stimulusHighlightChanged.emit(self.highlightStimulusCheckbox.isChecked())
 
     def setup_widgets(self):
+
         self.highlightStimulusCheckbox = QCheckBox("Highlight selected pulse")
         self.highlightStimulusCheckbox.setChecked(
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
@@ -87,24 +94,24 @@ class StimulusView(QDialog):
         )
 
         # spacer(self.ui.horizontalLayout)
-        self.ui.parameterLayout.insertWidget(0, create_title("Stimulus parameters"))
-        self.ui.parameterLayout.insertWidget(
-            self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget),
+        self.ui.leftLayout.insertWidget(0, create_title("Stimulus parameters"))
+        self.ui.leftLayout.insertWidget(
+            self.ui.leftLayout.indexOf(self.ui.segmentTabWidget),
             create_title("Pulse parameters"),
         )
-        self.ui.parameterLayout.insertWidget(
-            self.ui.parameterLayout.indexOf(self.ui.segmentTabWidget) + 1,
+        self.ui.leftLayout.insertWidget(
+            self.ui.leftLayout.indexOf(self.ui.segmentTabWidget) + 1,
             self.highlightStimulusCheckbox,
         )
-        self.ui.parameterLayout.insertWidget(
-            self.ui.parameterLayout.indexOf(self.ui.stepSlider),
+        self.ui.leftLayout.insertWidget(
+            self.ui.leftLayout.indexOf(self.ui.stepSlider),
             create_title("Stimulus dial"),
         )
         self.ui.stepSlider.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
-        self.ui.plotLayout.addWidget(create_title("Stimulus plot"))
-        self.ui.plotLayout.addWidget(frame)
+        self.ui.rightLayout.addWidget(create_title("Stimulus plot"))
+        self.ui.rightLayout.addWidget(frame)
         self.plotWidget = plot
 
         double_spin_helper(

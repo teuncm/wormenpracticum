@@ -1,19 +1,21 @@
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
-from app.view.view_helpers import (
-    create_plot_widget,
-    create_title,
-    spacer,
-)
-from app.window.ui_overview_window import Ui_OverviewWindow
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFormLayout,
     QSlider,
     QWidget,
 )
+
+from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
+from app.view.view_helpers import (
+    create_plot_widget,
+    create_title,
+    main_layout_setup,
+    spacer,
+)
+from app.window.ui_overview_window import Ui_OverviewWindow
 
 AMP_SLIDER_SCALE_FACTOR = 100
 
@@ -28,6 +30,8 @@ class OverviewView(QWidget):
 
         self.ui = Ui_OverviewWindow()
         self.ui.setupUi(self)
+
+        main_layout_setup(self.ui.horizontalLayout)
 
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
 
@@ -50,11 +54,9 @@ class OverviewView(QWidget):
             y_units="V",
         )
 
-        spacer(self.ui.horizontalLayout)
-
-        self.ui.plotLayout.addWidget(create_title("Evoked response plot"))
-        self.ui.plotLayout.addWidget(frame)
-        self.ui.optionsLayout.insertWidget(0, create_title("Plot options"))
+        self.ui.rightLayout.addWidget(create_title("Evoked response plot"))
+        self.ui.rightLayout.addWidget(frame)
+        self.ui.leftLayout.insertWidget(0, create_title("Plot options"))
         self.plotWidget = plot
 
         # Channel slider for data viewing
@@ -70,7 +72,7 @@ class OverviewView(QWidget):
         form_layout.addRow("Amplification:", self.ui.ampSlider)
         form_layout.addRow("Channel:", self.channel_slider)
 
-        self.ui.optionsLayout.insertLayout(1, form_layout)
+        self.ui.leftLayout.insertLayout(1, form_layout)
 
     def on_load_triggered(self, checked=False):
         self.requestDataLoad.emit()

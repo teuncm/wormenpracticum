@@ -1,12 +1,14 @@
-from app.model.nidaq.protocol_mapping import (
-    encode_stim_channel_pair,
-    get_logical_channel_labels,
-)
-from app.window.ui_protocol_window import Ui_ProtocolWindow
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QWidget,
 )
+
+from app.model.nidaq.protocol_mapping import (
+    encode_stim_channel_pair,
+    get_logical_channel_labels,
+)
+from app.view.view_helpers import main_layout_setup
+from app.window.ui_protocol_window import Ui_ProtocolWindow
 
 
 class ProtocolView(QWidget):
@@ -17,6 +19,9 @@ class ProtocolView(QWidget):
 
         self.ui = Ui_ProtocolWindow()
         self.ui.setupUi(self)
+
+        main_layout_setup(self.ui.horizontalLayout)
+
         self.populate_channel_dropdowns()
         self.ui.pushButton.clicked.connect(self.request_run)
 

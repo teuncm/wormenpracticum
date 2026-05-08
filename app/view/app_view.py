@@ -1,5 +1,3 @@
-from app.view.view_helpers import set_global_plot_config
-from app.window.ui_app_window import Ui_AppWindow
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QCursor, QPalette
 from PySide6.QtWidgets import (
@@ -11,6 +9,9 @@ from PySide6.QtWidgets import (
     QTabWidget,
     QWidget,
 )
+
+from app.view.view_helpers import set_global_plot_config
+from app.window.ui_app_window import Ui_AppWindow
 
 
 class VerticalTabBar(QTabBar):
@@ -27,7 +28,7 @@ class VerticalTabBar(QTabBar):
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
         # Swap width/height because west tabs are normally vertical.
-        return QSize(size.height(), size.width() + 75)
+        return QSize(size.height(), size.width() + 60)
 
     def paintEvent(self, event):
         painter = QStylePainter(self)

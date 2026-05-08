@@ -1,10 +1,4 @@
 import pyqtgraph as pg
-from app.constants import (
-    DOUBLE_SPIN_NUM_DECIMALS,
-    PLOT_GRID_ALPHA_DEFAULT,
-    VIEW_MARGIN_DEFAULT,
-    VIEW_SPACING_DEFAULT,
-)
 from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtWidgets import (
     QBoxLayout,
@@ -16,6 +10,15 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QVBoxLayout,
     QWidget,
+)
+
+from app.constants import (
+    DOUBLE_SPIN_NUM_DECIMALS,
+    LEFT_LAYOUT_STRETCH,
+    PLOT_GRID_ALPHA_DEFAULT,
+    RIGHT_LAYOUT_STRETCH,
+    VIEW_MARGIN_DEFAULT,
+    VIEW_SPACING_DEFAULT,
 )
 
 
@@ -134,6 +137,14 @@ def spin_helper(
     spinbox.setRange(min_val, max_val)
     spinbox.setSingleStep(step)
     spinbox.setValue(default_val)
+
+
+def main_layout_setup(layout) -> None:
+    """Set stretch factors for the main layout to control how space is allocated.
+    This is constant through the whole application to maintain consistency."""
+    layout.setStretch(0, LEFT_LAYOUT_STRETCH)
+    layout.setStretch(1, RIGHT_LAYOUT_STRETCH)
+    spacer(layout, 5, spacing=5)
 
 
 def spacer(
