@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.view.view_helpers import (
     create_plot_widget,
     setup_ui_custom,
@@ -32,8 +31,6 @@ class OverviewView(QWidget):
         setup_ui_custom(self)
 
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
-
-        self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
 
         self.plotMagnitude = 1.0
         self.setup_widgets()
@@ -148,6 +145,3 @@ class OverviewView(QWidget):
             )
         )
 
-    def set_nidaq_status(self, status: str):
-        """Set the nidaq status label in the UI."""
-        self.ui.nidaqStatusLabel.setText(f"Status: {status}")

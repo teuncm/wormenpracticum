@@ -98,6 +98,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="add_pulse_button">
+       <property name="text">
+        <string>Add pulse</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QTabWidget" name="segmentTabWidget">
        <property name="minimumSize">
         <size>
@@ -110,6 +117,13 @@
        </property>
        <property name="currentIndex">
         <number>-1</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="highlight_selected_pulse_checkbox">
+       <property name="text">
+        <string>Highlight selected pulse</string>
        </property>
       </widget>
      </item>

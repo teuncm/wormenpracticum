@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.model.nidaq.protocol_mapping import (
     encode_stim_channel_pair,
     get_logical_channel_labels,
@@ -21,6 +22,8 @@ class ProtocolView(QWidget):
         self.ui.setupUi(self)
 
         setup_ui_custom(self)
+
+        self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
 
         self.populate_channel_dropdowns()
         self.ui.pushButton.clicked.connect(self.request_run)
@@ -55,3 +58,7 @@ class ProtocolView(QWidget):
     def get_encoded_stim_port_values(self):
         positive_channel, negative_channel = self.get_selected_stim_channels()
         return encode_stim_channel_pair(positive_channel, negative_channel)
+
+    def set_nidaq_status(self, status: str):
+        """Set the nidaq status label in the UI."""
+        self.ui.nidaqStatusLabel.setText(f"Status: {status}")

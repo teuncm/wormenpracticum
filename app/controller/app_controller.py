@@ -111,7 +111,7 @@ class AppController:
 
     def update_nidaq_label(self):
         """Update the nidaq status label in the app view."""
-        self.overview_view.set_nidaq_status(self.nidaq_model.device_status)
+        self.protocol_view.set_nidaq_status(self.nidaq_model.device_status)
 
     def show_debug_view(self):
         """Show the debug window and refresh its app model snapshot."""

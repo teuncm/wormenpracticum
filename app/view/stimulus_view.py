@@ -2,9 +2,7 @@ import pyqtgraph as pg
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
-    QCheckBox,
     QDialog,
-    QPushButton,
     QSizePolicy,
     QTabBar,
 )
@@ -69,25 +67,20 @@ class StimulusView(QDialog):
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
         self.ui.limitSpinBox.valueChanged.connect(self.stimulusChanged)
         self.ui.durSpinBox.valueChanged.connect(self.stimulusChanged)
-        self.highlightStimulusCheckbox.toggled.connect(
+        self.ui.highlight_selected_pulse_checkbox.toggled.connect(
             self.stimulusHighlightChanged.emit
         )
 
-        self.stimulusHighlightChanged.emit(self.highlightStimulusCheckbox.isChecked())
+        self.stimulusHighlightChanged.emit(
+            self.ui.highlight_selected_pulse_checkbox.isChecked()
+        )
 
     def setup_widgets(self):
-
-        self.highlightStimulusCheckbox = QCheckBox("Highlight selected pulse")
-        self.highlightStimulusCheckbox.setChecked(
+        self.ui.highlight_selected_pulse_checkbox.setChecked(
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
         )
 
         frame, plot = create_plot_widget()
-
-        self.ui.leftLayout.insertWidget(
-            self.ui.leftLayout.indexOf(self.ui.segmentTabWidget) + 1,
-            self.highlightStimulusCheckbox,
-        )
         self.ui.stepSlider.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
@@ -124,18 +117,7 @@ class StimulusView(QDialog):
         # Add base segment tab.
         self.add_segment_tab()
 
-        new_segment_button = QPushButton("+")
-        new_segment_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        button_height = max(
-            tab_bar.tabSizeHint(0).height() - SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX,
-            28,
-        )
-        new_segment_button.setFixedSize(30, button_height)
-        new_segment_button.clicked.connect(self.add_segment_tab)
-        self.ui.segmentTabWidget.setCornerWidget(
-            new_segment_button, Qt.Corner.TopRightCorner
-        )
-        new_segment_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.ui.add_pulse_button.clicked.connect(self.add_segment_tab)
 
         self.ui.segmentTabWidget.setSizePolicy(
             QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
@@ -152,10 +134,6 @@ class StimulusView(QDialog):
         self.renumber_tabs()
 
     def handle_close_tab(self, index):
-        # Keep at least one segment tab open.
-        if self.ui.segmentTabWidget.count() <= 1:
-            return
-
         self.ui.segmentTabWidget.removeTab(index)
         self.renumber_tabs()
 

@@ -31,16 +31,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="nidaqStatusLabel">
-       <property name="text">
-        <string>Status: NI-DAQ unavailable</string>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
