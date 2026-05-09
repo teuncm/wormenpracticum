@@ -87,8 +87,8 @@ class AppController:
 
     def update_main_plot(self):
         """Update the main plot with the latest experiment data."""
-        if self.app_model.raw_data_df is not None:
-            self.overview_view.plot_data(self.app_model.raw_data_df)
+        if self.app_model.app_state.raw_data_df is not None:
+            self.overview_view.plot_data(self.app_model.app_state.raw_data_df)
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""
@@ -131,11 +131,11 @@ class AppController:
             info_box(message="No file name was given.").exec()
             return
 
-        if self.app_model.raw_data_df is None:
+        if self.app_model.app_state.raw_data_df is None:
             info_box(message="There is no data to save.").exec()
             return
 
-        msg = data_io.write_data(filename, self.app_model.raw_data_df)
+        msg = data_io.write_data(filename, self.app_model.app_state.raw_data_df)
         self.save_experiment_metadata(filename)
         if msg:
             info_box(message=f"Error saving data: {msg}").exec()
@@ -173,11 +173,11 @@ class AppController:
             "save_date": now.date().isoformat(),
             "save_time": now.timetz().isoformat(),
         }
-        experiment_metadata = self.app_model.experiment_metadata or {}
+        experiment_metadata = self.app_model.app_state.experiment_metadata or {}
         metadata_aggregate = {
             "metadata": save_metadata | experiment_metadata,
-            "experiment_config": self.app_model.experiment_config,
-            "stim_config": self.app_model.stim_config.to_dict(),
+            "experiment_config": self.app_model.app_state.experiment_config,
+            "stim_config": self.app_model.app_state.stim_config.to_dict(),
         }
         msg = data_io.write_metadata(metadata_filename, metadata_aggregate)
         if msg:
