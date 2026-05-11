@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.constants import APP_TITLE
 from app.view.view_helpers import set_global_plot_config
 from app.window.ui_app_window import Ui_AppWindow
 
@@ -103,6 +104,8 @@ class AppView(QMainWindow):
         tabs.setTabBar(VerticalTabBar())
         tabs.setTabPosition(QTabWidget.TabPosition.West)
         tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
+        tabs.currentChanged.connect(self._update_window_title)
+        self._update_window_title()
 
         self.ui.menuFile.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
@@ -113,12 +116,32 @@ class AppView(QMainWindow):
 
     def clear_tabs(self):
         self.ui.tabWidget.clear()
+        self._update_window_title()
 
     def add_tab(self, widget: QWidget, label: str):
-        self.ui.tabWidget.addTab(widget, label)
+        index = self.ui.tabWidget.addTab(widget, label)
+        self.ui.tabWidget.setTabToolTip(index, self._format_tab_name(label))
+        self._update_window_title()
 
     def set_current_tab_index(self, index: int):
         self.ui.tabWidget.setCurrentIndex(index)
+        self._update_window_title()
+
+    def _update_window_title(self, index: int | None = None):
+        if index is None:
+            index = self.ui.tabWidget.currentIndex()
+
+        tab_name = ""
+        if index >= 0:
+            tab_name = self._format_tab_name(self.ui.tabWidget.tabText(index))
+
+        if tab_name:
+            self.setWindowTitle(f"{APP_TITLE} - {tab_name}")
+        else:
+            self.setWindowTitle(APP_TITLE)
+
+    def _format_tab_name(self, label: str) -> str:
+        return " ".join(label.split())
 
     def on_load_triggered(self, checked=False):
         self.data_load_requested.emit()

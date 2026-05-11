@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QSpinBox,
     QVBoxLayout,
-    QWidget,
 )
 
 from app.constants import (

@@ -1,3 +1,6 @@
+# :)
+APP_TITLE = "Wormenpracticum"
+
 # Margin and spacing for layouts
 VIEW_MARGIN_DEFAULT = 20
 VIEW_SPACING_DEFAULT = 18

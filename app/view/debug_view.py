@@ -1,7 +1,6 @@
 import json
 from dataclasses import asdict
 
-import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtGui import (
     QColor,
