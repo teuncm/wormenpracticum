@@ -145,14 +145,14 @@ def adjust_layout_flow(parent_widget) -> None:
         flow_layout.setStretch(0, LEFT_LAYOUT_STRETCH)
         flow_layout.setStretch(1, RIGHT_LAYOUT_STRETCH)
 
-    spacer(
-        flow_layout,
-        margin_left=8,
-        margin_top=8,
-        margin_right=8,
-        margin_bottom=8,
-        spacing=12,
-    )
+        spacer(
+            flow_layout,
+            margin_left=8,
+            margin_top=8,
+            margin_right=8,
+            margin_bottom=8,
+            spacing=12,
+        )
 
 
 def spacer(
