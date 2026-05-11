@@ -86,37 +86,6 @@ def create_guide_line(
     return guide_line
 
 
-def create_title(title_text, bold=True, bottom_margin=0) -> QWidget:
-    """Create a section title."""
-    container = QWidget()
-    layout = QVBoxLayout(container)
-    layout.setContentsMargins(0, 0, 0, bottom_margin)
-    layout.setSpacing(0)
-
-    title = QLabel(title_text)
-    style_label(title, point_size_increase=3)
-
-    layout.addWidget(title)
-
-    return container
-
-
-def create_attribution_row(name_text: str, description_text: str) -> QWidget:
-    """Create a single attribution row with a bold name and neutral description."""
-    row = QWidget()
-    layout = QHBoxLayout(row)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(10)
-
-    layout.addWidget(create_title(name_text))
-
-    description = QLabel(description_text)
-    description.setWordWrap(True)
-    layout.addWidget(description, 1)
-
-    return row
-
-
 def double_spin_helper(
     spinbox: QDoubleSpinBox,
     default_val: float,
@@ -162,7 +131,7 @@ def style_title_labels(parent_widget) -> None:
     """Automatically style all QLabel widgets with "title" in their object name as section titles."""
     for widget in parent_widget.findChildren(QLabel):
         if "title" in widget.objectName():
-            style_label(widget, point_size_increase=3)
+            style_label(widget, point_size_increase=8, bold=False)
 
 
 def adjust_layout_flow(parent_widget) -> None:

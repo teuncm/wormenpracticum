@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.model.app_model import AppModel
-from app.view.view_helpers import create_title
+from app.view.view_helpers import setup_ui_custom
 from app.window.ui_debug_window import Ui_DebugWindow
 
 
@@ -32,14 +32,16 @@ class DebugView(QWidget):
         self.app_model = app_model
         self.ui = Ui_DebugWindow()
         self.ui.setupUi(self)
+
+        setup_ui_custom(self)
+
+        self.resize(800, 600)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
 
         self.setup_widgets()
         self.refresh()
 
     def setup_widgets(self):
-        self.ui.verticalLayout.addWidget(create_title("App model debug"))
-
         toolbar = QHBoxLayout()
 
         self.searchLineEdit = QLineEdit()
@@ -143,17 +145,3 @@ class DebugView(QWidget):
 
     def _app_model_snapshot(self) -> dict:
         return asdict(self.app_model.app_state)
-
-    def _dataframe_snapshot(self, df: pd.DataFrame | None) -> dict:
-        if df is None:
-            return {
-                "loaded": False,
-            }
-
-        return {
-            "loaded": True,
-            "shape": list(df.shape),
-            "columns": [str(column) for column in df.columns],
-            "dtypes": {str(column): str(dtype) for column, dtype in df.dtypes.items()},
-            "memory_bytes": int(df.memory_usage(deep=True).sum()),
-        }
