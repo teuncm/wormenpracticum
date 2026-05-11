@@ -104,6 +104,7 @@ class AppView(QMainWindow):
         tabs.setTabBar(VerticalTabBar())
         tabs.setTabPosition(QTabWidget.TabPosition.West)
         tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
+        tabs.setDocumentMode(True)
         tabs.currentChanged.connect(self._update_window_title)
         self._update_window_title()
 
@@ -119,8 +120,7 @@ class AppView(QMainWindow):
         self._update_window_title()
 
     def add_tab(self, widget: QWidget, label: str):
-        index = self.ui.tabWidget.addTab(widget, label)
-        self.ui.tabWidget.setTabToolTip(index, self._format_tab_name(label))
+        self.ui.tabWidget.addTab(widget, label)
         self._update_window_title()
 
     def set_current_tab_index(self, index: int):
