@@ -1,12 +1,14 @@
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QCursor, QPalette
 from PySide6.QtWidgets import (
+    QFrame,
     QMainWindow,
     QStyle,
     QStyleOptionTab,
     QStylePainter,
     QTabBar,
     QTabWidget,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -120,8 +122,24 @@ class AppView(QMainWindow):
         self._update_window_title()
 
     def add_tab(self, widget: QWidget, label: str):
-        self.ui.tabWidget.addTab(widget, label)
+        self.ui.tabWidget.addTab(self._create_tab_page_frame(widget), label)
         self._update_window_title()
+
+    def _create_tab_page_frame(self, widget: QWidget) -> QFrame:
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.StyledPanel)
+        frame.setFrameShadow(QFrame.Shadow.Plain)
+        frame.setAutoFillBackground(False)
+
+        widget.setBackgroundRole(QPalette.ColorRole.Window)
+        widget.setAutoFillBackground(True)
+
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(widget)
+
+        return frame
 
     def set_current_tab_index(self, index: int):
         self.ui.tabWidget.setCurrentIndex(index)
