@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QFormLayout,
-    QSlider,
     QWidget,
 )
 
@@ -48,18 +46,11 @@ class OverviewView(QWidget):
 
         # Channel slider for data viewing
         self._current_df = None
-        self.channel_slider = QSlider(Qt.Orientation.Horizontal)
+        self.channel_slider = self.ui.channelSlider
         self.channel_slider.setMinimum(0)
         self.channel_slider.setValue(0)
         self.channel_slider.setEnabled(False)
         self.channel_slider.valueChanged.connect(self.on_channel_changed)
-
-        # Create form layout for sliders
-        form_layout = QFormLayout()
-        form_layout.addRow(self.ui.ampSlider)
-        form_layout.addRow(self.channel_slider)
-
-        self.ui.leftLayout.insertLayout(1, form_layout)
 
     def on_load_triggered(self, checked=False):
         self.requestDataLoad.emit()
@@ -144,4 +135,3 @@ class OverviewView(QWidget):
                 view_scale_factor * 2,
             )
         )
-

@@ -17,18 +17,45 @@
    <item>
     <layout class="QVBoxLayout" name="leftLayout">
      <item>
-      <widget class="QLabel" name="title_options">
+      <widget class="QLabel" name="title_filter">
        <property name="text">
-        <string>Plot options</string>
+        <string>Filter options</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QSlider" name="ampSlider">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-      </widget>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="lowPassLabel">
+         <property name="text">
+          <string>Low pass (Hz)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="suppress50HzLabel">
+         <property name="text">
+          <string>Suppress 50 Hz</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QCheckBox" name="suppress50HzCheckBox"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="removeDCOffsetLabel">
+         <property name="text">
+          <string>Remove DC offset</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QCheckBox" name="removeDCOffsetCheckBox"/>
+       </item>
+      </layout>
      </item>
      <item>
       <spacer name="verticalSpacer">
@@ -43,6 +70,45 @@
        </property>
       </spacer>
      </item>
+     <item>
+      <widget class="QLabel" name="title_options">
+       <property name="text">
+        <string>Plot options</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QFormLayout" name="formLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="channelLabel">
+         <property name="text">
+          <string>Channel</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QSlider" name="channelSlider">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="amplitudeLabel">
+         <property name="text">
+          <string>Gain</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSlider" name="ampSlider">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
    </item>
    <item>
@@ -50,7 +116,7 @@
      <item>
       <widget class="QLabel" name="title_response">
        <property name="text">
-        <string>Evoked response plot</string>
+        <string>Evoked response overview plot</string>
        </property>
       </widget>
      </item>
