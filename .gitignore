@@ -1,9 +1,6 @@
 # Practicum data
 data/
 
-# Generated from Qt Designer .ui files
-app/**/ui_*.py
-
 # MacOS
 .DS_Store
 
