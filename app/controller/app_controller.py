@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import cast
 
 from PySide6.QtCore import QSettings, QTimer
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
 from app.constants import APP_ORG, APP_TITLE

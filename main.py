@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtGui import QFont, QGuiApplication, QIcon, Qt
+from PySide6.QtGui import QGuiApplication, QIcon, Qt
 from PySide6.QtWidgets import QApplication
 
 from app.controller.app_controller import AppController
