@@ -42,7 +42,7 @@ class Ui_DebugWindow(object):
     # setupUi
 
     def retranslateUi(self, DebugWindow):
-        DebugWindow.setWindowTitle(QCoreApplication.translate("DebugWindow", u"Debug Window", None))
-        self.title_debug.setText(QCoreApplication.translate("DebugWindow", u"Debug variables", None))
+        DebugWindow.setWindowTitle(QCoreApplication.translate("DebugWindow", u"Debug", None))
+        self.title_debug.setText(QCoreApplication.translate("DebugWindow", u"Debug", None))
     # retranslateUi
 

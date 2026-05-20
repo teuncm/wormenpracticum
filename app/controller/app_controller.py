@@ -1,10 +1,13 @@
 import getpass
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QSettings, QTimer
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
+from app.constants import APP_ORG, APP_TITLE
 from app.controller.filter_controller import FilterController
 from app.controller.nidaq_controller import NidaqController
 from app.controller.protocol_controller import ProtocolController
@@ -21,13 +24,16 @@ from app.view.app_view import AppView
 from app.view.debug_view import DebugView
 from app.view.filter_view import FilterView
 from app.view.overview_view import OverviewView
+from app.view.preferences_view import PreferencesView
 from app.view.protocol_view import ProtocolView
 from app.view.stimulus_view import StimulusView
-from app.view.view_helpers import info_box
+from app.view.view_helpers import info_box, set_font_size
 
 
 class AppController:
     def __init__(self):
+        self.settings = QSettings(APP_ORG, APP_TITLE)
+
         self.init_mvc()
 
         self.connect_data_signals()
@@ -52,6 +58,7 @@ class AppController:
         self.analyze_view_2 = AnalyzeView2()
         self.filter_view = FilterView()
         self.debug_view = DebugView(self.app_model)
+        self.preferences_view = PreferencesView()
 
         self.app_view.clear_tabs()
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
@@ -69,6 +76,11 @@ class AppController:
         )
 
         self.init_nidaq()
+        self.restore_preferences()
+
+    def restore_preferences(self):
+        point_size = cast(int, self.settings.value("ui/font_size", 10, int))
+        set_font_size(point_size)
 
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
@@ -78,6 +90,7 @@ class AppController:
         self.app_view.data_load_requested.connect(self.load_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
         self.app_view.debug_requested.connect(self.show_debug_view)
+        self.app_view.preferences_requested.connect(self.show_preferences_view)
         self.protocol_view.run_requested.connect(self.run_magic)
         self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 
@@ -119,6 +132,12 @@ class AppController:
         self.debug_view.show()
         self.debug_view.raise_()
         self.debug_view.activateWindow()
+
+    def show_preferences_view(self):
+        """Show the preferences window."""
+        self.preferences_view.show()
+        self.preferences_view.raise_()
+        self.preferences_view.activateWindow()
 
     def shutdown(self):
         """Clean up resources on application shutdown."""

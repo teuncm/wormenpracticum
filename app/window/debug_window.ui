@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Debug Window</string>
+   <string>Debug</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
@@ -19,7 +19,7 @@
      <item>
       <widget class="QLabel" name="title_debug">
        <property name="text">
-        <string>Debug variables</string>
+        <string>Debug</string>
        </property>
       </widget>
      </item>

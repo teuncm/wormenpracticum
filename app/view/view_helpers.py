@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtWidgets import (
+    QApplication,
     QBoxLayout,
     QDoubleSpinBox,
     QFrame,
@@ -185,6 +186,17 @@ def info_box(
     msg_box.setText(message)
 
     return msg_box
+
+
+def set_font_size(point_size: int):
+    app = QApplication.instance()
+
+    if not isinstance(app, QApplication):
+        return
+
+    font = app.font()
+    font.setPointSize(point_size)
+    app.setFont(font)
 
 
 class Blocker:

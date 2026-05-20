@@ -31,7 +31,7 @@ class VerticalTabBar(QTabBar):
     def tabSizeHint(self, index):
         size = super().tabSizeHint(index)
         # Swap width/height because west tabs are normally vertical.
-        return QSize(size.height() - 12, size.width() + 50)
+        return QSize(size.height(), size.width() + 50)
 
     def paintEvent(self, event):
         painter = QStylePainter(self)
@@ -92,6 +92,7 @@ class AppView(QMainWindow):
     data_load_requested = Signal()
     data_save_requested = Signal()
     debug_requested = Signal()
+    preferences_requested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -115,6 +116,7 @@ class AppView(QMainWindow):
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
         self.ui.actionDebug.triggered.connect(self.debug_requested.emit)
+        self.ui.actionPreferences.triggered.connect(self.preferences_requested.emit)
         self.ui.actionExit.triggered.connect(self.close)
 
     def clear_tabs(self):

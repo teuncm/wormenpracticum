@@ -1,4 +1,5 @@
 # :)
+APP_ORG = "UvA"
 APP_TITLE = "Wormenpracticum"
 
 # Margin and spacing for layouts

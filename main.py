@@ -1,9 +1,11 @@
 import sys
 
-from app.controller.app_controller import AppController
-from app.resource_path import resource_path
 from PySide6.QtGui import QFont, QGuiApplication, QIcon, Qt
 from PySide6.QtWidgets import QApplication
+
+from app.controller.app_controller import AppController
+from app.resource_path import resource_path
+from app.view.view_helpers import set_font_size
 
 
 def main():
@@ -18,10 +20,7 @@ def main():
     app.setWindowIcon(QIcon(resource_path("app/window/icon.ico")))
 
     # Normalize font style across platforms
-    font = app.font()
-    font.setPointSize(11)
-    font.setWeight(QFont.Weight.Normal)
-    app.setFont(font)
+    set_font_size(11)
 
     controller = AppController()
     controller.start()

@@ -17,7 +17,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QHBoxLayout,
     QLabel, QPushButton, QSizePolicy, QSpacerItem,
-    QVBoxLayout, QWidget)
+    QTextEdit, QVBoxLayout, QWidget)
 
 class Ui_ProtocolWindow(object):
     def setupUi(self, ProtocolWindow):
@@ -58,11 +58,15 @@ class Ui_ProtocolWindow(object):
 
         self.leftLayout.addLayout(self.channelFormLayout)
 
-        self.nidaqStatusLabel = QLabel(ProtocolWindow)
-        self.nidaqStatusLabel.setObjectName(u"nidaqStatusLabel")
-        self.nidaqStatusLabel.setWordWrap(True)
+        self.textEdit = QTextEdit(ProtocolWindow)
+        self.textEdit.setObjectName(u"textEdit")
 
-        self.leftLayout.addWidget(self.nidaqStatusLabel)
+        self.leftLayout.addWidget(self.textEdit)
+
+        self.label = QLabel(ProtocolWindow)
+        self.label.setObjectName(u"label")
+
+        self.leftLayout.addWidget(self.label)
 
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -77,6 +81,12 @@ class Ui_ProtocolWindow(object):
         self.title_lanes.setObjectName(u"title_lanes")
 
         self.rightLayout.addWidget(self.title_lanes)
+
+        self.nidaqStatusLabel = QLabel(ProtocolWindow)
+        self.nidaqStatusLabel.setObjectName(u"nidaqStatusLabel")
+        self.nidaqStatusLabel.setWordWrap(True)
+
+        self.rightLayout.addWidget(self.nidaqStatusLabel)
 
         self.pushButton = QPushButton(ProtocolWindow)
         self.pushButton.setObjectName(u"pushButton")
@@ -103,8 +113,17 @@ class Ui_ProtocolWindow(object):
         self.title_controls.setText(QCoreApplication.translate("ProtocolWindow", u"Controls", None))
         self.positiveChannelLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Positive channel", None))
         self.negativeChannelLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Negative channel", None))
-        self.nidaqStatusLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Status: NI-DAQ unavailable", None))
+        self.textEdit.setHtml(QCoreApplication.translate("ProtocolWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"hr { height: 1px; border-width: 0; }\n"
+"li.unchecked::marker { content: \"\\2610\"; }\n"
+"li.checked::marker { content: \"\\2612\"; }\n"
+"</style></head><body style=\" font-family:'Segoe UI'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.label.setText(QCoreApplication.translate("ProtocolWindow", u"Sample rate: 0 Hz", None))
         self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Selected lanes", None))
+        self.nidaqStatusLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Status: NI-DAQ unavailable", None))
         self.pushButton.setText(QCoreApplication.translate("ProtocolWindow", u"Run", None))
     # retranslateUi
 
