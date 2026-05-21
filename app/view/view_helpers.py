@@ -17,6 +17,7 @@ from app.constants import (
     LEFT_LAYOUT_STRETCH,
     PLOT_GRID_ALPHA_DEFAULT,
     RIGHT_LAYOUT_STRETCH,
+    TITLE_LABEL_POINT_SIZE_INCREASE,
     VIEW_MARGIN_DEFAULT,
     VIEW_SPACING_DEFAULT,
 )
@@ -131,7 +132,11 @@ def style_title_labels(parent_widget) -> None:
     """Automatically style all QLabel widgets with "title" in their object name as section titles."""
     for widget in parent_widget.findChildren(QLabel):
         if "title" in widget.objectName():
-            style_label(widget, point_size_increase=8, bold=False)
+            style_label(
+                widget,
+                point_size_increase=TITLE_LABEL_POINT_SIZE_INCREASE,
+                bold=False,
+            )
 
 
 def adjust_layout_flow(parent_widget) -> None:

@@ -1,14 +1,22 @@
+import pyqtgraph as pg
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QGridLayout,
+    QPushButton,
+    QSizePolicy,
     QWidget,
 )
 
+from app.constants import (
+    PLOT_PIN_SELECTED_PEN_WIDTH,
+    PLOT_PIN_UNSELECTED_PEN_WIDTH,
+)
 from app.model.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.model.nidaq.protocol_mapping import (
     encode_stim_channel_pair,
     get_logical_channel_labels,
 )
-from app.view.view_helpers import setup_ui_custom
+from app.view.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.window.ui_protocol_window import Ui_ProtocolWindow
 
 
@@ -27,6 +35,119 @@ class ProtocolView(QWidget):
 
         self.populate_channel_dropdowns()
         self.ui.pushButton.clicked.connect(self.request_run)
+        self.ui.positiveChannelComboBox.currentIndexChanged.connect(self.plot_pins)
+        self.ui.negativeChannelComboBox.currentIndexChanged.connect(self.plot_pins)
+
+        self.setup_widgets()
+        self.plot_pins()
+
+    def setup_widgets(self):
+        """Set up the main plot and controls."""
+        frame, plot = create_plot_widget()
+
+        self.ui.rightLayout.addWidget(frame)
+        self.plotWidget = plot
+
+        if plot.plotItem is not None:
+            left_axis = plot.plotItem.getAxis("left")
+            left_axis.setVisible(False)
+
+        # Create a grid of 16 checkable buttons under the "Pins" label
+        pins_container = QWidget()
+        pins_layout = QGridLayout(pins_container)
+        pins_layout.setContentsMargins(0, 0, 0, 0)
+        pins_layout.setSpacing(4)
+
+        # Fix column widths to match button width so spacing stays even
+        button_w = 34
+        for col in range(4):
+            pins_layout.setColumnMinimumWidth(col, button_w + 2)
+
+        # Keep the container from expanding vertically too much
+        pins_container.setSizePolicy(
+            QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed
+        )
+
+        self.pinButtons = []
+        for i in range(16):
+            btn = QPushButton(str(i + 1))
+            btn.setCheckable(True)
+            btn.setObjectName(f"pinButton{i + 1}")
+            pins_layout.addWidget(btn, i // 4, i % 4)
+            btn.toggled.connect(self.plot_pins)
+            self.pinButtons.append(btn)
+
+        # Add Select All / Deselect All buttons below the pin grid
+        select_all_btn = QPushButton("Select All")
+        deselect_all_btn = QPushButton("Deselect All")
+        select_all_btn.setObjectName("selectAllPinsButton")
+        deselect_all_btn.setObjectName("deselectAllPinsButton")
+
+        def select_all():
+            with Blocker(*self.pinButtons):
+                for b in self.pinButtons:
+                    b.setChecked(True)
+            self.plot_pins()
+
+        def deselect_all():
+            with Blocker(*self.pinButtons):
+                for b in self.pinButtons:
+                    b.setChecked(False)
+            self.plot_pins()
+
+        select_all_btn.clicked.connect(select_all)
+        deselect_all_btn.clicked.connect(deselect_all)
+
+        # place the buttons centered below the 4x4 grid (row 4)
+        pins_layout.addWidget(select_all_btn, 4, 1)
+        pins_layout.addWidget(deselect_all_btn, 4, 2)
+
+        # Insert the pins container under the existing pins_label (before the placeholder label)
+        try:
+            placeholder_index = self.ui.leftLayout.indexOf(self.ui.label)
+        except Exception:
+            placeholder_index = -1
+
+        if placeholder_index == -1:
+            self.ui.leftLayout.addWidget(pins_container)
+        else:
+            self.ui.leftLayout.insertWidget(placeholder_index, pins_container)
+
+    def plot_pins(self):
+        """Plot 16 vertical pins for visual reference of the NI-DAQ digital output channels."""
+        if not hasattr(self, "plotWidget"):
+            return
+
+        self.plotWidget.clear()
+
+        positive_channel, negative_channel = self.get_selected_stim_channels()
+
+        measured = [i + 1 for i, b in enumerate(self.pinButtons) if b.isChecked()]
+
+        for channel in range(1, 17):
+            # first, draw the pin
+            base_pen = pg.mkPen("gray", width=PLOT_PIN_UNSELECTED_PEN_WIDTH)
+            self.plotWidget.plot([channel, channel], [0, 1], pen=base_pen)
+
+            # highlight measured pins
+            if channel in measured:
+                c = pg.mkColor("g")
+                c.setAlpha(110)
+                highlight_pen = pg.mkPen(c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
+                self.plotWidget.plot([channel, channel], [0, 1], pen=highlight_pen)
+
+            # overlay translucent pens for positive/negative so both remain visible
+            if channel == positive_channel:
+                c = pg.mkColor("b")
+                c.setAlpha(110)
+                pos_pen = pg.mkPen(color=c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
+                self.plotWidget.plot([channel, channel], [0, 1], pen=pos_pen)
+
+            if channel == negative_channel:
+                c = pg.mkColor("r")
+                c.setAlpha(110)
+                neg_pen = pg.mkPen(color=c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
+                self.plotWidget.plot([channel, channel], [0, 1], pen=neg_pen)
 
     def request_run(self):
         self.run_requested.emit()
