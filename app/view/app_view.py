@@ -112,9 +112,7 @@ class HorizontalTabBar(QTabBar):
                 else:
                     option.state &= ~QStyle.StateFlag.State_MouseOver
 
-                # Important: draw the tab as a WEST tab.
-                # This makes the selected tab connect to the page on the east/right side.
-                option.shape = QTabBar.Shape.RoundedWest
+                option.shape = QTabBar.Shape.RoundedNorth
 
                 painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
 

@@ -24,10 +24,6 @@ from app.view.view_helpers import (
 )
 from app.window.ui_stimulus_window import Ui_StimulusWindow
 
-SEGMENT_TAB_EXTRA_HEIGHT_PX = 12
-SEGMENT_TAB_MIN_HEIGHT_PX = 38
-SEGMENT_CORNER_BUTTON_VERTICAL_INSET_PX = 6
-
 
 class PulseTabBar(QTabBar):
     def __init__(self, parent=None):
@@ -38,7 +34,7 @@ class PulseTabBar(QTabBar):
         size = super().tabSizeHint(index)
         return QSize(
             size.width(),
-            max(size.height() + SEGMENT_TAB_EXTRA_HEIGHT_PX, SEGMENT_TAB_MIN_HEIGHT_PX),
+            size.height() + 15,
         )
 
 
