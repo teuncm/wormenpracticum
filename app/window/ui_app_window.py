@@ -62,7 +62,7 @@ class Ui_AppWindow(object):
         self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
         self.tabWidget = QTabWidget(self.centralwidget)
         self.tabWidget.setObjectName(u"tabWidget")
-        self.tabWidget.setTabPosition(QTabWidget.TabPosition.West)
+        self.tabWidget.setTabPosition(QTabWidget.TabPosition.North)
         self.tab = QWidget()
         self.tab.setObjectName(u"tab")
         self.tabWidget.addTab(self.tab, "")

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from app.model.stimulus.stimulus_config import StimulusConfig
+from app.model.config.stimulus_config import StimulusConfig
 
 
 @dataclass(slots=True)

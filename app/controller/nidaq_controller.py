@@ -16,7 +16,6 @@ class NidaqController:
 
     def discover(self) -> bool:
         """Discover NI-DAQ devices and update model state accordingly."""
-        print("Discovering...")
         try:
             system = System.local()
         except Exception as exc:

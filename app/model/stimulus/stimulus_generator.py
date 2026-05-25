@@ -1,9 +1,10 @@
 import copy
 
-import app.model.stimulus.signal as sgn
 import numpy as np
+
+import app.model.stimulus.signal as sgn
+from app.model.config.stimulus_config import StimulusConfig
 from app.model.stimulus.stimulus import Stimulus
-from app.model.stimulus.stimulus_config import StimulusConfig
 
 
 class StimulusGenerator:

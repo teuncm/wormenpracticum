@@ -33,7 +33,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="tabPosition">
-       <enum>QTabWidget::TabPosition::West</enum>
+       <enum>QTabWidget::TabPosition::North</enum>
       </property>
       <property name="currentIndex">
        <number>0</number>

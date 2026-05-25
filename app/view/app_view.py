@@ -58,7 +58,75 @@ class VerticalTabBar(QTabBar):
 
                 painter.drawItemText(
                     rect,
-                    Qt.AlignmentFlag.AlignCenter.value | Qt.TextFlag.TextWordWrap.value,
+                    Qt.AlignmentFlag.AlignCenter.value,
+                    option.palette,
+                    bool(option.state & QStyle.StateFlag.State_Enabled),
+                    option.text,
+                    QPalette.ColorRole.ButtonText,
+                )
+        finally:
+            painter.end()
+
+    def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
+        self._set_hovered_index(self.tabAt(event.position().toPoint()))
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self._set_hovered_index(-1)
+
+    def _set_hovered_index(self, index):
+        if index == self._hovered_index:
+            return
+
+        previous_index = self._hovered_index
+        self._hovered_index = index
+
+        if previous_index >= 0:
+            self.update(self.tabRect(previous_index))
+        if index >= 0:
+            self.update(self.tabRect(index))
+
+
+class HorizontalTabBar(QTabBar):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._hovered_index = -1
+        self.setShape(QTabBar.Shape.RoundedNorth)
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.setMouseTracking(True)
+
+    def tabSizeHint(self, index):
+        size = super().tabSizeHint(index)
+        return QSize(size.width() + 80, size.height() + 5)
+
+    def paintEvent(self, event):
+        painter = QStylePainter(self)
+        try:
+            for index in range(self.count()):
+                option = QStyleOptionTab()
+                self.initStyleOption(option, index)
+                option.text = " ".join(option.text.splitlines())
+                if index == self._hovered_index and self.isTabEnabled(index):
+                    option.state |= QStyle.StateFlag.State_MouseOver
+                else:
+                    option.state &= ~QStyle.StateFlag.State_MouseOver
+
+                # Important: draw the tab as a WEST tab.
+                # This makes the selected tab connect to the page on the east/right side.
+                option.shape = QTabBar.Shape.RoundedWest
+
+                painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
+
+                rect = option.rect.adjusted(8, 0, -8, 0)
+
+                font = painter.font()
+                font.setPointSize(10)
+                painter.setFont(font)
+
+                painter.drawItemText(
+                    rect,
+                    Qt.AlignmentFlag.AlignCenter.value,
                     option.palette,
                     bool(option.state & QStyle.StateFlag.State_Enabled),
                     option.text,
@@ -104,9 +172,7 @@ class AppView(QMainWindow):
 
         tabs = self.ui.tabWidget
         tabs.clear()
-        tabs.setTabBar(VerticalTabBar())
-        tabs.setTabPosition(QTabWidget.TabPosition.West)
-        tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
+        self.set_tab_orientation(vertical=False)
         tabs.setDocumentMode(True)
         tabs.currentChanged.connect(self._update_window_title)
         self._update_window_title()
@@ -122,6 +188,19 @@ class AppView(QMainWindow):
     def clear_tabs(self):
         self.ui.tabWidget.clear()
         self._update_window_title()
+
+    def set_tab_orientation(self, vertical: bool):
+        tabs = self.ui.tabWidget
+        if vertical:
+            tabs.setTabBar(VerticalTabBar())
+            tabs.setTabPosition(QTabWidget.TabPosition.West)
+            tabs.tabBar().setShape(QTabBar.Shape.RoundedWest)
+            tabs.setDocumentMode(True)
+        else:
+            tabs.setTabBar(HorizontalTabBar())
+            tabs.setTabPosition(QTabWidget.TabPosition.North)
+            tabs.tabBar().setShape(QTabBar.Shape.RoundedNorth)
+            tabs.setDocumentMode(False)
 
     def add_tab(self, widget: QWidget, label: str):
         self.ui.tabWidget.addTab(self._create_tab_page_frame(widget), label)

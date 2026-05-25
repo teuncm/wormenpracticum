@@ -2,7 +2,7 @@ import pandas as pd
 from PySide6.QtCore import QObject, Signal
 
 from app.model.app_state import AppState
-from app.model.stimulus.stimulus_config import DEFAULT_STIMULUS_CONFIG, StimulusConfig
+from app.model.config.stimulus_config import DEFAULT_STIMULUS_CONFIG, StimulusConfig
 from app.model.stimulus.stimulus_generator import StimulusGenerator
 
 

@@ -1,6 +1,7 @@
 import pytest
+
+from app.model.config.stimulus_config import StimulusConfig
 from app.model.stimulus.pulse import Pulse
-from app.model.stimulus.stimulus_config import StimulusConfig
 from app.model.stimulus.stimulus_generator import StimulusGenerator
 
 TEST_SR_HZ = 4.0

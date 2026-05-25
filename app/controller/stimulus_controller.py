@@ -1,7 +1,7 @@
 from app.constants import DOUBLE_SPIN_PARSE_ROUND_DECIMALS, TARGET_N_SAMPLES_PULSE_PLOT
 from app.model.app_model import AppModel
+from app.model.config.stimulus_config import StimulusConfig
 from app.model.stimulus.pulse import Pulse
-from app.model.stimulus.stimulus_config import StimulusConfig
 from app.view.pulse_tab_view import PulseTabView
 from app.view.stimulus_view import StimulusView
 from app.view.view_helpers import Blocker
