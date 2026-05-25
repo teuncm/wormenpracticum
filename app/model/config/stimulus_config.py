@@ -6,6 +6,8 @@ from app.model.stimulus.stimulus import Stimulus
 
 @dataclass
 class StimulusConfig:
+    """Configuration for the stimulus generator stage."""
+
     n_steps: int
     # Voltage limiting is only applied to samples in the generator.
     limit_v: float
@@ -40,23 +42,3 @@ class StimulusConfig:
                 for pulse in self.stim.pulses
             ],
         }
-
-
-DEFAULT_STIMULUS_CONFIG = StimulusConfig(
-    dur_s=0.02,
-    limit_v=1.5,
-    n_steps=10,
-    pulses=[
-        Pulse(
-            amp_v=1.5,
-            start_s=0.001,
-            step_start_s=0.0001,
-            dur_s=0.0002,
-        ),
-        Pulse(
-            amp_v=1.5,
-            start_s=0.006,
-            dur_s=0.0002,
-        ),
-    ],
-)

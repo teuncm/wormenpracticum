@@ -1,3 +1,8 @@
+from app.model.config.filter_config import FilterConfig
+from app.model.config.protocol_config import ProtocolConfig
+from app.model.config.stimulus_config import StimulusConfig
+from app.model.stimulus.pulse import Pulse
+
 # :)
 APP_ORG = "UvA"
 APP_TITLE = "Wormenpracticum"
@@ -35,3 +40,37 @@ DOUBLE_SPIN_MAX_V = 2.0
 
 # Segment highlighting
 SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT = True
+
+
+# Default configs moved from model.config
+DEFAULT_PROTOCOL_CONFIG = ProtocolConfig(
+    positive_channel=0,
+    negative_channel=1,
+    selected_pins=list(range(2, 16)),
+    sample_rate_divider=1,
+)
+
+DEFAULT_FILTER_CONFIG = FilterConfig(
+    low_pass_cutoff_hz=5000.0,
+    suppress_50hz=True,
+    remove_dc_offset=True,
+)
+
+DEFAULT_STIMULUS_CONFIG = StimulusConfig(
+    dur_s=0.02,
+    limit_v=1.5,
+    n_steps=10,
+    pulses=[
+        Pulse(
+            amp_v=1.5,
+            start_s=0.001,
+            step_start_s=0.0001,
+            dur_s=0.0002,
+        ),
+        Pulse(
+            amp_v=1.5,
+            start_s=0.006,
+            dur_s=0.0002,
+        ),
+    ],
+)
