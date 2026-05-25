@@ -84,8 +84,6 @@ class AppController:
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
-        self.app_model.experiment_data_changed.connect(self.debug_view.refresh)
-        self.app_model.stim_config_changed.connect(self.debug_view.refresh)
         self.app_view.data_load_requested.connect(self.load_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
         self.app_view.debug_requested.connect(self.show_debug_view)
