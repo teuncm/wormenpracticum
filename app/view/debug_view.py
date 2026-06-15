@@ -143,4 +143,10 @@ class DebugView(QWidget):
         self.searchResultLabel.setText(f"{match_count} match(es)")
 
     def _app_model_snapshot(self) -> dict:
-        return asdict(self.app_model.app_state)
+        return {
+            "stim_config": asdict(self.app_model.stim_config),
+            "protocol_config": asdict(self.app_model.protocol_config),
+            "filter_config": asdict(self.app_model.filter_config),
+            "experiment_config": self.app_model.experiment_config,
+            "experiment_metadata": self.app_model.experiment_metadata,
+        }

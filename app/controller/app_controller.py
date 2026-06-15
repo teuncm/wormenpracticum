@@ -1,6 +1,8 @@
+import dataclasses
 import getpass
 from datetime import datetime
 from pathlib import Path
+from pprint import pprint
 from typing import cast
 
 from PySide6.QtCore import QSettings, QTimer
@@ -35,9 +37,15 @@ class AppController:
 
         self.init_mvc()
 
-        self.connect_data_signals()
+        # self.connect_data_signals()
+
+        # self.save_state(.json")
 
         # self.init_nidaq()
+
+        pprint(self.app_model.export_state())
+
+        self.restore_preferences()
 
     def init_mvc(self):
         """Initialize mvc components."""
@@ -74,9 +82,6 @@ class AppController:
             self.app_model, self.protocol_view
         )
 
-        self.init_nidaq()
-        self.restore_preferences()
-
     def restore_preferences(self):
         point_size = cast(int, self.settings.value("ui/font_size", 10, int))
         set_font_size(point_size)
@@ -97,8 +102,8 @@ class AppController:
 
     def update_main_plot(self):
         """Update the main plot with the latest experiment data."""
-        if self.app_model.app_state.raw_data_df is not None:
-            self.overview_view.plot_data(self.app_model.app_state.raw_data_df)
+        if self.app_model.raw_data_df is not None:
+            self.overview_view.plot_data(self.app_model.raw_data_df)
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""
@@ -109,11 +114,16 @@ class AppController:
 
         app = QApplication.instance()
         if app is not None:
-            app.aboutToQuit.connect(self.shutdown)
+            app.aboutToQuit.connect(self.cleanup)
 
     def start(self):
         """Start the application by showing the main view."""
-        self.app_view.showMaximized()
+        self.app_view.show()
+        # self.app_view.showMaximized()
+
+    def cleanup(self):
+        """Clean up resources on application shutdown."""
+        self.nidaq_status_timer.stop()
 
     def discover_nidaq_device(self):
         """Refresh the nidaq discovery status."""
@@ -136,10 +146,6 @@ class AppController:
         self.preferences_view.raise_()
         self.preferences_view.activateWindow()
 
-    def shutdown(self):
-        """Clean up resources on application shutdown."""
-        self.nidaq_status_timer.stop()
-
     def save_experiment_data(self):
         """Save experiment data to a file."""
         filename = data_dialog.show_save_dialog()
@@ -147,11 +153,11 @@ class AppController:
             info_box(message="No file name was given.").exec()
             return
 
-        if self.app_model.app_state.raw_data_df is None:
+        if self.app_model.raw_data_df is None:
             info_box(message="There is no data to save.").exec()
             return
 
-        msg = data_io.write_data(filename, self.app_model.app_state.raw_data_df)
+        msg = data_io.write_data(filename, self.app_model.raw_data_df)
         self.save_experiment_metadata(filename)
         if msg:
             info_box(message=f"Error saving data: {msg}").exec()
@@ -177,6 +183,17 @@ class AppController:
 
         self.app_model.update_experiment_data(df)
 
+    def save_state(self, filename):
+        """Save the entire state of the application to a file."""
+        state = {
+            "stim_config": dataclasses.asdict(self.app_model.stim_config),
+            "protocol_config": dataclasses.asdict(self.app_model.protocol_config),
+            "filter_config": dataclasses.asdict(self.app_model.filter_config),
+            "experiment_config": self.app_model.experiment_config,
+            "experiment_metadata": self.app_model.experiment_metadata,
+        }
+        print(state)
+
     def save_experiment_metadata(self, filename):
         """Save experiment metadata to a file.
         Automatically called when saving experiment data."""
@@ -189,11 +206,11 @@ class AppController:
             "save_date": now.date().isoformat(),
             "save_time": now.timetz().isoformat(),
         }
-        experiment_metadata = self.app_model.app_state.experiment_metadata or {}
+        experiment_metadata = self.app_model.experiment_metadata or {}
         metadata_aggregate = {
             "metadata": save_metadata | experiment_metadata,
-            "experiment_config": self.app_model.app_state.experiment_config,
-            "stim_config": self.app_model.app_state.stim_config.to_dict(),
+            "experiment_config": self.app_model.experiment_config,
+            "stim_config": self.app_model.stim_config.to_dict(),
         }
         msg = data_io.write_metadata(metadata_filename, metadata_aggregate)
         if msg:
