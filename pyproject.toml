@@ -22,7 +22,7 @@ dev = [
 
 [tool.ruff]
 exclude = [
-    "app/window/",
+    "app/ui/generated/",
     "legacy",
 ]
 

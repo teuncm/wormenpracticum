@@ -1,4 +1,4 @@
-import app.model.stimulus.signal as sgn
+import app.feature.stimulus.signal as sgn
 import numpy as np
 import pytest
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from app.model.data_io import read_data, write_data
+from app.shared.data_io import read_data, write_data
 
 
 def test_save_load_data(tmp_path):

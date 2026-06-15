@@ -1,4 +1,4 @@
-from app.model.protocol_mapping import (
+from app.feature.acquisition.protocol_mapping import (
     encode_stim_channel_pair,
     get_logical_channel_labels,
     get_logical_measurement_channel_labels,
