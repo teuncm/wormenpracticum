@@ -5,7 +5,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import cast
 
-from PySide6.QtCore import QSettings, QTimer
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
 from app.app_model import AppModel
@@ -27,18 +27,17 @@ from app.feature.stimulus.stimulus_controller import StimulusController
 from app.feature.stimulus.stimulus_view import StimulusView
 from app.shared import data_dialog, data_io
 from app.shared.constants import (
-    APP_ORG,
-    APP_TITLE,
     DEFAULT_FILTER_CONFIG,
     DEFAULT_PROTOCOL_CONFIG,
     DEFAULT_STIMULUS_CONFIG,
 )
+from app.shared.settings import create_app_settings
 from app.shared.view_helpers import info_box, set_font_size
 
 
 class AppController:
     def __init__(self):
-        self.settings = QSettings(APP_ORG, APP_TITLE)
+        self.settings = create_app_settings()
 
         self.init_mvc()
         self.connect_data_signals()
@@ -91,6 +90,11 @@ class AppController:
 
     def restore_preferences(self):
         point_size = cast(int, self.settings.value("ui/font_size", 10, int))
+        self.preferences_view.set_font_size(point_size)
+        set_font_size(self.preferences_view.font_size())
+
+    def update_font_size_preference(self, point_size: int):
+        self.settings.setValue("ui/font_size", point_size)
         set_font_size(point_size)
 
     def connect_data_signals(self):
@@ -109,6 +113,9 @@ class AppController:
         self.app_view.filter_reset_requested.connect(self.reset_filter_state)
         self.app_view.debug_requested.connect(self.show_debug_view)
         self.app_view.preferences_requested.connect(self.show_preferences_view)
+        self.preferences_view.font_size_changed.connect(
+            self.update_font_size_preference
+        )
         self.protocol_view.run_requested.connect(self.run_magic)
         self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 

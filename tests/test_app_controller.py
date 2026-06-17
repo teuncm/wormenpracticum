@@ -320,3 +320,57 @@ def test_reset_protocol_restores_pins_after_bulk_pin_edit():
 
     controller.app_view.close()
     app.processEvents()
+
+
+class FakeSettings:
+    def __init__(self, stored_font_size=10):
+        self.stored_font_size = stored_font_size
+        self.values = {}
+
+    def value(self, key, default=None, type=None):
+        if key == "ui/font_size":
+            return self.stored_font_size
+
+        return default
+
+    def setValue(self, key, value):
+        self.values[key] = value
+
+
+def test_restore_preferences_updates_font_size_spinbox_and_app_font():
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    controller.settings = FakeSettings(stored_font_size=13)
+
+    controller.restore_preferences()
+
+    assert controller.preferences_view.font_size() == 13
+    assert app.font().pointSize() == 13
+
+    controller.app_view.close()
+    app.processEvents()
+
+
+def test_preferences_font_size_spinbox_applies_and_persists_size():
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    fake_settings = FakeSettings()
+    controller.settings = fake_settings
+    controller.preferences_view.set_font_size(10)
+
+    controller.preferences_view.ui.fontSizeSpinBox.stepUp()
+    app.processEvents()
+
+    assert controller.preferences_view.font_size() == 11
+    assert app.font().pointSize() == 11
+    assert fake_settings.values["ui/font_size"] == 11
+
+    controller.preferences_view.ui.fontSizeSpinBox.stepDown()
+    app.processEvents()
+
+    assert controller.preferences_view.font_size() == 10
+    assert app.font().pointSize() == 10
+    assert fake_settings.values["ui/font_size"] == 10
+
+    controller.app_view.close()
+    app.processEvents()

@@ -46,7 +46,7 @@ SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT = True
 DEFAULT_PROTOCOL_CONFIG = ProtocolConfig(
     positive_channel=0,
     negative_channel=1,
-    selected_pins=list(range(2, 17)),
+    selected_pins=list(range(3, 17)),
     sample_rate_divider=1,
 )
 
