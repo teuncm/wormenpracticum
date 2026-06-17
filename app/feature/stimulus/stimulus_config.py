@@ -20,6 +20,11 @@ class StimulusConfig:
         pulses: list[Pulse],
         n_steps: int = 1,
     ):
+        if type(pulses) is not list:
+            raise TypeError("pulses must be a list of Pulse objects.")
+        if not all(isinstance(pulse, Pulse) for pulse in pulses):
+            raise TypeError("All elements in pulses must be Pulse objects.")
+
         self.n_steps = n_steps
         self.limit_v = limit_v
         self.stim = Stimulus(dur_s=dur_s, pulses=pulses)

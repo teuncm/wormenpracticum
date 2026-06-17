@@ -85,6 +85,7 @@ class StimulusGenerator:
         # Since _step() is in-place, we need to deepcopy the base stimulus to avoid modifying it.
         cur_stim = copy.deepcopy(self.config.stim)
         expanded_stims = []
+
         for _ in range(self.config.n_steps):
             expanded_stims.append(copy.deepcopy(cur_stim))
             cur_stim._step()

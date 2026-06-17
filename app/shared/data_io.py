@@ -49,3 +49,12 @@ def write_metadata(file_path, metadata) -> None | str:
             json.dump(metadata, f, indent=4)
     except Exception as e:
         return str(e)
+
+
+def read_metadata(file_path) -> dict | str:
+    """Read metadata from a JSON file."""
+    try:
+        with open(file_path) as f:
+            return json.load(f)
+    except Exception as e:
+        return str(e)

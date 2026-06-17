@@ -3,15 +3,16 @@ import dataclasses
 import pandas as pd
 from PySide6.QtCore import QObject, Signal
 
+from app.feature.acquisition.protocol_config import ProtocolConfig
+from app.feature.filter.filter_config import FilterConfig
+from app.feature.stimulus.pulse import Pulse
+from app.feature.stimulus.stimulus_config import StimulusConfig
+from app.feature.stimulus.stimulus_generator import StimulusGenerator
 from app.shared.constants import (
     DEFAULT_FILTER_CONFIG,
     DEFAULT_PROTOCOL_CONFIG,
     DEFAULT_STIMULUS_CONFIG,
 )
-from app.feature.acquisition.protocol_config import ProtocolConfig
-from app.feature.stimulus.stimulus_config import StimulusConfig
-from app.feature.stimulus.stimulus_generator import StimulusGenerator
-from app.feature.filter.filter_config import FilterConfig
 
 
 class AppModel(QObject):
@@ -66,18 +67,26 @@ class AppModel(QObject):
     def export_state(self):
         """Export the entire state of the application as a dictionary."""
         return {
-            "stim_config": dataclasses.asdict(self.stim_config),
+            "stim_config": self.stim_config.to_dict(),
             "protocol_config": dataclasses.asdict(self.protocol_config),
             "filter_config": dataclasses.asdict(self.filter_config),
-            "experiment_config": self.experiment_config,
-            "experiment_metadata": self.experiment_metadata,
+            # "experiment_config": self.experiment_config,
+            # "experiment_metadata": self.experiment_metadata,
         }
 
     def import_state(self, state: dict):
         """Import source state information of the application from a dictionary, updating derived state
         information where needed."""
         if "stim_config" in state:
+            # Create Pulse objects from the list of dictionaries in the state
+            pulseObjects = [
+                Pulse(**pulse_dict) for pulse_dict in state["stim_config"]["pulses"]
+            ]
+
+            state["stim_config"] |= {"pulses": pulseObjects}
+
             self.stim_config = StimulusConfig(**state["stim_config"])
+
             self.stim_generator = StimulusGenerator(self.stim_config)
             self.stim_config_changed.emit()
         if "protocol_config" in state:

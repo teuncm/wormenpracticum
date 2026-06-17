@@ -10,7 +10,6 @@ from PySide6.QtWidgets import QApplication
 
 from app.app_model import AppModel
 from app.app_view import AppView
-from app.shared.constants import APP_ORG, APP_TITLE
 from app.feature.about.about_view import AboutView
 from app.feature.acquisition.protocol_controller import ProtocolController
 from app.feature.acquisition.protocol_view import ProtocolView
@@ -27,6 +26,7 @@ from app.feature.preferences.preferences_view import PreferencesView
 from app.feature.stimulus.stimulus_controller import StimulusController
 from app.feature.stimulus.stimulus_view import StimulusView
 from app.shared import data_dialog, data_io
+from app.shared.constants import APP_ORG, APP_TITLE
 from app.shared.view_helpers import info_box, set_font_size
 
 
@@ -41,7 +41,11 @@ class AppController:
 
         # self.init_nidaq()
 
-        pprint(self.app_model.export_state())
+        state = self.app_model.export_state()
+
+        pprint(state)
+
+        self.app_model.import_state(state)
 
         self.restore_preferences()
 
@@ -89,6 +93,12 @@ class AppController:
         self.app_model.experiment_data_changed.connect(self.update_main_plot)
         self.app_view.data_load_requested.connect(self.load_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
+        self.app_view.stimulus_load_requested.connect(self.load_stimulus_state)
+        self.app_view.stimulus_save_requested.connect(self.save_stimulus_state)
+        self.app_view.protocol_load_requested.connect(self.load_protocol_state)
+        self.app_view.protocol_save_requested.connect(self.save_protocol_state)
+        self.app_view.filter_load_requested.connect(self.load_filter_state)
+        self.app_view.filter_save_requested.connect(self.save_filter_state)
         self.app_view.debug_requested.connect(self.show_debug_view)
         self.app_view.preferences_requested.connect(self.show_preferences_view)
         self.protocol_view.run_requested.connect(self.run_magic)
@@ -191,6 +201,64 @@ class AppController:
             "experiment_metadata": self.app_model.experiment_metadata,
         }
         print(state)
+
+    def save_stimulus_state(self):
+        self.save_named_state("stimulus", "stim_config")
+
+    def load_stimulus_state(self):
+        self.load_named_state("stimulus", "stim_config")
+
+    def save_protocol_state(self):
+        self.save_named_state("protocol", "protocol_config")
+
+    def load_protocol_state(self):
+        self.load_named_state("protocol", "protocol_config")
+
+    def save_filter_state(self):
+        self.save_named_state("filter", "filter_config")
+
+    def load_filter_state(self):
+        self.load_named_state("filter", "filter_config")
+
+    def save_named_state(self, state_name: str, state_key: str):
+        """Save one app state section to a typed JSON file."""
+        filename = data_dialog.show_save_json_dialog()
+        if filename is None:
+            info_box(message="No file name was given.").exec()
+            return
+
+        filename = self._state_filename(filename, state_name)
+        state = {state_key: self.app_model.export_state()[state_key]}
+        msg = data_io.write_metadata(filename, state)
+        if msg:
+            info_box(message=f"Error saving {state_name}: {msg}").exec()
+
+    def load_named_state(self, state_name: str, state_key: str):
+        """Load one app state section from JSON into the app model."""
+        filename = data_dialog.show_load_json_dialog()
+        if filename is None:
+            info_box(message="No file was selected.").exec()
+            return
+
+        state = data_io.read_metadata(filename)
+        if isinstance(state, str):
+            info_box(message=f"Error loading {state_name}: {state}").exec()
+            return
+
+        if state_key not in state:
+            state = {state_key: state}
+
+        self.app_model.import_state(state)
+
+    def _state_filename(self, filename: str, state_name: str) -> str:
+        path = Path(filename)
+        base_path = path.with_suffix("")
+        for suffix in (".stimulus", ".protocol", ".filter"):
+            if base_path.name.endswith(suffix):
+                base_path = base_path.with_name(base_path.name[: -len(suffix)])
+                break
+
+        return str(base_path.with_name(f"{base_path.name}.{state_name}.json"))
 
     def save_experiment_metadata(self, filename):
         """Save experiment metadata to a file.

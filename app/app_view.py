@@ -157,6 +157,12 @@ class HorizontalTabBar(QTabBar):
 class AppView(QMainWindow):
     data_load_requested = Signal()
     data_save_requested = Signal()
+    stimulus_load_requested = Signal()
+    stimulus_save_requested = Signal()
+    protocol_load_requested = Signal()
+    protocol_save_requested = Signal()
+    filter_load_requested = Signal()
+    filter_save_requested = Signal()
     debug_requested = Signal()
     preferences_requested = Signal()
 
@@ -179,6 +185,20 @@ class AppView(QMainWindow):
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
+        self.ui.actionLoad_stimulus.triggered.connect(
+            self.stimulus_load_requested.emit
+        )
+        self.ui.actionSave_stimulus.triggered.connect(
+            self.stimulus_save_requested.emit
+        )
+        self.ui.actionLoad_protocol.triggered.connect(
+            self.protocol_load_requested.emit
+        )
+        self.ui.actionSave_protocol.triggered.connect(
+            self.protocol_save_requested.emit
+        )
+        self.ui.actionLoad_filter.triggered.connect(self.filter_load_requested.emit)
+        self.ui.actionSave_filter.triggered.connect(self.filter_save_requested.emit)
         self.ui.actionDebug.triggered.connect(self.debug_requested.emit)
         self.ui.actionPreferences.triggered.connect(self.preferences_requested.emit)
         self.ui.actionExit.triggered.connect(self.close)
