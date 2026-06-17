@@ -64,8 +64,10 @@
     <addaction name="separator"/>
     <addaction name="actionLoad_stimulus"/>
     <addaction name="actionSave_stimulus"/>
+    <addaction name="separator"/>
     <addaction name="actionLoad_protocol"/>
     <addaction name="actionSave_protocol"/>
+    <addaction name="separator"/>
     <addaction name="actionLoad_filter"/>
     <addaction name="actionSave_filter"/>
     <addaction name="separator"/>

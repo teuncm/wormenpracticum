@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'app_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.11.0
+## Created by: Qt User Interface Compiler version 6.11.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -99,8 +99,10 @@ class Ui_AppWindow(object):
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionLoad_stimulus)
         self.menuFile.addAction(self.actionSave_stimulus)
+        self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionLoad_protocol)
         self.menuFile.addAction(self.actionSave_protocol)
+        self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionLoad_filter)
         self.menuFile.addAction(self.actionSave_filter)
         self.menuFile.addSeparator()
