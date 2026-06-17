@@ -34,7 +34,7 @@ class Ui_PreferencesWindow(object):
 
         self.fontSizeSpinBox = QSpinBox(PreferencesWindow)
         self.fontSizeSpinBox.setObjectName(u"fontSizeSpinBox")
-        self.fontSizeSpinBox.setMinimum(9)
+        self.fontSizeSpinBox.setMinimum(6)
         self.fontSizeSpinBox.setMaximum(20)
 
         self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.fontSizeSpinBox)
@@ -52,4 +52,3 @@ class Ui_PreferencesWindow(object):
         PreferencesWindow.setWindowTitle(QCoreApplication.translate("PreferencesWindow", u"Preferences", None))
         self.fontSizeLabel.setText(QCoreApplication.translate("PreferencesWindow", u"Font size", None))
     # retranslateUi
-

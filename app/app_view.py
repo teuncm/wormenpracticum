@@ -52,10 +52,6 @@ class VerticalTabBar(QTabBar):
 
                 rect = option.rect.adjusted(8, 0, -8, 0)
 
-                font = painter.font()
-                font.setPointSize(10)
-                painter.setFont(font)
-
                 painter.drawItemText(
                     rect,
                     Qt.AlignmentFlag.AlignCenter.value,
@@ -117,10 +113,6 @@ class HorizontalTabBar(QTabBar):
                 painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
 
                 rect = option.rect.adjusted(8, 0, -8, 0)
-
-                font = painter.font()
-                font.setPointSize(10)
-                painter.setFont(font)
 
                 painter.drawItemText(
                     rect,

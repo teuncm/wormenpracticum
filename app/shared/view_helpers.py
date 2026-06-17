@@ -1,5 +1,6 @@
 import pyqtgraph as pg
 from PySide6.QtCore import QSignalBlocker, Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
     QBoxLayout,
@@ -8,6 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
+    QTabBar,
     QSpinBox,
     QVBoxLayout,
 )
@@ -114,10 +116,9 @@ def spin_helper(
 
 
 def style_label(label: QLabel, bold=False, point_size_increase=0) -> QLabel:
-    font = label.font()
-    font.setBold(bold)
-    font.setPointSize(font.pointSize() + point_size_increase)
-    label.setFont(font)
+    label.setProperty("title_point_size_increase", point_size_increase)
+    label.setProperty("title_bold", bold)
+    apply_title_label_font(label)
 
     return label
 
@@ -202,6 +203,30 @@ def set_font_size(point_size: int):
     font = app.font()
     font.setPointSize(point_size)
     app.setFont(font)
+    refresh_widget_fonts(app)
+
+
+def refresh_widget_fonts(app: QApplication) -> None:
+    """Refresh widgets that use explicit fonts or custom painting."""
+    for widget in app.allWidgets():
+        if isinstance(widget, QLabel) and widget.property(
+            "title_point_size_increase"
+        ) is not None:
+            apply_title_label_font(widget)
+
+        if isinstance(widget, QTabBar):
+            widget.updateGeometry()
+            widget.update()
+
+
+def apply_title_label_font(label: QLabel) -> None:
+    app = QApplication.instance()
+    base_font = app.font() if isinstance(app, QApplication) else label.font()
+    font = QFont(base_font)
+    point_size_increase = int(label.property("title_point_size_increase") or 0)
+    font.setPointSize(base_font.pointSize() + point_size_increase)
+    font.setBold(bool(label.property("title_bold")))
+    label.setFont(font)
 
 
 class Blocker:

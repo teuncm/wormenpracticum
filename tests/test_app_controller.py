@@ -14,6 +14,7 @@ from app.shared.constants import (
     DEFAULT_FILTER_CONFIG,
     DEFAULT_PROTOCOL_CONFIG,
     DEFAULT_STIMULUS_CONFIG,
+    TITLE_LABEL_POINT_SIZE_INCREASE,
 )
 
 
@@ -346,6 +347,11 @@ def test_restore_preferences_updates_font_size_spinbox_and_app_font():
 
     assert controller.preferences_view.font_size() == 13
     assert app.font().pointSize() == 13
+    assert controller.app_view.ui.tabWidget.tabBar().font().pointSize() == 13
+    assert (
+        controller.stimulus_view.ui.title_stimulus.font().pointSize()
+        == 13 + TITLE_LABEL_POINT_SIZE_INCREASE
+    )
 
     controller.app_view.close()
     app.processEvents()
@@ -363,6 +369,11 @@ def test_preferences_font_size_spinbox_applies_and_persists_size():
 
     assert controller.preferences_view.font_size() == 11
     assert app.font().pointSize() == 11
+    assert controller.app_view.ui.tabWidget.tabBar().font().pointSize() == 11
+    assert (
+        controller.protocol_view.ui.title_controls.font().pointSize()
+        == 11 + TITLE_LABEL_POINT_SIZE_INCREASE
+    )
     assert fake_settings.values["ui/font_size"] == 11
 
     controller.preferences_view.ui.fontSizeSpinBox.stepDown()
@@ -370,6 +381,11 @@ def test_preferences_font_size_spinbox_applies_and_persists_size():
 
     assert controller.preferences_view.font_size() == 10
     assert app.font().pointSize() == 10
+    assert controller.app_view.ui.tabWidget.tabBar().font().pointSize() == 10
+    assert (
+        controller.protocol_view.ui.title_controls.font().pointSize()
+        == 10 + TITLE_LABEL_POINT_SIZE_INCREASE
+    )
     assert fake_settings.values["ui/font_size"] == 10
 
     controller.app_view.close()
