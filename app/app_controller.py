@@ -26,7 +26,13 @@ from app.feature.preferences.preferences_view import PreferencesView
 from app.feature.stimulus.stimulus_controller import StimulusController
 from app.feature.stimulus.stimulus_view import StimulusView
 from app.shared import data_dialog, data_io
-from app.shared.constants import APP_ORG, APP_TITLE
+from app.shared.constants import (
+    APP_ORG,
+    APP_TITLE,
+    DEFAULT_FILTER_CONFIG,
+    DEFAULT_PROTOCOL_CONFIG,
+    DEFAULT_STIMULUS_CONFIG,
+)
 from app.shared.view_helpers import info_box, set_font_size
 
 
@@ -56,8 +62,6 @@ class AppController:
         self.nidaq_model = NidaqModel()
         self.nidaq_controller = NidaqController(self.nidaq_model, self.app_model)
 
-        self.filter_controller = FilterController(self.app_model)
-
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
@@ -83,6 +87,7 @@ class AppController:
         self.protocol_controller = ProtocolController(
             self.app_model, self.protocol_view
         )
+        self.filter_controller = FilterController(self.app_model, self.overview_view)
 
     def restore_preferences(self):
         point_size = cast(int, self.settings.value("ui/font_size", 10, int))
@@ -99,6 +104,9 @@ class AppController:
         self.app_view.protocol_save_requested.connect(self.save_protocol_state)
         self.app_view.filter_load_requested.connect(self.load_filter_state)
         self.app_view.filter_save_requested.connect(self.save_filter_state)
+        self.app_view.stimulus_reset_requested.connect(self.reset_stimulus_state)
+        self.app_view.protocol_reset_requested.connect(self.reset_protocol_state)
+        self.app_view.filter_reset_requested.connect(self.reset_filter_state)
         self.app_view.debug_requested.connect(self.show_debug_view)
         self.app_view.preferences_requested.connect(self.show_preferences_view)
         self.protocol_view.run_requested.connect(self.run_magic)
@@ -219,6 +227,19 @@ class AppController:
 
     def load_filter_state(self):
         self.load_named_state("filter", "filter_config")
+
+    def reset_stimulus_state(self):
+        self.app_model.import_state({"stim_config": DEFAULT_STIMULUS_CONFIG.to_dict()})
+
+    def reset_protocol_state(self):
+        self.app_model.import_state(
+            {"protocol_config": dataclasses.asdict(DEFAULT_PROTOCOL_CONFIG)}
+        )
+
+    def reset_filter_state(self):
+        self.app_model.import_state(
+            {"filter_config": dataclasses.asdict(DEFAULT_FILTER_CONFIG)}
+        )
 
     def save_named_state(self, state_name: str, state_key: str):
         """Save one app state section to a typed JSON file."""

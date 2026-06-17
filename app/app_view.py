@@ -163,6 +163,9 @@ class AppView(QMainWindow):
     protocol_save_requested = Signal()
     filter_load_requested = Signal()
     filter_save_requested = Signal()
+    stimulus_reset_requested = Signal()
+    protocol_reset_requested = Signal()
+    filter_reset_requested = Signal()
     debug_requested = Signal()
     preferences_requested = Signal()
 
@@ -199,6 +202,13 @@ class AppView(QMainWindow):
         )
         self.ui.actionLoad_filter.triggered.connect(self.filter_load_requested.emit)
         self.ui.actionSave_filter.triggered.connect(self.filter_save_requested.emit)
+        self.ui.actionReset_stimulus.triggered.connect(
+            self.stimulus_reset_requested.emit
+        )
+        self.ui.actionReset_protocol.triggered.connect(
+            self.protocol_reset_requested.emit
+        )
+        self.ui.actionReset_filter.triggered.connect(self.filter_reset_requested.emit)
         self.ui.actionDebug.triggered.connect(self.debug_requested.emit)
         self.ui.actionPreferences.triggered.connect(self.preferences_requested.emit)
         self.ui.actionExit.triggered.connect(self.close)

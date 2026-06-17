@@ -80,7 +80,9 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionClear_stimulus"/>
+    <addaction name="actionReset_stimulus"/>
+    <addaction name="actionReset_protocol"/>
+    <addaction name="actionReset_filter"/>
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
    </widget>
@@ -186,14 +188,24 @@
     <string>Debug</string>
    </property>
   </action>
-  <action name="actionClear_stimulus">
+  <action name="actionReset_stimulus">
    <property name="text">
-    <string>Clear stimulus</string>
+    <string>Reset stimulus</string>
    </property>
   </action>
   <action name="actionPreferences">
    <property name="text">
     <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionReset_protocol">
+   <property name="text">
+    <string>Reset protocol</string>
+   </property>
+  </action>
+  <action name="actionReset_filter">
+   <property name="text">
+    <string>Reset filter</string>
    </property>
   </action>
  </widget>

@@ -7,9 +7,11 @@ from PySide6.QtWidgets import (
 )
 
 from app.shared.view_helpers import (
+    Blocker,
     create_plot_widget,
     setup_ui_custom,
 )
+from app.feature.filter.filter_config import FilterConfig
 from app.ui.generated.overview_window import Ui_OverviewWindow
 
 AMP_SLIDER_SCALE_FACTOR = 100
@@ -18,6 +20,7 @@ AMP_SLIDER_SCALE_FACTOR = 100
 class OverviewView(QWidget):
     requestDataLoad = Signal()
     requestDataSave = Signal()
+    filterChanged = Signal()
     _current_df: pd.DataFrame | None = None
 
     def __init__(self):
@@ -29,9 +32,35 @@ class OverviewView(QWidget):
         setup_ui_custom(self)
 
         self.ui.ampSlider.valueChanged.connect(self.update_plot_amplitude)
+        self.ui.doubleSpinBox.setRange(0.0, 100000.0)
+        self.ui.doubleSpinBox.setDecimals(2)
+        self.ui.doubleSpinBox.valueChanged.connect(self.filterChanged)
+        self.ui.suppress50HzCheckBox.toggled.connect(self.filterChanged)
+        self.ui.removeDCOffsetCheckBox.toggled.connect(self.filterChanged)
 
         self.plotMagnitude = 1.0
         self.setup_widgets()
+
+    def update_from_config(self, filter_config: FilterConfig):
+        """Update filter controls from a config object."""
+        with Blocker(
+            self.ui.doubleSpinBox,
+            self.ui.suppress50HzCheckBox,
+            self.ui.removeDCOffsetCheckBox,
+        ):
+            self.ui.doubleSpinBox.setValue(filter_config.low_pass_cutoff_hz)
+            self.ui.suppress50HzCheckBox.setChecked(filter_config.suppress_50hz)
+            self.ui.removeDCOffsetCheckBox.setChecked(
+                filter_config.remove_dc_offset
+            )
+
+    def to_filter_config(self) -> FilterConfig:
+        """Read the filter controls into a config object."""
+        return FilterConfig(
+            low_pass_cutoff_hz=self.ui.doubleSpinBox.value(),
+            suppress_50hz=self.ui.suppress50HzCheckBox.isChecked(),
+            remove_dc_offset=self.ui.removeDCOffsetCheckBox.isChecked(),
+        )
 
     def setup_widgets(self):
         """Set up the main plot and controls."""

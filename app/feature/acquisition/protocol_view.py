@@ -11,6 +11,7 @@ from app.shared.constants import (
     PLOT_PIN_SELECTED_PEN_WIDTH,
     PLOT_PIN_UNSELECTED_PEN_WIDTH,
 )
+from app.feature.acquisition.protocol_config import ProtocolConfig
 from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.feature.acquisition.protocol_mapping import (
     encode_stim_channel_pair,
@@ -22,6 +23,7 @@ from app.ui.generated.protocol_window import Ui_ProtocolWindow
 
 class ProtocolView(QWidget):
     run_requested = Signal()
+    protocolChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -37,6 +39,13 @@ class ProtocolView(QWidget):
         self.ui.pushButton.clicked.connect(self.request_run)
         self.ui.positiveChannelComboBox.currentIndexChanged.connect(self.plot_pins)
         self.ui.negativeChannelComboBox.currentIndexChanged.connect(self.plot_pins)
+        self.ui.positiveChannelComboBox.currentIndexChanged.connect(
+            self.protocolChanged
+        )
+        self.ui.negativeChannelComboBox.currentIndexChanged.connect(
+            self.protocolChanged
+        )
+        self.ui.sampleRateDividerSpinBox.valueChanged.connect(self.protocolChanged)
 
         self.setup_widgets()
         self.plot_pins()
@@ -75,6 +84,7 @@ class ProtocolView(QWidget):
             btn.setObjectName(f"pinButton{i + 1}")
             pins_layout.addWidget(btn, i // 4, i % 4)
             btn.toggled.connect(self.plot_pins)
+            btn.toggled.connect(self.protocolChanged)
             self.pinButtons.append(btn)
 
         # Add Select All / Deselect All buttons below the pin grid
@@ -88,12 +98,14 @@ class ProtocolView(QWidget):
                 for b in self.pinButtons:
                     b.setChecked(True)
             self.plot_pins()
+            self.protocolChanged.emit()
 
         def deselect_all():
             with Blocker(*self.pinButtons):
                 for b in self.pinButtons:
                     b.setChecked(False)
             self.plot_pins()
+            self.protocolChanged.emit()
 
         select_all_btn.clicked.connect(select_all)
         deselect_all_btn.clicked.connect(deselect_all)
@@ -112,6 +124,42 @@ class ProtocolView(QWidget):
             self.ui.leftLayout.addWidget(pins_container)
         else:
             self.ui.leftLayout.insertWidget(placeholder_index, pins_container)
+
+    def update_from_config(self, protocol_config: ProtocolConfig):
+        """Update protocol controls from a config object."""
+        with Blocker(
+            self.ui.positiveChannelComboBox,
+            self.ui.negativeChannelComboBox,
+            self.ui.sampleRateDividerSpinBox,
+            *self.pinButtons,
+        ):
+            self.ui.positiveChannelComboBox.setCurrentIndex(
+                protocol_config.positive_channel
+            )
+            self.ui.negativeChannelComboBox.setCurrentIndex(
+                protocol_config.negative_channel
+            )
+            self.ui.sampleRateDividerSpinBox.setValue(
+                protocol_config.sample_rate_divider
+            )
+            selected_pins = set(protocol_config.selected_pins)
+            for index, button in enumerate(self.pinButtons, start=1):
+                button.setChecked(index in selected_pins)
+
+        self.plot_pins()
+
+    def to_config(self) -> ProtocolConfig:
+        """Read the protocol controls into a config object."""
+        return ProtocolConfig(
+            positive_channel=self.ui.positiveChannelComboBox.currentIndex(),
+            negative_channel=self.ui.negativeChannelComboBox.currentIndex(),
+            selected_pins=[
+                index
+                for index, button in enumerate(self.pinButtons, start=1)
+                if button.isChecked()
+            ],
+            sample_rate_divider=self.ui.sampleRateDividerSpinBox.value(),
+        )
 
     def plot_pins(self):
         """Plot 16 vertical pins for visual reference of the NI-DAQ digital output channels."""
