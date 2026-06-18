@@ -2,8 +2,10 @@ import pyqtgraph as pg
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QGridLayout,
+    QHBoxLayout,
     QPushButton,
     QSizePolicy,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -63,14 +65,20 @@ class ProtocolView(QWidget):
 
         # Create a grid of 16 checkable buttons under the "Pins" label
         pins_container = QWidget()
-        pins_layout = QGridLayout(pins_container)
+        pins_container_layout = QVBoxLayout(pins_container)
+        pins_container_layout.setContentsMargins(0, 0, 0, 0)
+        pins_container_layout.setSpacing(4)
+
+        pins_layout = QGridLayout()
         pins_layout.setContentsMargins(0, 0, 0, 0)
         pins_layout.setSpacing(4)
+        pins_container_layout.addLayout(pins_layout)
 
-        # Fix column widths to match button width so spacing stays even
-        button_w = 34
-        for col in range(4):
-            pins_layout.setColumnMinimumWidth(col, button_w + 2)
+        # Keep columns even while letting pin buttons follow the available width.
+        button_h = 26
+        for col in range(8):
+            pins_layout.setColumnMinimumWidth(col, 0)
+            pins_layout.setColumnStretch(col, 1)
 
         # Keep the container from expanding vertically too much
         pins_container.setSizePolicy(
@@ -82,7 +90,10 @@ class ProtocolView(QWidget):
             btn = QPushButton(str(i + 1))
             btn.setCheckable(True)
             btn.setObjectName(f"pinButton{i + 1}")
-            pins_layout.addWidget(btn, i // 4, i % 4)
+            btn.setMinimumSize(0, button_h)
+            btn.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+            btn.setStyleSheet("min-width: 0px; padding: 0px;")
+            pins_layout.addWidget(btn, i // 8, i % 8)
             btn.toggled.connect(self.plot_pins)
             btn.toggled.connect(self.protocolChanged)
             self.pinButtons.append(btn)
@@ -110,9 +121,15 @@ class ProtocolView(QWidget):
         select_all_btn.clicked.connect(select_all)
         deselect_all_btn.clicked.connect(deselect_all)
 
-        # place the buttons centered below the 4x4 grid (row 4)
-        pins_layout.addWidget(select_all_btn, 4, 1)
-        pins_layout.addWidget(deselect_all_btn, 4, 2)
+        # Keep the action buttons out of the pin grid so they do not widen columns.
+        pin_actions_layout = QHBoxLayout()
+        pin_actions_layout.setContentsMargins(0, 0, 0, 0)
+        pin_actions_layout.setSpacing(4)
+        pin_actions_layout.addStretch()
+        pin_actions_layout.addWidget(select_all_btn)
+        pin_actions_layout.addWidget(deselect_all_btn)
+        pin_actions_layout.addStretch()
+        pins_container_layout.addLayout(pin_actions_layout)
 
         # Insert the pins container under the existing pins_label (before the placeholder label)
         try:
