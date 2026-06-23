@@ -215,6 +215,7 @@ def refresh_widget_fonts(app: QApplication) -> None:
             apply_title_label_font(widget)
 
         if isinstance(widget, QTabBar):
+            widget.setFont(app.font())
             widget.updateGeometry()
             widget.update()
 

@@ -13,8 +13,10 @@ from app.app_view import AppView
 from app.feature.about.about_view import AboutView
 from app.feature.acquisition.protocol_controller import ProtocolController
 from app.feature.acquisition.protocol_view import ProtocolView
+from app.feature.analysis.analyze_view_io import AnalyzeIOView
+from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
+from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
 from app.feature.analysis.analyze_view import AnalyzeView
-from app.feature.analysis.analyze_view_2 import AnalyzeView2
 from app.feature.debug.debug_view import DebugView
 from app.feature.filter.filter_controller import FilterController
 from app.feature.filter.filter_view import FilterView
@@ -67,7 +69,9 @@ class AppController:
         self.overview_view = OverviewView()
         self.about_view = AboutView()
         self.analyze_view = AnalyzeView()
-        self.analyze_view_2 = AnalyzeView2()
+        self.analyze_io_view = AnalyzeIOView()
+        self.analyze_speed_view = AnalyzeSpeedView()
+        self.analyze_tetanus_view = AnalyzeTetanusView()
         self.filter_view = FilterView()
         self.debug_view = DebugView(self.app_model)
         self.preferences_view = PreferencesView()
@@ -77,7 +81,9 @@ class AppController:
         self.app_view.add_tab(self.protocol_view, "Data\nacquisition")
         self.app_view.add_tab(self.overview_view, "Filter")
         self.app_view.add_tab(self.analyze_view, "Analyze\npeaks")
-        self.app_view.add_tab(self.analyze_view_2, "Analyze\nother")
+        self.app_view.add_tab(self.analyze_io_view, "Analyze\nIO")
+        self.app_view.add_tab(self.analyze_speed_view, "Analyze\nspeed")
+        self.app_view.add_tab(self.analyze_tetanus_view, "Analyze\ntetanus")
         self.app_view.set_current_tab_index(2)
 
         self.stimulus_controller = StimulusController(

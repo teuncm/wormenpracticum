@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'analyze_window.ui'
+## Form generated from reading UI file 'analyze_speed_window.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.11.1
 ##
@@ -18,21 +18,21 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QPushButton,
     QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 
-class Ui_AnalyzeWindow(object):
-    def setupUi(self, AnalyzeWindow):
-        if not AnalyzeWindow.objectName():
-            AnalyzeWindow.setObjectName(u"AnalyzeWindow")
-        AnalyzeWindow.resize(481, 304)
-        self.flowLayout = QHBoxLayout(AnalyzeWindow)
+class Ui_AnalyzeSpeedWindow(object):
+    def setupUi(self, AnalyzeSpeedWindow):
+        if not AnalyzeSpeedWindow.objectName():
+            AnalyzeSpeedWindow.setObjectName(u"AnalyzeSpeedWindow")
+        AnalyzeSpeedWindow.resize(481, 304)
+        self.flowLayout = QHBoxLayout(AnalyzeSpeedWindow)
         self.flowLayout.setObjectName(u"flowLayout")
         self.leftLayout = QVBoxLayout()
         self.leftLayout.setObjectName(u"leftLayout")
-        self.title_controls = QLabel(AnalyzeWindow)
+        self.title_controls = QLabel(AnalyzeSpeedWindow)
         self.title_controls.setObjectName(u"title_controls")
 
         self.leftLayout.addWidget(self.title_controls)
 
-        self.pushButton = QPushButton(AnalyzeWindow)
+        self.pushButton = QPushButton(AnalyzeSpeedWindow)
         self.pushButton.setObjectName(u"pushButton")
 
         self.leftLayout.addWidget(self.pushButton)
@@ -46,7 +46,7 @@ class Ui_AnalyzeWindow(object):
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.setObjectName(u"rightLayout")
-        self.title_overview = QLabel(AnalyzeWindow)
+        self.title_overview = QLabel(AnalyzeSpeedWindow)
         self.title_overview.setObjectName(u"title_overview")
 
         self.rightLayout.addWidget(self.title_overview)
@@ -57,15 +57,15 @@ class Ui_AnalyzeWindow(object):
         self.flowLayout.setStretch(0, 3)
         self.flowLayout.setStretch(1, 5)
 
-        self.retranslateUi(AnalyzeWindow)
+        self.retranslateUi(AnalyzeSpeedWindow)
 
-        QMetaObject.connectSlotsByName(AnalyzeWindow)
+        QMetaObject.connectSlotsByName(AnalyzeSpeedWindow)
     # setupUi
 
-    def retranslateUi(self, AnalyzeWindow):
-        AnalyzeWindow.setWindowTitle(QCoreApplication.translate("AnalyzeWindow", u"Form", None))
-        self.title_controls.setText(QCoreApplication.translate("AnalyzeWindow", u"Controls", None))
-        self.pushButton.setText(QCoreApplication.translate("AnalyzeWindow", u"PushButton", None))
-        self.title_overview.setText(QCoreApplication.translate("AnalyzeWindow", u"Overview", None))
+    def retranslateUi(self, AnalyzeSpeedWindow):
+        AnalyzeSpeedWindow.setWindowTitle(QCoreApplication.translate("AnalyzeSpeedWindow", u"Form", None))
+        self.title_controls.setText(QCoreApplication.translate("AnalyzeSpeedWindow", u"Controls", None))
+        self.pushButton.setText(QCoreApplication.translate("AnalyzeSpeedWindow", u"PushButton", None))
+        self.title_overview.setText(QCoreApplication.translate("AnalyzeSpeedWindow", u"Overview", None))
     # retranslateUi
 
