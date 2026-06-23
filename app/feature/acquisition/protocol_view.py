@@ -1,5 +1,5 @@
 import pyqtgraph as pg
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
@@ -15,12 +15,76 @@ from app.shared.constants import (
 )
 from app.feature.acquisition.protocol_config import ProtocolConfig
 from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
-from app.feature.acquisition.protocol_mapping import (
-    encode_stim_channel_pair,
-    get_logical_channel_labels,
-)
+from app.feature.acquisition.protocol_mapping import encode_stim_channel_pair
 from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.protocol_window import Ui_ProtocolWindow
+
+
+class PinStateButton(QPushButton):
+    stateChanged = Signal(int)
+
+    DEFAULT_STATE = 0
+    GREEN_STATE = 1
+    RED_STATE = 2
+    BLUE_STATE = 3
+    NUM_STATES = 4
+
+    _STATE_STYLES = {
+        DEFAULT_STATE: "",
+        GREEN_STATE: "background-color: #2f9e44; color: white;",
+        RED_STATE: "background-color: #c92a2a; color: white;",
+        BLUE_STATE: "background-color: #1971c2; color: white;",
+    }
+
+    def __init__(self, text: str):
+        super().__init__(text)
+        self._pin_state = self.DEFAULT_STATE
+        self.setCheckable(False)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+        self._refresh_state_style()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.set_pin_state(self._pin_state + 1)
+            event.accept()
+            return
+
+        if event.button() == Qt.MouseButton.RightButton:
+            self.set_pin_state(self._pin_state - 1)
+            event.accept()
+            return
+
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() in (
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButton.RightButton,
+        ):
+            event.accept()
+            return
+
+        super().mouseReleaseEvent(event)
+
+    def setChecked(self, checked: bool):
+        self.set_pin_state(self.GREEN_STATE if checked else self.DEFAULT_STATE)
+
+    def isChecked(self) -> bool:
+        return self._pin_state != self.DEFAULT_STATE
+
+    def set_pin_state(self, state: int):
+        state %= self.NUM_STATES
+        if state == self._pin_state:
+            return
+
+        self._pin_state = state
+        self._refresh_state_style()
+        self.stateChanged.emit(self._pin_state)
+
+    def _refresh_state_style(self):
+        self.setStyleSheet(
+            f"min-width: 0px; padding: 0px; {self._STATE_STYLES[self._pin_state]}"
+        )
 
 
 class ProtocolView(QWidget):
@@ -36,17 +100,10 @@ class ProtocolView(QWidget):
         setup_ui_custom(self)
 
         self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
+        self._positive_channel = 0
+        self._negative_channel = 1
 
-        self.populate_channel_dropdowns()
         self.ui.pushButton.clicked.connect(self.request_run)
-        self.ui.positiveChannelComboBox.currentIndexChanged.connect(self.plot_pins)
-        self.ui.negativeChannelComboBox.currentIndexChanged.connect(self.plot_pins)
-        self.ui.positiveChannelComboBox.currentIndexChanged.connect(
-            self.protocolChanged
-        )
-        self.ui.negativeChannelComboBox.currentIndexChanged.connect(
-            self.protocolChanged
-        )
         self.ui.sampleRateDividerSpinBox.valueChanged.connect(self.protocolChanged)
 
         self.setup_widgets()
@@ -87,15 +144,13 @@ class ProtocolView(QWidget):
 
         self.pinButtons = []
         for i in range(16):
-            btn = QPushButton(str(i + 1))
-            btn.setCheckable(True)
+            btn = PinStateButton(str(i + 1))
             btn.setObjectName(f"pinButton{i + 1}")
             btn.setMinimumSize(0, button_h)
             btn.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
-            btn.setStyleSheet("min-width: 0px; padding: 0px;")
             pins_layout.addWidget(btn, i // 8, i % 8)
-            btn.toggled.connect(self.plot_pins)
-            btn.toggled.connect(self.protocolChanged)
+            btn.stateChanged.connect(lambda _state: self.plot_pins())
+            btn.stateChanged.connect(lambda _state: self.protocolChanged.emit())
             self.pinButtons.append(btn)
 
         # Add Select All / Deselect All buttons below the pin grid
@@ -145,17 +200,11 @@ class ProtocolView(QWidget):
     def update_from_config(self, protocol_config: ProtocolConfig):
         """Update protocol controls from a config object."""
         with Blocker(
-            self.ui.positiveChannelComboBox,
-            self.ui.negativeChannelComboBox,
             self.ui.sampleRateDividerSpinBox,
             *self.pinButtons,
         ):
-            self.ui.positiveChannelComboBox.setCurrentIndex(
-                protocol_config.positive_channel
-            )
-            self.ui.negativeChannelComboBox.setCurrentIndex(
-                protocol_config.negative_channel
-            )
+            self._positive_channel = protocol_config.positive_channel
+            self._negative_channel = protocol_config.negative_channel
             self.ui.sampleRateDividerSpinBox.setValue(
                 protocol_config.sample_rate_divider
             )
@@ -168,8 +217,8 @@ class ProtocolView(QWidget):
     def to_config(self) -> ProtocolConfig:
         """Read the protocol controls into a config object."""
         return ProtocolConfig(
-            positive_channel=self.ui.positiveChannelComboBox.currentIndex(),
-            negative_channel=self.ui.negativeChannelComboBox.currentIndex(),
+            positive_channel=self._positive_channel,
+            negative_channel=self._negative_channel,
             selected_pins=[
                 index
                 for index, button in enumerate(self.pinButtons, start=1)
@@ -185,8 +234,6 @@ class ProtocolView(QWidget):
 
         self.plotWidget.clear()
 
-        positive_channel, negative_channel = self.get_selected_stim_channels()
-
         measured = [i + 1 for i, b in enumerate(self.pinButtons) if b.isChecked()]
 
         for channel in range(1, 17):
@@ -201,45 +248,11 @@ class ProtocolView(QWidget):
                 highlight_pen = pg.mkPen(c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
                 self.plotWidget.plot([channel, channel], [0, 1], pen=highlight_pen)
 
-            # overlay translucent pens for positive/negative so both remain visible
-            if channel == positive_channel:
-                c = pg.mkColor("b")
-                c.setAlpha(110)
-                pos_pen = pg.mkPen(color=c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
-                self.plotWidget.plot([channel, channel], [0, 1], pen=pos_pen)
-
-            if channel == negative_channel:
-                c = pg.mkColor("r")
-                c.setAlpha(110)
-                neg_pen = pg.mkPen(color=c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
-                self.plotWidget.plot([channel, channel], [0, 1], pen=neg_pen)
-
     def request_run(self):
         self.run_requested.emit()
 
-    def populate_channel_dropdowns(self):
-        channel_labels = get_logical_channel_labels()
-
-        self.ui.positiveChannelComboBox.clear()
-        self.ui.negativeChannelComboBox.clear()
-
-        for channel_number, channel_label in enumerate(channel_labels, start=1):
-            self.ui.positiveChannelComboBox.addItem(channel_label, channel_number)
-            self.ui.negativeChannelComboBox.addItem(channel_label, channel_number)
-
-        # Match the MATLAB defaults: stim1 = 1, stim2 = 2.
-        self.ui.positiveChannelComboBox.setCurrentIndex(0)
-        if self.ui.negativeChannelComboBox.count() > 1:
-            self.ui.negativeChannelComboBox.setCurrentIndex(1)
-
     def get_selected_stim_channels(self):
-        positive_channel = self.ui.positiveChannelComboBox.currentData()
-        negative_channel = self.ui.negativeChannelComboBox.currentData()
-
-        if positive_channel is None or negative_channel is None:
-            raise ValueError("Stim channel dropdowns are not populated")
-
-        return int(positive_channel), int(negative_channel)
+        return self._positive_channel + 1, self._negative_channel + 1
 
     def get_encoded_stim_port_values(self):
         positive_channel, negative_channel = self.get_selected_stim_channels()

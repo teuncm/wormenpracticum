@@ -24,37 +24,6 @@
       </widget>
      </item>
      <item>
-      <layout class="QFormLayout" name="channelFormLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="positiveChannelLabel">
-         <property name="text">
-          <string>Positive channel</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QComboBox" name="positiveChannelComboBox"/>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="negativeChannelLabel">
-         <property name="text">
-          <string>Negative channel</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="negativeChannelComboBox"/>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <widget class="QLabel" name="pins_label">
-       <property name="text">
-        <string>Pins</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Max sample rate: 0 Hz</string>
@@ -96,6 +65,44 @@
       <widget class="QPushButton" name="pushButton">
        <property name="text">
         <string>Run</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="title_filter">
+       <property name="text">
+        <string>Filter</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QFormLayout" name="formLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="lowpass_label">
+         <property name="text">
+          <string>Low pass (Hz)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="lowPassHzDoubleSpinBox"/>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="suppress_label">
+         <property name="text">
+          <string>Suppress 50Hz</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QCheckBox" name="suppress50HzCheckBox"/>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string>Apply</string>
        </property>
       </widget>
      </item>

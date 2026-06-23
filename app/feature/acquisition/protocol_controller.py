@@ -6,6 +6,7 @@ class ProtocolController:
 	def __init__(self, app_model: AppModel, protocol_view: ProtocolView):
 		self.app_model = app_model
 		self.protocol_view = protocol_view
+		self._updating_model_from_view = False
 
 		self.connect_data_signals()
 		self.update_ui_from_model()
@@ -21,7 +22,14 @@ class ProtocolController:
 		return
 
 	def _on_view_protocol_changed(self):
-		self.app_model.update_protocol_config(self.protocol_view.to_config())
+		self._updating_model_from_view = True
+		try:
+			self.app_model.update_protocol_config(self.protocol_view.to_config())
+		finally:
+			self._updating_model_from_view = False
 
 	def update_ui_from_model(self):
+		if self._updating_model_from_view:
+			return
+
 		self.protocol_view.update_from_config(self.app_model.protocol_config)

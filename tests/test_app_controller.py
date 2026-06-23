@@ -212,12 +212,13 @@ def test_reset_config_actions_restore_default_configs():
     assert controller.app_model.protocol_config is not DEFAULT_PROTOCOL_CONFIG
     assert controller.app_model.filter_config == DEFAULT_FILTER_CONFIG
     assert controller.app_model.filter_config is not DEFAULT_FILTER_CONFIG
+    protocol_view_config = controller.protocol_view.to_config()
     assert (
-        controller.protocol_view.ui.positiveChannelComboBox.currentIndex()
+        protocol_view_config.positive_channel
         == DEFAULT_PROTOCOL_CONFIG.positive_channel
     )
     assert (
-        controller.protocol_view.ui.negativeChannelComboBox.currentIndex()
+        protocol_view_config.negative_channel
         == DEFAULT_PROTOCOL_CONFIG.negative_channel
     )
     assert [
@@ -250,8 +251,6 @@ def test_reset_config_actions_restore_ui_after_ui_edits():
     app = QApplication.instance() or QApplication([])
     controller = AppController()
 
-    controller.protocol_view.ui.positiveChannelComboBox.setCurrentIndex(3)
-    controller.protocol_view.ui.negativeChannelComboBox.setCurrentIndex(4)
     controller.protocol_view.pinButtons[0].setChecked(True)
     controller.protocol_view.pinButtons[-1].setChecked(False)
     controller.protocol_view.ui.sampleRateDividerSpinBox.setValue(3)
@@ -264,12 +263,13 @@ def test_reset_config_actions_restore_ui_after_ui_edits():
     controller.app_view.ui.actionReset_filter.trigger()
     app.processEvents()
 
+    protocol_view_config = controller.protocol_view.to_config()
     assert (
-        controller.protocol_view.ui.positiveChannelComboBox.currentIndex()
+        protocol_view_config.positive_channel
         == DEFAULT_PROTOCOL_CONFIG.positive_channel
     )
     assert (
-        controller.protocol_view.ui.negativeChannelComboBox.currentIndex()
+        protocol_view_config.negative_channel
         == DEFAULT_PROTOCOL_CONFIG.negative_channel
     )
     assert [
