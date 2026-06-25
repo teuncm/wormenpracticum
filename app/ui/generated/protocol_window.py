@@ -16,8 +16,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout,
-    QHBoxLayout, QLabel, QPushButton, QSizePolicy,
-    QSpacerItem, QSpinBox, QVBoxLayout, QWidget)
+    QFrame, QHBoxLayout, QLabel, QPushButton,
+    QSizePolicy, QSpacerItem, QSpinBox, QVBoxLayout,
+    QWidget)
 
 class Ui_ProtocolWindow(object):
     def setupUi(self, ProtocolWindow):
@@ -32,6 +33,14 @@ class Ui_ProtocolWindow(object):
         self.title_controls.setObjectName(u"title_controls")
 
         self.leftLayout.addWidget(self.title_controls)
+
+        self.pinFrame = QFrame(ProtocolWindow)
+        self.pinFrame.setObjectName(u"pinFrame")
+        self.pinFrame.setMinimumSize(QSize(50, 50))
+        self.pinFrame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.pinFrame.setFrameShadow(QFrame.Shadow.Raised)
+
+        self.leftLayout.addWidget(self.pinFrame)
 
         self.label = QLabel(ProtocolWindow)
         self.label.setObjectName(u"label")
@@ -96,6 +105,16 @@ class Ui_ProtocolWindow(object):
 
         self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.suppress50HzCheckBox)
 
+        self.remove_dc_offset_label = QLabel(ProtocolWindow)
+        self.remove_dc_offset_label.setObjectName(u"remove_dc_offset_label")
+
+        self.formLayout_2.setWidget(2, QFormLayout.ItemRole.LabelRole, self.remove_dc_offset_label)
+
+        self.removeDCOffsetCheckBox = QCheckBox(ProtocolWindow)
+        self.removeDCOffsetCheckBox.setObjectName(u"removeDCOffsetCheckBox")
+
+        self.formLayout_2.setWidget(2, QFormLayout.ItemRole.FieldRole, self.removeDCOffsetCheckBox)
+
 
         self.leftLayout.addLayout(self.formLayout_2)
 
@@ -140,6 +159,7 @@ class Ui_ProtocolWindow(object):
         self.title_filter.setText(QCoreApplication.translate("ProtocolWindow", u"Filter", None))
         self.lowpass_label.setText(QCoreApplication.translate("ProtocolWindow", u"Low pass (Hz)", None))
         self.suppress_label.setText(QCoreApplication.translate("ProtocolWindow", u"Suppress 50Hz", None))
+        self.remove_dc_offset_label.setText(QCoreApplication.translate("ProtocolWindow", u"Remove DC offset", None))
         self.pushButton_2.setText(QCoreApplication.translate("ProtocolWindow", u"Apply", None))
         self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Selected pins", None))
     # retranslateUi

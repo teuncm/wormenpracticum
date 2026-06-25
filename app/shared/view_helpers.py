@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QTabBar,
     QSpinBox,
+    QTabBar,
     QVBoxLayout,
 )
 
@@ -39,11 +39,17 @@ def set_global_plot_config() -> None:
 
 
 def create_plot_widget(
-    title=None, x_label=None, x_units=None, y_label=None, y_units=None
+    title=None,
+    x_label=None,
+    x_units=None,
+    y_label=None,
+    y_units=None,
+    frame: QFrame | None = None,
 ) -> tuple[QFrame, pg.PlotWidget]:
     """Create a plot widget in a frame."""
-    frame = QFrame()
-    frame.setFrameShape(QFrame.Shape.StyledPanel)
+    if frame is None:
+        frame = QFrame()
+        frame.setFrameShape(QFrame.Shape.StyledPanel)
 
     layout = QVBoxLayout(frame)
     layout.setContentsMargins(0, 0, 0, 0)
@@ -209,9 +215,10 @@ def set_font_size(point_size: int):
 def refresh_widget_fonts(app: QApplication) -> None:
     """Refresh widgets that use explicit fonts or custom painting."""
     for widget in app.allWidgets():
-        if isinstance(widget, QLabel) and widget.property(
-            "title_point_size_increase"
-        ) is not None:
+        if (
+            isinstance(widget, QLabel)
+            and widget.property("title_point_size_increase") is not None
+        ):
             apply_title_label_font(widget)
 
         if isinstance(widget, QTabBar):

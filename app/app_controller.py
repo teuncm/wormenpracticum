@@ -16,11 +16,8 @@ from app.feature.acquisition.protocol_view import ProtocolView
 from app.feature.analysis.analyze_view_io import AnalyzeIOView
 from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
 from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
-from app.feature.analysis.analyze_view import AnalyzeView
 from app.feature.debug.debug_view import DebugView
 from app.feature.filter.filter_controller import FilterController
-from app.feature.filter.filter_view import FilterView
-from app.feature.filter.overview_view import OverviewView
 from app.feature.nidaq.nidaq_constants import NI_DAQ_DISCOVERY_POLL_INTERVAL_MS
 from app.feature.nidaq.nidaq_controller import NidaqController
 from app.feature.nidaq.nidaq_model import NidaqModel
@@ -66,25 +63,20 @@ class AppController:
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
-        self.overview_view = OverviewView()
         self.about_view = AboutView()
-        self.analyze_view = AnalyzeView()
         self.analyze_io_view = AnalyzeIOView()
         self.analyze_speed_view = AnalyzeSpeedView()
         self.analyze_tetanus_view = AnalyzeTetanusView()
-        self.filter_view = FilterView()
         self.debug_view = DebugView(self.app_model)
         self.preferences_view = PreferencesView()
 
         self.app_view.clear_tabs()
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
         self.app_view.add_tab(self.protocol_view, "Data\nacquisition")
-        self.app_view.add_tab(self.overview_view, "Filter")
-        self.app_view.add_tab(self.analyze_view, "Analyze\npeaks")
         self.app_view.add_tab(self.analyze_io_view, "Analyze\nIO")
         self.app_view.add_tab(self.analyze_speed_view, "Analyze\nspeed")
         self.app_view.add_tab(self.analyze_tetanus_view, "Analyze\ntetanus")
-        self.app_view.set_current_tab_index(2)
+        self.app_view.set_current_tab_index(1)
 
         self.stimulus_controller = StimulusController(
             self.app_model, self.stimulus_view
@@ -92,7 +84,7 @@ class AppController:
         self.protocol_controller = ProtocolController(
             self.app_model, self.protocol_view
         )
-        self.filter_controller = FilterController(self.app_model, self.overview_view)
+        self.filter_controller = FilterController(self.app_model, self.protocol_view)
 
     def restore_preferences(self):
         point_size = cast(int, self.settings.value("ui/font_size", 10, int))
@@ -105,7 +97,6 @@ class AppController:
 
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
-        self.app_model.experiment_data_changed.connect(self.update_main_plot)
         self.app_view.data_load_requested.connect(self.load_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
         self.app_view.stimulus_load_requested.connect(self.load_stimulus_state)
@@ -128,11 +119,6 @@ class AppController:
     def run_magic(self):
         """In the magic function we will connect to a DAQ and send a hello world signal."""
         self.nidaq_controller.magic()
-
-    def update_main_plot(self):
-        """Update the main plot with the latest experiment data."""
-        if self.app_model.raw_data_df is not None:
-            self.overview_view.plot_data(self.app_model.raw_data_df)
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""

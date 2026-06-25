@@ -9,13 +9,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.feature.acquisition.protocol_config import ProtocolConfig
+from app.feature.acquisition.protocol_mapping import encode_stim_channel_pair
+from app.feature.filter.filter_config import FilterConfig
+from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.shared.constants import (
     PLOT_PIN_SELECTED_PEN_WIDTH,
     PLOT_PIN_UNSELECTED_PEN_WIDTH,
 )
-from app.feature.acquisition.protocol_config import ProtocolConfig
-from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
-from app.feature.acquisition.protocol_mapping import encode_stim_channel_pair
 from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.protocol_window import Ui_ProtocolWindow
 
@@ -90,6 +91,7 @@ class PinStateButton(QPushButton):
 class ProtocolView(QWidget):
     run_requested = Signal()
     protocolChanged = Signal()
+    filterChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -105,20 +107,18 @@ class ProtocolView(QWidget):
 
         self.ui.pushButton.clicked.connect(self.request_run)
         self.ui.sampleRateDividerSpinBox.valueChanged.connect(self.protocolChanged)
+        self.ui.lowPassHzDoubleSpinBox.setRange(0.0, 100000.0)
+        self.ui.lowPassHzDoubleSpinBox.setDecimals(2)
+        self.ui.lowPassHzDoubleSpinBox.valueChanged.connect(self.filterChanged)
+        self.ui.suppress50HzCheckBox.toggled.connect(self.filterChanged)
+        self.ui.removeDCOffsetCheckBox.toggled.connect(self.filterChanged)
+        self.ui.pushButton_2.clicked.connect(self.filterChanged)
 
         self.setup_widgets()
         self.plot_pins()
 
     def setup_widgets(self):
         """Set up the main plot and controls."""
-        frame, plot = create_plot_widget()
-
-        self.ui.rightLayout.addWidget(frame)
-        self.plotWidget = plot
-
-        if plot.plotItem is not None:
-            left_axis = plot.plotItem.getAxis("left")
-            left_axis.setVisible(False)
 
         # Create a grid of 16 checkable buttons under the "Pins" label
         pins_container = QWidget()
@@ -197,6 +197,15 @@ class ProtocolView(QWidget):
         else:
             self.ui.leftLayout.insertWidget(placeholder_index, pins_container)
 
+        # frame, plot = create_plot_widget(frame=self.ui.pinFrame)
+
+        # self.ui.rightLayout.addWidget(frame)
+        # self.plotWidget = plot
+
+        # if plot.plotItem is not None:
+        #     left_axis = plot.plotItem.getAxis("left")
+        #     left_axis.setVisible(False)
+
     def update_from_config(self, protocol_config: ProtocolConfig):
         """Update protocol controls from a config object."""
         with Blocker(
@@ -225,6 +234,25 @@ class ProtocolView(QWidget):
                 if button.isChecked()
             ],
             sample_rate_divider=self.ui.sampleRateDividerSpinBox.value(),
+        )
+
+    def update_filter_from_config(self, filter_config: FilterConfig):
+        """Update acquisition filter controls from a config object."""
+        with Blocker(
+            self.ui.lowPassHzDoubleSpinBox,
+            self.ui.suppress50HzCheckBox,
+            self.ui.removeDCOffsetCheckBox,
+        ):
+            self.ui.lowPassHzDoubleSpinBox.setValue(filter_config.low_pass_cutoff_hz)
+            self.ui.suppress50HzCheckBox.setChecked(filter_config.suppress_50hz)
+            self.ui.removeDCOffsetCheckBox.setChecked(filter_config.remove_dc_offset)
+
+    def to_filter_config(self) -> FilterConfig:
+        """Read the acquisition filter controls into a config object."""
+        return FilterConfig(
+            low_pass_cutoff_hz=self.ui.lowPassHzDoubleSpinBox.value(),
+            suppress_50hz=self.ui.suppress50HzCheckBox.isChecked(),
+            remove_dc_offset=self.ui.removeDCOffsetCheckBox.isChecked(),
         )
 
     def plot_pins(self):

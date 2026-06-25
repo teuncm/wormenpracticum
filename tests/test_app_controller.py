@@ -231,15 +231,15 @@ def test_reset_config_actions_restore_default_configs():
         == DEFAULT_PROTOCOL_CONFIG.sample_rate_divider
     )
     assert (
-        controller.overview_view.ui.doubleSpinBox.value()
+        controller.protocol_view.ui.lowPassHzDoubleSpinBox.value()
         == DEFAULT_FILTER_CONFIG.low_pass_cutoff_hz
     )
     assert (
-        controller.overview_view.ui.suppress50HzCheckBox.isChecked()
+        controller.protocol_view.ui.suppress50HzCheckBox.isChecked()
         == DEFAULT_FILTER_CONFIG.suppress_50hz
     )
     assert (
-        controller.overview_view.ui.removeDCOffsetCheckBox.isChecked()
+        controller.protocol_view.ui.removeDCOffsetCheckBox.isChecked()
         == DEFAULT_FILTER_CONFIG.remove_dc_offset
     )
 
@@ -254,9 +254,9 @@ def test_reset_config_actions_restore_ui_after_ui_edits():
     controller.protocol_view.pinButtons[0].setChecked(True)
     controller.protocol_view.pinButtons[-1].setChecked(False)
     controller.protocol_view.ui.sampleRateDividerSpinBox.setValue(3)
-    controller.overview_view.ui.doubleSpinBox.setValue(123.0)
-    controller.overview_view.ui.suppress50HzCheckBox.setChecked(False)
-    controller.overview_view.ui.removeDCOffsetCheckBox.setChecked(False)
+    controller.protocol_view.ui.lowPassHzDoubleSpinBox.setValue(123.0)
+    controller.protocol_view.ui.suppress50HzCheckBox.setChecked(False)
+    controller.protocol_view.ui.removeDCOffsetCheckBox.setChecked(False)
     app.processEvents()
 
     controller.app_view.ui.actionReset_protocol.trigger()
@@ -282,15 +282,15 @@ def test_reset_config_actions_restore_ui_after_ui_edits():
         == DEFAULT_PROTOCOL_CONFIG.sample_rate_divider
     )
     assert (
-        controller.overview_view.ui.doubleSpinBox.value()
+        controller.protocol_view.ui.lowPassHzDoubleSpinBox.value()
         == DEFAULT_FILTER_CONFIG.low_pass_cutoff_hz
     )
     assert (
-        controller.overview_view.ui.suppress50HzCheckBox.isChecked()
+        controller.protocol_view.ui.suppress50HzCheckBox.isChecked()
         == DEFAULT_FILTER_CONFIG.suppress_50hz
     )
     assert (
-        controller.overview_view.ui.removeDCOffsetCheckBox.isChecked()
+        controller.protocol_view.ui.removeDCOffsetCheckBox.isChecked()
         == DEFAULT_FILTER_CONFIG.remove_dc_offset
     )
 
