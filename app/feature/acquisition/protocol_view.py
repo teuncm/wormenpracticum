@@ -17,7 +17,7 @@ from app.shared.constants import (
     PLOT_PIN_SELECTED_PEN_WIDTH,
     PLOT_PIN_UNSELECTED_PEN_WIDTH,
 )
-from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
+from app.shared.view_helpers import Blocker, setup_ui_custom
 from app.ui.generated.protocol_window import Ui_ProtocolWindow
 
 
@@ -186,16 +186,16 @@ class ProtocolView(QWidget):
         pin_actions_layout.addStretch()
         pins_container_layout.addLayout(pin_actions_layout)
 
-        # Insert the pins container under the existing pins_label (before the placeholder label)
+        # Keep the pin grid at the top of the left controls column.
         try:
-            placeholder_index = self.ui.leftLayout.indexOf(self.ui.label)
+            title_index = self.ui.leftLayout.indexOf(self.ui.title_controls)
         except Exception:
-            placeholder_index = -1
+            title_index = -1
 
-        if placeholder_index == -1:
+        if title_index == -1:
             self.ui.leftLayout.addWidget(pins_container)
         else:
-            self.ui.leftLayout.insertWidget(placeholder_index, pins_container)
+            self.ui.leftLayout.insertWidget(title_index + 1, pins_container)
 
         # frame, plot = create_plot_widget(frame=self.ui.pinFrame)
 
@@ -257,24 +257,25 @@ class ProtocolView(QWidget):
 
     def plot_pins(self):
         """Plot 16 vertical pins for visual reference of the NI-DAQ digital output channels."""
-        if not hasattr(self, "plotWidget"):
+        plot_widget = getattr(self, "plotWidget", None)
+        if plot_widget is None:
             return
 
-        self.plotWidget.clear()
+        plot_widget.clear()
 
         measured = [i + 1 for i, b in enumerate(self.pinButtons) if b.isChecked()]
 
         for channel in range(1, 17):
             # first, draw the pin
             base_pen = pg.mkPen("gray", width=PLOT_PIN_UNSELECTED_PEN_WIDTH)
-            self.plotWidget.plot([channel, channel], [0, 1], pen=base_pen)
+            plot_widget.plot([channel, channel], [0, 1], pen=base_pen)
 
             # highlight measured pins
             if channel in measured:
                 c = pg.mkColor("g")
                 c.setAlpha(110)
                 highlight_pen = pg.mkPen(c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
-                self.plotWidget.plot([channel, channel], [0, 1], pen=highlight_pen)
+                plot_widget.plot([channel, channel], [0, 1], pen=highlight_pen)
 
     def request_run(self):
         self.run_requested.emit()

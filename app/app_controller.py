@@ -196,7 +196,7 @@ class AppController:
             info_box(message=f"Error loading data: {df}").exec()
             return
 
-        self.app_model.update_experiment_data(df)
+        self.app_model.update_raw_data(df)
 
     def save_state(self, filename):
         """Save the entire state of the application to a file."""

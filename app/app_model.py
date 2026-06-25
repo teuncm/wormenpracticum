@@ -100,12 +100,20 @@ class AppModel(QObject):
         if "experiment_metadata" in state:
             self.experiment_metadata = state["experiment_metadata"]
 
-    def update_experiment_data(self, df: pd.DataFrame):
-        """Update experiment data with a new dataframe."""
+    def update_raw_data(self, df: pd.DataFrame):
+        """Update raw data with a new dataframe."""
         if self.raw_data_df is not None and self.raw_data_df.equals(df):
             return
 
         self.raw_data_df = df
+        self.filtered_data_df = df
+        self.experiment_data_changed.emit()
+
+    def update_filtered_data(self, df: pd.DataFrame):
+        """Update filtered data with a new dataframe."""
+        if self.filtered_data_df is not None and self.filtered_data_df.equals(df):
+            return
+
         self.filtered_data_df = df
         self.experiment_data_changed.emit()
 

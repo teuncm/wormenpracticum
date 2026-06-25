@@ -16,9 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout,
-    QFrame, QHBoxLayout, QLabel, QPushButton,
-    QSizePolicy, QSpacerItem, QSpinBox, QVBoxLayout,
-    QWidget)
+    QHBoxLayout, QLabel, QPushButton, QSizePolicy,
+    QSpacerItem, QSpinBox, QVBoxLayout, QWidget)
 
 class Ui_ProtocolWindow(object):
     def setupUi(self, ProtocolWindow):
@@ -33,14 +32,6 @@ class Ui_ProtocolWindow(object):
         self.title_controls.setObjectName(u"title_controls")
 
         self.leftLayout.addWidget(self.title_controls)
-
-        self.pinFrame = QFrame(ProtocolWindow)
-        self.pinFrame.setObjectName(u"pinFrame")
-        self.pinFrame.setMinimumSize(QSize(50, 50))
-        self.pinFrame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.pinFrame.setFrameShadow(QFrame.Shadow.Raised)
-
-        self.leftLayout.addWidget(self.pinFrame)
 
         self.label = QLabel(ProtocolWindow)
         self.label.setObjectName(u"label")

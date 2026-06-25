@@ -1,3 +1,4 @@
+import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtGui import QFont
@@ -71,6 +72,10 @@ def create_plot_widget(
     layout.addWidget(plot)
 
     return frame, plot
+
+
+# def multichannel_plot(plot: pg.PlotWidget, data: np.ndarray):
+#     """Given multiple data channels, plot them on the same plot widget with the same color."""
 
 
 def create_guide_line(
