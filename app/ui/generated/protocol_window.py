@@ -152,6 +152,6 @@ class Ui_ProtocolWindow(object):
         self.suppress_label.setText(QCoreApplication.translate("ProtocolWindow", u"Suppress 50Hz", None))
         self.remove_dc_offset_label.setText(QCoreApplication.translate("ProtocolWindow", u"Remove DC offset", None))
         self.pushButton_2.setText(QCoreApplication.translate("ProtocolWindow", u"Apply", None))
-        self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Selected pins", None))
+        self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Acquired data plot", None))
     # retranslateUi
 

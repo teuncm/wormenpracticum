@@ -17,7 +17,7 @@ from app.shared.constants import (
     PLOT_PIN_SELECTED_PEN_WIDTH,
     PLOT_PIN_UNSELECTED_PEN_WIDTH,
 )
-from app.shared.view_helpers import Blocker, setup_ui_custom
+from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.protocol_window import Ui_ProtocolWindow
 
 
@@ -119,6 +119,10 @@ class ProtocolView(QWidget):
 
     def setup_widgets(self):
         """Set up the main plot and controls."""
+        frame, plot = create_plot_widget()
+
+        self.ui.rightLayout.addWidget(frame)
+        self.plotWidget = plot
 
         # Create a grid of 16 checkable buttons under the "Pins" label
         pins_container = QWidget()
@@ -220,8 +224,6 @@ class ProtocolView(QWidget):
             selected_pins = set(protocol_config.selected_pins)
             for index, button in enumerate(self.pinButtons, start=1):
                 button.setChecked(index in selected_pins)
-
-        self.plot_pins()
 
     def to_config(self) -> ProtocolConfig:
         """Read the protocol controls into a config object."""

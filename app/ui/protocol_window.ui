@@ -136,7 +136,7 @@
      <item>
       <widget class="QLabel" name="title_lanes">
        <property name="text">
-        <string>Selected pins</string>
+        <string>Acquired data plot</string>
        </property>
       </widget>
      </item>
