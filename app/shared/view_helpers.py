@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
 from PySide6.QtCore import QSignalBlocker, Qt
 from PySide6.QtGui import QFont
@@ -74,8 +75,14 @@ def create_plot_widget(
     return frame, plot
 
 
-# def multichannel_plot(plot: pg.PlotWidget, data: np.ndarray):
-#     """Given multiple data channels, plot them on the same plot widget with the same color."""
+def multichannel_plot(plot: pg.PlotWidget, data: pd.DataFrame) -> None:
+    """Given multiple data channels, plot them on the same plot widget with the same color.
+    The plot should follow NME plot format: every channel is plotted at an offset. The axis is
+    drawn only for the first channel and is equal for all other channels."""
+    n_channels = data.shape[0]
+    offsets = np.arange(n_channels) * 100  # Offset each channel by 100 units
+    for i in range(n_channels):
+        plot.plot(data.iloc[i] + offsets[i], pen=pg.mkPen(color="b", width=1))
 
 
 def create_guide_line(
