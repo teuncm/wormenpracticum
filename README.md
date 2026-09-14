@@ -18,13 +18,13 @@ uv run pyside6-designer
 
 # Convert UI components to Python
 # After editing .ui files, regenerate the generated ui_*.py files.
-uv run python tools/ui_convert.py
+uv run tools/ui_convert.py
 
 # Run
-uv run python -m main
+uv run main.py
 
 # Test
-uv run python -m pytest
+uv run pytest
 
 # Tidy code
 uv run ruff check . --fix
