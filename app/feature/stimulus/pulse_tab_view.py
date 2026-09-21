@@ -2,6 +2,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QCheckBox, QDoubleSpinBox, QGridLayout, QLabel, QWidget
 
 from app.shared.constants import (
+    DEFAULT_PULSE_DUR_S,
     DOUBLE_SPIN_MAX_S,
     DOUBLE_SPIN_MAX_V,
     DOUBLE_SPIN_STEP_S,
@@ -39,7 +40,7 @@ class PulseTabView(QWidget):
                 DOUBLE_SPIN_STEP_V,
             ),
             "start_s": (0.001, 0.0, DOUBLE_SPIN_MAX_S, DOUBLE_SPIN_STEP_S),
-            "dur_s": (0.002, 0.0, DOUBLE_SPIN_MAX_S, DOUBLE_SPIN_STEP_S),
+            "dur_s": (DEFAULT_PULSE_DUR_S, 0.0, DOUBLE_SPIN_MAX_S, DOUBLE_SPIN_STEP_S),
             "step_amp_v": (
                 0.0,
                 -DOUBLE_SPIN_MAX_V,

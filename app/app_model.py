@@ -10,6 +10,7 @@ from app.feature.stimulus.stimulus_config import StimulusConfig
 from app.feature.stimulus.stimulus_generator import StimulusGenerator
 from app.shared.constants import (
     DEFAULT_FILTER_CONFIG,
+    DEFAULT_LIMIT_V,
     DEFAULT_PROTOCOL_CONFIG,
     DEFAULT_STIMULUS_CONFIG,
 )
@@ -85,10 +86,7 @@ class AppModel(QObject):
 
             state["stim_config"] |= {"pulses": pulseObjects}
 
-            self.stim_config = StimulusConfig(**state["stim_config"])
-
-            self.stim_generator = StimulusGenerator(self.stim_config)
-            self.stim_config_changed.emit()
+            self.update_stim_config(StimulusConfig(**state["stim_config"]))
         if "protocol_config" in state:
             self.protocol_config = ProtocolConfig(**state["protocol_config"])
             self.protocol_config_changed.emit()
@@ -118,7 +116,14 @@ class AppModel(QObject):
         self.experiment_data_changed.emit()
 
     def update_stim_config(self, stim_config: StimulusConfig):
-        """Update the stimulus config with a new config object."""
+        """Update the stimulus config while enforcing the fixed voltage limit."""
+        # Saved configurations may contain a previously configurable limit.
+        stim_config = StimulusConfig(
+            dur_s=stim_config.stim.dur_s,
+            limit_v=DEFAULT_LIMIT_V,
+            pulses=stim_config.stim.pulses,
+            n_steps=stim_config.n_steps,
+        )
         if self.stim_config == stim_config:
             return
 

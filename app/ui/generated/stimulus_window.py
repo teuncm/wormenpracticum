@@ -62,20 +62,6 @@ class Ui_StimulusWindow(object):
 
         self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.durSpinBox)
 
-        self.limitLabel = QLabel(StimulusWindow)
-        self.limitLabel.setObjectName(u"limitLabel")
-
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.limitLabel)
-
-        self.limitSpinBox = QDoubleSpinBox(StimulusWindow)
-        self.limitSpinBox.setObjectName(u"limitSpinBox")
-        self.limitSpinBox.setDecimals(3)
-        self.limitSpinBox.setMinimum(0.000000000000000)
-        self.limitSpinBox.setMaximum(1000000.000000000000000)
-        self.limitSpinBox.setValue(1.500000000000000)
-
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.limitSpinBox)
-
 
         self.leftLayout.addLayout(self.formLayout)
 
@@ -100,6 +86,12 @@ class Ui_StimulusWindow(object):
         self.highlight_selected_pulse_checkbox.setObjectName(u"highlight_selected_pulse_checkbox")
 
         self.leftLayout.addWidget(self.highlight_selected_pulse_checkbox)
+
+        self.show_voltage_boundary_checkbox = QCheckBox(StimulusWindow)
+        self.show_voltage_boundary_checkbox.setObjectName(u"show_voltage_boundary_checkbox")
+        self.show_voltage_boundary_checkbox.setChecked(True)
+
+        self.leftLayout.addWidget(self.show_voltage_boundary_checkbox)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -145,10 +137,10 @@ class Ui_StimulusWindow(object):
         self.title_stimulus.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus parameters", None))
         self.nLabel.setText(QCoreApplication.translate("StimulusWindow", u"Number of stimuli", None))
         self.durLabel.setText(QCoreApplication.translate("StimulusWindow", u"Total duration (s)", None))
-        self.limitLabel.setText(QCoreApplication.translate("StimulusWindow", u"Voltage limit (V)", None))
         self.title_pulse.setText(QCoreApplication.translate("StimulusWindow", u"Pulse parameters", None))
         self.add_pulse_button.setText(QCoreApplication.translate("StimulusWindow", u"Add pulse", None))
         self.highlight_selected_pulse_checkbox.setText(QCoreApplication.translate("StimulusWindow", u"Highlight selected pulse", None))
+        self.show_voltage_boundary_checkbox.setText(QCoreApplication.translate("StimulusWindow", u"Show voltage limit (1.5V)", None))
         self.title_slider.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus slider", None))
         self.title_plot.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus plot", None))
     # retranslateUi

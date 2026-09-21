@@ -10,10 +10,8 @@ from PySide6.QtWidgets import (
 from app.feature.stimulus.pulse_tab_view import PulseTabView
 from app.shared.constants import (
     DEFAULT_DUR_S,
-    DEFAULT_LIMIT_V,
-    DOUBLE_SPIN_MAX_V,
+    DEFAULT_PULSE_GAP_S,
     DOUBLE_SPIN_STEP_S,
-    DOUBLE_SPIN_STEP_V,
     SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT,
 )
 from app.shared.view_helpers import (
@@ -42,6 +40,7 @@ class StimulusView(QDialog):
     stimulusChanged = Signal()
     stepChanged = Signal()
     stimulusHighlightChanged = Signal(bool)
+    voltageBoundaryChanged = Signal(bool)
 
     def __init__(self):
         super().__init__()
@@ -61,10 +60,12 @@ class StimulusView(QDialog):
 
         self.ui.nSpinBox.valueChanged.connect(self.stimulusChanged)
         self.ui.stepSlider.valueChanged.connect(self.stepChanged)
-        self.ui.limitSpinBox.valueChanged.connect(self.stimulusChanged)
         self.ui.durSpinBox.valueChanged.connect(self.stimulusChanged)
         self.ui.highlight_selected_pulse_checkbox.toggled.connect(
             self.stimulusHighlightChanged.emit
+        )
+        self.ui.show_voltage_boundary_checkbox.toggled.connect(
+            self.voltageBoundaryChanged.emit
         )
 
         self.stimulusHighlightChanged.emit(
@@ -76,7 +77,13 @@ class StimulusView(QDialog):
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
         )
 
-        frame, plot = create_plot_widget()
+        frame, plot = create_plot_widget(
+            x_label="Time", x_units="ms", y_label="Voltage", y_units="V"
+        )
+        # Display milliseconds while keeping waveform coordinates in seconds.
+        time_axis = plot.getAxis("bottom")
+        time_axis.enableAutoSIPrefix(False)
+        time_axis.setScale(1000)
         self.ui.stepSlider.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
@@ -90,14 +97,6 @@ class StimulusView(QDialog):
             min_val=0.0001,
             max_val=1,
             step=DOUBLE_SPIN_STEP_S,
-        )
-
-        double_spin_helper(
-            self.ui.limitSpinBox,
-            default_val=DEFAULT_LIMIT_V,
-            min_val=0.0,
-            max_val=DOUBLE_SPIN_MAX_V,
-            step=DOUBLE_SPIN_STEP_V,
         )
 
     def setup_tabs(self):
@@ -134,10 +133,22 @@ class StimulusView(QDialog):
         self.renumber_tabs()
 
     def add_segment_tab(self):
+        """Add a pulse after the latest endpoint, keeping a gap between pulses."""
         segment = PulseTabView()
 
-        index = self.ui.segmentTabWidget.addTab(segment, "")
-        self.ui.segmentTabWidget.setCurrentIndex(index)
+        tabs = self.ui.segmentTabWidget
+        if tabs.count():
+            # Tabs can be reordered, so find the last pulse in time.
+            latest_end_s = 0.0
+            for i in range(tabs.count()):
+                spinboxes = tabs.widget(i).spinboxes
+                end_s = spinboxes["start_s"].value() + spinboxes["dur_s"].value()
+                latest_end_s = max(latest_end_s, end_s)
+
+            segment.spinboxes["start_s"].setValue(latest_end_s + DEFAULT_PULSE_GAP_S)
+
+        index = tabs.addTab(segment, "")
+        tabs.setCurrentIndex(index)
 
         segment.segmentChanged.connect(self.stimulusChanged)
         self.renumber_tabs()

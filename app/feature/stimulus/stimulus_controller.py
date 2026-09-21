@@ -4,6 +4,7 @@ from app.feature.stimulus.pulse_tab_view import PulseTabView
 from app.feature.stimulus.stimulus_config import StimulusConfig
 from app.feature.stimulus.stimulus_view import StimulusView
 from app.shared.constants import (
+    DEFAULT_LIMIT_V,
     DOUBLE_SPIN_PARSE_ROUND_DECIMALS,
     TARGET_N_SAMPLES_PULSE_PLOT,
 )
@@ -24,6 +25,7 @@ class StimulusController:
         self.app_model.stim_config_changed.connect(self._on_model_stim_config_changed)
         self.stimulus_view.stepChanged.connect(self.update_plot)
         self.stimulus_view.stimulusHighlightChanged.connect(self.update_plot)
+        self.stimulus_view.voltageBoundaryChanged.connect(self.update_plot)
 
     def _on_model_stim_config_changed(self):
         # Reflect model change in view parameter fields
@@ -54,7 +56,7 @@ class StimulusController:
             pulses=pulses,
             n_steps=self.stimulus_view.ui.nSpinBox.value(),
             dur_s=self.stimulus_view.ui.durSpinBox.value(),
-            limit_v=self.stimulus_view.ui.limitSpinBox.value(),
+            limit_v=DEFAULT_LIMIT_V,
         )
 
         self.app_model.update_stim_config(stim_config)
@@ -69,7 +71,6 @@ class StimulusController:
         with Blocker(self.stimulus_view):
             self.stimulus_view.ui.durSpinBox.setValue(stim_config.stim.dur_s)
             self.stimulus_view.ui.nSpinBox.setValue(stim_config.n_steps)
-            self.stimulus_view.ui.limitSpinBox.setValue(stim_config.limit_v)
 
             # Remove all tabs first
             while tab_widget.count() > 0:
@@ -100,9 +101,10 @@ class StimulusController:
         self.stimulus_view.clear_plot()
         self.stimulus_view.draw_zero_line()
 
-        self.stimulus_view.draw_voltage_limit(
-            self.app_model.stim_generator.config.limit_v
-        )
+        if self.stimulus_view.ui.show_voltage_boundary_checkbox.isChecked():
+            self.stimulus_view.draw_voltage_limit(
+                self.app_model.stim_generator.config.limit_v
+            )
 
         target_dur = self.app_model.stim_generator.config.stim.dur_s
         train_plot_sr = TARGET_N_SAMPLES_PULSE_PLOT / target_dur
@@ -133,7 +135,12 @@ class StimulusController:
                 )
 
         x_bounds = self.app_model.get_x_bounds()
-        y_bounds = self.app_model.get_y_bounds()
+        # Keep the voltage limits visible when there are no pulses to scale to.
+        y_bounds = (
+            self.app_model.get_y_bounds()
+            if pulses
+            else (-DEFAULT_LIMIT_V, DEFAULT_LIMIT_V)
+        )
 
         if x_bounds is not None and y_bounds is not None:
             self.stimulus_view.plotWidget.setXRange(*x_bounds)

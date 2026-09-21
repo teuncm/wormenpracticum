@@ -25,6 +25,12 @@ TITLE_LABEL_POINT_SIZE_INCREASE = 5
 DEFAULT_LIMIT_V = 1.5
 DEFAULT_DUR_S = 0.01
 
+# Default pulse duration (0.2 ms).
+DEFAULT_PULSE_DUR_S = 0.0002
+
+# Gap between newly added pulses (2 ms).
+DEFAULT_PULSE_GAP_S = 0.002
+
 # Segment parameter precision
 DOUBLE_SPIN_NUM_DECIMALS = 4
 DOUBLE_SPIN_PARSE_ROUND_DECIMALS = 7
@@ -65,12 +71,12 @@ DEFAULT_STIMULUS_CONFIG = StimulusConfig(
             amp_v=1.5,
             start_s=0.001,
             step_start_s=0.0001,
-            dur_s=0.0002,
+            dur_s=DEFAULT_PULSE_DUR_S,
         ),
         Pulse(
             amp_v=1.5,
             start_s=0.006,
-            dur_s=0.0002,
+            dur_s=DEFAULT_PULSE_DUR_S,
         ),
     ],
 )

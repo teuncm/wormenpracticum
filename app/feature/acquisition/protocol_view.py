@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import pyqtgraph as pg
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -30,11 +32,11 @@ class PinStateButton(QPushButton):
     BLUE_STATE = 3
     NUM_STATES = 4
 
-    _STATE_STYLES = {
-        DEFAULT_STATE: "",
-        GREEN_STATE: "background-color: #2f9e44; color: white;",
-        RED_STATE: "background-color: #c92a2a; color: white;",
-        BLUE_STATE: "background-color: #1971c2; color: white;",
+    _STATE_COLORS: ClassVar[dict[int, str]] = {
+        DEFAULT_STATE: "gray",
+        GREEN_STATE: "#2f9e44",
+        RED_STATE: "#c92a2a",
+        BLUE_STATE: "#1971c2",
     }
 
     def __init__(self, text: str):
@@ -82,10 +84,15 @@ class PinStateButton(QPushButton):
         self._refresh_state_style()
         self.stateChanged.emit(self._pin_state)
 
+    def pin_color(self) -> str:
+        """Return the shared color for this pin button and its plot bar."""
+        return self._STATE_COLORS[self._pin_state]
+
     def _refresh_state_style(self):
-        self.setStyleSheet(
-            f"min-width: 0px; padding: 0px; {self._STATE_STYLES[self._pin_state]}"
-        )
+        style = "min-width: 0px; padding: 0px;"
+        if self.isChecked():
+            style += f" background-color: {self.pin_color()}; color: white;"
+        self.setStyleSheet(style)
 
 
 class ProtocolView(QWidget):
@@ -123,8 +130,13 @@ class ProtocolView(QWidget):
 
         self.ui.rightLayout.addWidget(frame)
         self.plotWidget = plot
+        # Pin positions never change; selection should only change their styling.
+        plot.setRange(xRange=(0.5, 16.5), yRange=(-0.05, 1.05), padding=0)
+        self._pin_bars = [
+            plot.plot([channel, channel], [0, 1]) for channel in range(1, 17)
+        ]
 
-        # Create a grid of 16 checkable buttons under the "Pins" label
+        # Create a grid of 16 buttons that cycle through the pin colors.
         pins_container = QWidget()
         pins_container_layout = QVBoxLayout(pins_container)
         pins_container_layout.setContentsMargins(0, 0, 0, 0)
@@ -191,24 +203,12 @@ class ProtocolView(QWidget):
         pins_container_layout.addLayout(pin_actions_layout)
 
         # Keep the pin grid at the top of the left controls column.
-        try:
-            title_index = self.ui.leftLayout.indexOf(self.ui.title_controls)
-        except Exception:
-            title_index = -1
+        title_index = self.ui.leftLayout.indexOf(self.ui.title_controls)
 
         if title_index == -1:
             self.ui.leftLayout.addWidget(pins_container)
         else:
             self.ui.leftLayout.insertWidget(title_index + 1, pins_container)
-
-        # frame, plot = create_plot_widget(frame=self.ui.pinFrame)
-
-        # self.ui.rightLayout.addWidget(frame)
-        # self.plotWidget = plot
-
-        # if plot.plotItem is not None:
-        #     left_axis = plot.plotItem.getAxis("left")
-        #     left_axis.setVisible(False)
 
     def update_from_config(self, protocol_config: ProtocolConfig):
         """Update protocol controls from a config object."""
@@ -224,6 +224,7 @@ class ProtocolView(QWidget):
             selected_pins = set(protocol_config.selected_pins)
             for index, button in enumerate(self.pinButtons, start=1):
                 button.setChecked(index in selected_pins)
+        self.plot_pins()
 
     def to_config(self) -> ProtocolConfig:
         """Read the protocol controls into a config object."""
@@ -258,26 +259,14 @@ class ProtocolView(QWidget):
         )
 
     def plot_pins(self):
-        """Plot 16 vertical pins for visual reference of the NI-DAQ digital output channels."""
-        plot_widget = getattr(self, "plotWidget", None)
-        if plot_widget is None:
-            return
-
-        plot_widget.clear()
-
-        measured = [i + 1 for i, b in enumerate(self.pinButtons) if b.isChecked()]
-
-        for channel in range(1, 17):
-            # first, draw the pin
-            base_pen = pg.mkPen("gray", width=PLOT_PIN_UNSELECTED_PEN_WIDTH)
-            plot_widget.plot([channel, channel], [0, 1], pen=base_pen)
-
-            # highlight measured pins
-            if channel in measured:
-                c = pg.mkColor("g")
-                c.setAlpha(110)
-                highlight_pen = pg.mkPen(c, width=PLOT_PIN_SELECTED_PEN_WIDTH)
-                plot_widget.plot([channel, channel], [0, 1], pen=highlight_pen)
+        """Match each pin bar to its button without changing the plot range."""
+        for button, bar in zip(self.pinButtons, self._pin_bars):
+            width = (
+                PLOT_PIN_SELECTED_PEN_WIDTH
+                if button.isChecked()
+                else PLOT_PIN_UNSELECTED_PEN_WIDTH
+            )
+            bar.setPen(pg.mkPen(button.pin_color(), width=width))
 
     def request_run(self):
         self.run_requested.emit()

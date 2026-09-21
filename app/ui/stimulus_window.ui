@@ -65,29 +65,6 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="limitLabel">
-         <property name="text">
-          <string>Voltage limit (V)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QDoubleSpinBox" name="limitSpinBox">
-         <property name="decimals">
-          <number>3</number>
-         </property>
-         <property name="minimum">
-          <double>0.000000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>1000000.000000000000000</double>
-         </property>
-         <property name="value">
-          <double>1.500000000000000</double>
-         </property>
-        </widget>
-       </item>
       </layout>
      </item>
      <item>
@@ -124,6 +101,16 @@
       <widget class="QCheckBox" name="highlight_selected_pulse_checkbox">
        <property name="text">
         <string>Highlight selected pulse</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="show_voltage_boundary_checkbox">
+       <property name="text">
+        <string>Show voltage limit (1.5V)</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
