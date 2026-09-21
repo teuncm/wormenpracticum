@@ -75,6 +75,11 @@ class PinStateButton(QPushButton):
     def isChecked(self) -> bool:
         return self._pin_state != self.DEFAULT_STATE
 
+    @property
+    def pin_state(self) -> int:
+        """Return the current pin assignment."""
+        return self._pin_state
+
     def set_pin_state(self, state: int):
         state %= self.NUM_STATES
         if state == self._pin_state:
@@ -126,7 +131,8 @@ class ProtocolView(QWidget):
 
     def setup_widgets(self):
         """Set up the main plot and controls."""
-        frame, plot = create_plot_widget()
+        frame, plot = create_plot_widget(x_label="Pin number")
+        plot.hideAxis("left")
 
         self.ui.rightLayout.addWidget(frame)
         self.plotWidget = plot
@@ -176,16 +182,20 @@ class ProtocolView(QWidget):
         deselect_all_btn.setObjectName("deselectAllPinsButton")
 
         def select_all():
+            """Select unused pins while preserving the current pin assignments."""
             with Blocker(*self.pinButtons):
-                for b in self.pinButtons:
-                    b.setChecked(True)
+                for button in self.pinButtons:
+                    if not button.isChecked():
+                        button.setChecked(True)
             self.plot_pins()
             self.protocolChanged.emit()
 
         def deselect_all():
+            """Turn off green pins while preserving input/output assignments."""
             with Blocker(*self.pinButtons):
-                for b in self.pinButtons:
-                    b.setChecked(False)
+                for button in self.pinButtons:
+                    if button.pin_state == PinStateButton.GREEN_STATE:
+                        button.setChecked(False)
             self.plot_pins()
             self.protocolChanged.emit()
 

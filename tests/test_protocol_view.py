@@ -47,6 +47,29 @@ def test_pin_colors_and_selection_keep_plot_range_stable(monkeypatch):
             assert all(bar.opts["pen"].color() == pg.mkColor(color) for bar in bars)
             np.testing.assert_allclose(view.plotWidget.viewRange(), original_range)
 
+        # Select All preserves input/output colors and fills unused pins in green.
+        view.pinButtons[0].set_pin_state(PinStateButton.RED_STATE)
+        view.pinButtons[1].set_pin_state(PinStateButton.BLUE_STATE)
+        view.pinButtons[2].set_pin_state(PinStateButton.GREEN_STATE)
+        view.findChild(QPushButton, "selectAllPinsButton").click()
+        app.processEvents()
+        expected_colors = ["#c92a2a", "#1971c2"] + ["#2f9e44"] * 14
+        for button, bar, color in zip(view.pinButtons, bars, expected_colors):
+            assert button.pin_color() == color
+            assert bar.opts["pen"].color() == pg.mkColor(color)
+        assert model.protocol_config.selected_pins == list(range(1, 17))
+        np.testing.assert_allclose(view.plotWidget.viewRange(), original_range)
+
+        # Deselect All clears green pins while keeping input/output assignments.
+        view.findChild(QPushButton, "deselectAllPinsButton").click()
+        app.processEvents()
+        expected_colors = ["#c92a2a", "#1971c2"] + ["gray"] * 14
+        for button, bar, color in zip(view.pinButtons, bars, expected_colors):
+            assert button.pin_color() == color
+            assert bar.opts["pen"].color() == pg.mkColor(color)
+        assert model.protocol_config.selected_pins == [1, 2]
+        np.testing.assert_allclose(view.plotWidget.viewRange(), original_range)
+
         # Model-driven refreshes must update colors as well as the buttons.
         view.pinButtons[0].set_pin_state(PinStateButton.BLUE_STATE)
         controller.update_ui_from_model()

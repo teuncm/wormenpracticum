@@ -15,22 +15,38 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QSizePolicy, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QLabel, QPlainTextEdit, QSizePolicy,
+    QVBoxLayout, QWidget)
 
-class Ui_Form(object):
-    def setupUi(self, Form):
-        if not Form.objectName():
-            Form.setObjectName(u"Form")
-        Form.resize(400, 300)
-        self.verticalLayout = QVBoxLayout(Form)
+class Ui_AboutWindow(object):
+    def setupUi(self, AboutWindow):
+        if not AboutWindow.objectName():
+            AboutWindow.setObjectName(u"AboutWindow")
+        AboutWindow.resize(600, 350)
+        self.verticalLayout = QVBoxLayout(AboutWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
+        self.title_about = QLabel(AboutWindow)
+        self.title_about.setObjectName(u"title_about")
 
-        self.retranslateUi(Form)
+        self.verticalLayout.addWidget(self.title_about)
 
-        QMetaObject.connectSlotsByName(Form)
+        self.aboutTextEdit = QPlainTextEdit(AboutWindow)
+        self.aboutTextEdit.setObjectName(u"aboutTextEdit")
+        self.aboutTextEdit.setReadOnly(True)
+
+        self.verticalLayout.addWidget(self.aboutTextEdit)
+
+
+        self.retranslateUi(AboutWindow)
+
+        QMetaObject.connectSlotsByName(AboutWindow)
     # setupUi
 
-    def retranslateUi(self, Form):
-        Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
+    def retranslateUi(self, AboutWindow):
+        AboutWindow.setWindowTitle(QCoreApplication.translate("AboutWindow", u"About", None))
+        self.title_about.setText(QCoreApplication.translate("AboutWindow", u"About Wormenpracticum", None))
+        self.aboutTextEdit.setPlainText(QCoreApplication.translate("AboutWindow", u"This app was made by x y z.\n"
+"\n"
+"The low-pass filter uses a fourth-order Butterworth algorithm, applied forwards and backwards using SciPy's sosfiltfilt for zero-phase filtering.", None))
     # retranslateUi
 

@@ -113,6 +113,7 @@ class AppController:
         self.app_view.protocol_reset_requested.connect(self.reset_protocol_state)
         self.app_view.filter_reset_requested.connect(self.reset_filter_state)
         self.app_view.debug_requested.connect(self.show_debug_view)
+        self.app_view.about_requested.connect(self.show_about_view)
         self.app_view.preferences_requested.connect(self.show_preferences_view)
         self.preferences_view.font_size_changed.connect(
             self.update_font_size_preference
@@ -153,8 +154,7 @@ class AppController:
         self.protocol_view.set_nidaq_status(self.nidaq_model.device_status)
 
     def show_debug_view(self):
-        """Show the debug window and refresh its app model snapshot."""
-        self.debug_view.refresh()
+        """Show the debug window without changing its captured snapshot."""
         self.debug_view.show()
         self.debug_view.raise_()
         self.debug_view.activateWindow()
@@ -164,6 +164,12 @@ class AppController:
         self.preferences_view.show()
         self.preferences_view.raise_()
         self.preferences_view.activateWindow()
+
+    def show_about_view(self):
+        """Show the app credits and filter information in a separate window."""
+        self.about_view.show()
+        self.about_view.raise_()
+        self.about_view.activateWindow()
 
     def save_experiment_data(self):
         """Save experiment data to a file."""

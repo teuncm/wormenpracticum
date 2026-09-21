@@ -38,7 +38,6 @@ class DebugView(QWidget):
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
 
         self.setup_widgets()
-        self.refresh()
 
     def setup_widgets(self):
         toolbar = QHBoxLayout()
@@ -70,6 +69,7 @@ class DebugView(QWidget):
 
         self.debugTextEdit = QPlainTextEdit()
         self.debugTextEdit.setReadOnly(True)
+        self.debugTextEdit.setPlaceholderText("Click Refresh to load the app state.")
         self.debugTextEdit.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         debug_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
         if debug_font.pointSize() > 0:
@@ -78,6 +78,7 @@ class DebugView(QWidget):
         self.ui.verticalLayout.addWidget(self.debugTextEdit)
 
     def refresh(self):
+        """Capture the app state when the user clicks Refresh."""
         cursor = self.debugTextEdit.textCursor()
         cursor_position = cursor.position()
         vertical_scroll = self.debugTextEdit.verticalScrollBar().value()
@@ -99,7 +100,9 @@ class DebugView(QWidget):
     def find_previous(self):
         self._find_search_text(QTextDocument.FindFlag.FindBackward)
 
-    def _find_search_text(self, flags=QTextDocument.FindFlag(0)):
+    def _find_search_text(self, flags=None):
+        if flags is None:
+            flags = QTextDocument.FindFlag(0)
         search_text = self.searchLineEdit.text()
         if not search_text:
             return
