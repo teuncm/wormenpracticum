@@ -1,5 +1,6 @@
-from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from PySide6.QtCore import QObject, Signal
+
+from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 
 
 class NidaqModel(QObject):

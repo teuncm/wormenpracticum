@@ -34,23 +34,18 @@ class NidaqController:
 
     def execute(self):
         sr = 15600
-        # n_samples = 200
-
-        # waveform = np.array(
-        #     [0.5 * (1 + np.sin(2 * np.pi * 5 * t / sr)) for t in range(n_samples)]
-        # )
-
-        # Pull from the generator.
-        waveform, ts = self.app_model.stim_generator.sample_at_idx(sr_hz=sr, stim_idx=0)
-        # waveform = waveform * 0
+        waveform, ts = self.app_model.stim_generator.sample_all(sr_hz=sr)
 
         waveform = np.ascontiguousarray(np.ravel(waveform), dtype=np.float64)
         n_samples = waveform.size
-        ts = np.asarray(ts)[:n_samples]
+        if n_samples == 0:
+            raise ValueError("The stimulus buffer must contain samples.")
+        timeout = n_samples / sr + 2.0
 
+        protocol = self.app_model.protocol_config
         routing_word, routing_flags = self.generate_routing_mask(
-            positive_channel=13,
-            negative_channel=12,
+            positive_channel=protocol.positive_channel + 1,
+            negative_channel=protocol.negative_channel + 1,
         )
 
         with Task() as digital_output_task, Task() as ai_task, Task() as ao_task:
@@ -112,10 +107,10 @@ class NidaqController:
             reader.read_many_sample(
                 ai_data,
                 number_of_samples_per_channel=n_samples,
-                timeout=2.0,
+                timeout=timeout,
             )
 
-            ao_task.wait_until_done(timeout=2.0)
+            ao_task.wait_until_done(timeout=timeout)
 
             # Update app model with new data
             t = pd.Series(ts, name="t_(s)")
@@ -127,7 +122,7 @@ class NidaqController:
 
             df = pd.concat([t, *channels], axis=1)
 
-            self.app_model.update_experiment_data(df)
+            self.app_model.update_raw_data(df)
 
     def magic(self):
         if self.discover():

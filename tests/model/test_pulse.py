@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from app.feature.stimulus.pulse import Pulse
 
 TEST_SR_HZ = 4.0

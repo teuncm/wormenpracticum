@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+
 from app.shared.data_io import read_data, write_data
 
 

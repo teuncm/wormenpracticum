@@ -1,5 +1,6 @@
-from app.ui.generated.about_window import Ui_Form as Ui_AboutWindow
 from PySide6.QtWidgets import QWidget
+
+from app.ui.generated.about_window import Ui_Form as Ui_AboutWindow
 
 
 class AboutView(QWidget):

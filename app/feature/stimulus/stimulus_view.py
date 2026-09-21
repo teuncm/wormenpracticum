@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QTabBar,
 )
 
+from app.feature.stimulus.pulse_tab_view import PulseTabView
 from app.shared.constants import (
     DEFAULT_DUR_S,
     DEFAULT_LIMIT_V,
@@ -15,7 +16,6 @@ from app.shared.constants import (
     DOUBLE_SPIN_STEP_V,
     SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT,
 )
-from app.feature.stimulus.pulse_tab_view import PulseTabView
 from app.shared.view_helpers import (
     create_guide_line,
     create_plot_widget,

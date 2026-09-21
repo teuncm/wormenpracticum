@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
-import app.feature.stimulus.signal as sgn
 import numpy as np
+
+import app.feature.stimulus.signal as sgn
 
 
 @dataclass
@@ -58,11 +59,10 @@ class Pulse(sgn.Signal):
 
         n_samples = sgn.quantize_time_point(time_s=self.dur_s, sr_hz=sr_hz)
 
-        if not self.is_monophasic:
-            # Guarantee that biphasic pulses have an even number of samples.
-            # Causes truncation by at most one extra sample.
-            if n_samples % 2 == 1:
-                n_samples -= 1
+        # Guarantee that biphasic pulses have an even number of samples.
+        # Causes truncation by at most one extra sample.
+        if not self.is_monophasic and n_samples % 2 == 1:
+            n_samples -= 1
 
         return max(n_samples, 0)
 

@@ -13,6 +13,7 @@ from app.app_view import AppView
 from app.feature.about.about_view import AboutView
 from app.feature.acquisition.protocol_controller import ProtocolController
 from app.feature.acquisition.protocol_view import ProtocolView
+from app.feature.analysis.analyze_io_controller import AnalyzeIOController
 from app.feature.analysis.analyze_view_io import AnalyzeIOView
 from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
 from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
@@ -85,6 +86,9 @@ class AppController:
             self.app_model, self.protocol_view
         )
         self.filter_controller = FilterController(self.app_model, self.protocol_view)
+        self.analyze_io_controller = AnalyzeIOController(
+            self.app_model, self.analyze_io_view
+        )
 
     def restore_preferences(self):
         point_size = cast(int, self.settings.value("ui/font_size", 10, int))

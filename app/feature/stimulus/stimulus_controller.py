@@ -111,11 +111,13 @@ class StimulusController:
         y, t = self.app_model.stim_generator.sample_at_idx(train_plot_sr, cur_step)
         self.stimulus_view.update_train_plot((t, y), color="k", width=1)
 
-        if self.stimulus_view.ui.highlight_selected_pulse_checkbox.isChecked():
-            cur_tab = self.stimulus_view.ui.segmentTabWidget.currentIndex()
-            current_pulse = self.app_model.stim_generator.stims[cur_step].pulses[
-                cur_tab
-            ]
+        cur_tab = self.stimulus_view.ui.segmentTabWidget.currentIndex()
+        pulses = self.app_model.stim_generator.stims[cur_step].pulses
+        if (
+            self.stimulus_view.ui.highlight_selected_pulse_checkbox.isChecked()
+            and 0 <= cur_tab < len(pulses)
+        ):
+            current_pulse = pulses[cur_tab]
             y, t = self.app_model.stim_generator.sample_at_idx(
                 train_plot_sr, cur_step, cur_tab
             )

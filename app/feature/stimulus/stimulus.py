@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 
-import app.feature.stimulus.signal as sgn
 import numpy as np
+
+import app.feature.stimulus.signal as sgn
 from app.feature.stimulus.pulse import Pulse
 
 
@@ -23,7 +24,7 @@ class Stimulus(sgn.Signal):
             v_mins.append(v_min)
             v_maxs.append(v_max)
 
-        return min(v_mins), max(v_maxs)
+        return min(v_mins, default=0.0), max(v_maxs, default=0.0)
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the stimulus."""
@@ -97,8 +98,7 @@ class Stimulus(sgn.Signal):
 
         for pulse in self.pulses:
             pulse_end_time = pulse.start_s + pulse.dur_s
-            if pulse_end_time > latest_end_time:
-                latest_end_time = pulse_end_time
+            latest_end_time = max(latest_end_time, pulse_end_time)
 
         return latest_end_time
 

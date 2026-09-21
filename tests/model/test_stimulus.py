@@ -1,8 +1,16 @@
 import pytest
+
 from app.feature.stimulus.pulse import Pulse
 from app.feature.stimulus.stimulus import Stimulus
 
 TEST_SR_HZ = 4.0
+
+
+def test_empty_stimulus_has_zero_voltage():
+    stimulus = Stimulus(dur_s=2.0, pulses=[])
+
+    assert stimulus.v_bounds() == (0.0, 0.0)
+    assert stimulus.sample(TEST_SR_HZ).tolist() == [0.0] * 8
 
 
 @pytest.fixture

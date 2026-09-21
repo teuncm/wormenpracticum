@@ -8,27 +8,23 @@ class Signal(ABC):
     @abstractmethod
     def v_bounds(self) -> tuple[float, float]:
         """Voltage bounds of the signal."""
-        pass
 
     @abstractmethod
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the signal."""
-        pass
 
     @abstractmethod
     def n_samples(self, sr_hz: float) -> int:
         """Number of samples in the signal."""
-        pass
 
     @abstractmethod
     def sample(self, sr_hz: float) -> np.ndarray:
         """Sample the signal at the given sample rate."""
-        pass
 
 
 def quantize_time_point(time_s: float, sr_hz: float) -> int:
     """Quantize a time point to a sample offset."""
-    sample_offset = int(math.floor(time_s * sr_hz))
+    sample_offset = math.floor(time_s * sr_hz)
 
     return sample_offset
 

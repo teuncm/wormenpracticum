@@ -26,7 +26,7 @@ class StimulusGenerator:
                 v_mins.append(v_min)
                 v_maxs.append(v_max)
 
-        return min(v_mins), max(v_maxs)
+        return min(v_mins, default=0.0), max(v_maxs, default=0.0)
 
     def t_bounds(self, sr_hz: float) -> tuple[float, float]:
         """Time bounds of the stimulus generator."""
@@ -79,6 +79,15 @@ class StimulusGenerator:
     def clip_samples(self, samples: np.ndarray) -> np.ndarray:
         """Clip the samples to the voltage limits set in the stimulus config."""
         return np.clip(samples, -self.config.limit_v, self.config.limit_v)
+
+    def sample_all(self, sr_hz: float) -> tuple[np.ndarray, np.ndarray]:
+        """Concatenate all clipped stimuli with one continuous time axis."""
+        if not self.stims:
+            raise ValueError("At least one stimulus is required.")
+        samples = np.concatenate(
+            [self.clip_samples(stim.sample(sr_hz=sr_hz)) for stim in self.stims]
+        )
+        return samples, sgn.get_time_frame_s(len(samples), sr_hz)
 
     def _expand(self) -> None:
         """Expand the stimulus for each step."""

@@ -1,6 +1,7 @@
-import app.feature.stimulus.signal as sgn
 import numpy as np
 import pytest
+
+import app.feature.stimulus.signal as sgn
 
 TEST_SR_HZ = 4.0
 

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Analyze IO</string>
   </property>
   <layout class="QHBoxLayout" name="flowLayout" stretch="3,5">
    <item>
@@ -24,10 +24,19 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QLabel" name="channelLabel">
        <property name="text">
-        <string>PushButton</string>
+        <string>Channel: no data</string>
        </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSlider" name="channelSlider">
+       <property name="enabled"><bool>false</bool></property>
+       <property name="minimum"><number>1</number></property>
+       <property name="maximum"><number>1</number></property>
+       <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       <property name="accessibleName"><string>Measurement channel</string></property>
       </widget>
      </item>
      <item>
@@ -50,7 +59,7 @@
      <item>
       <widget class="QLabel" name="title_overview">
        <property name="text">
-        <string>Overview</string>
+        <string>Recorded stimuli</string>
        </property>
       </widget>
      </item>

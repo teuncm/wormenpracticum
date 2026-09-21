@@ -1,8 +1,9 @@
 from pathlib import Path
 
-import app.feature.stimulus.signal as sgn
 import numpy as np
 import pandas as pd
+
+import app.feature.stimulus.signal as sgn
 from app.shared.data_io import (
     write_data,
 )
