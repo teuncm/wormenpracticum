@@ -141,7 +141,10 @@ class StimulusView(QDialog):
             # Tabs can be reordered, so find the last pulse in time.
             latest_end_s = 0.0
             for i in range(tabs.count()):
-                spinboxes = tabs.widget(i).spinboxes
+                widget = tabs.widget(i)
+                if not isinstance(widget, PulseTabView):
+                    continue
+                spinboxes = widget.spinboxes
                 end_s = spinboxes["start_s"].value() + spinboxes["dur_s"].value()
                 latest_end_s = max(latest_end_s, end_s)
 

@@ -78,7 +78,7 @@ class DebugView(QWidget):
         self.ui.verticalLayout.addWidget(self.debugTextEdit)
 
     def refresh(self):
-        """Capture the app state when the user clicks Refresh."""
+        """Capture the app state on opening the window or clicking Refresh."""
         cursor = self.debugTextEdit.textCursor()
         cursor_position = cursor.position()
         vertical_scroll = self.debugTextEdit.verticalScrollBar().value()

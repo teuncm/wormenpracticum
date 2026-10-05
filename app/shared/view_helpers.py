@@ -212,6 +212,19 @@ def info_box(
     return msg_box
 
 
+def confirmation_box(message: str, title: str, parent=None) -> QMessageBox:
+    """Create a confirmation dialog that cancels unless the user chooses Yes."""
+    dialog = QMessageBox(parent)
+    dialog.setIcon(QMessageBox.Icon.Question)
+    dialog.setWindowTitle(title)
+    dialog.setText(message)
+    dialog.setStandardButtons(
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel
+    )
+    dialog.setDefaultButton(QMessageBox.StandardButton.Cancel)
+    return dialog
+
+
 def set_font_size(point_size: int):
     app = QApplication.instance()
 

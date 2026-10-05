@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout,
-    QHBoxLayout, QLabel, QPushButton, QSizePolicy,
-    QSpacerItem, QSpinBox, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
+    QFormLayout, QHBoxLayout, QLabel, QPushButton,
+    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_ProtocolWindow(object):
     def setupUi(self, ProtocolWindow):
@@ -33,30 +33,40 @@ class Ui_ProtocolWindow(object):
 
         self.leftLayout.addWidget(self.title_controls)
 
-        self.label = QLabel(ProtocolWindow)
-        self.label.setObjectName(u"label")
+        self.sampleRateLayout = QHBoxLayout()
+        self.sampleRateLayout.setObjectName(u"sampleRateLayout")
+        self.sampleRateLabel = QLabel(ProtocolWindow)
+        self.sampleRateLabel.setObjectName(u"sampleRateLabel")
 
-        self.leftLayout.addWidget(self.label)
+        self.sampleRateLayout.addWidget(self.sampleRateLabel)
 
-        self.formLayout = QFormLayout()
-        self.formLayout.setObjectName(u"formLayout")
-        self.sampleRateDividerLabel = QLabel(ProtocolWindow)
-        self.sampleRateDividerLabel.setObjectName(u"sampleRateDividerLabel")
+        self.maxSampleRateLabel = QLabel(ProtocolWindow)
+        self.maxSampleRateLabel.setObjectName(u"maxSampleRateLabel")
 
-        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.sampleRateDividerLabel)
+        self.sampleRateLayout.addWidget(self.maxSampleRateLabel)
 
-        self.sampleRateDividerSpinBox = QSpinBox(ProtocolWindow)
-        self.sampleRateDividerSpinBox.setObjectName(u"sampleRateDividerSpinBox")
+        self.sampleRateDivisionLabel = QLabel(ProtocolWindow)
+        self.sampleRateDivisionLabel.setObjectName(u"sampleRateDivisionLabel")
 
-        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.sampleRateDividerSpinBox)
+        self.sampleRateLayout.addWidget(self.sampleRateDivisionLabel)
+
+        self.sampleRateDividerComboBox = QComboBox(ProtocolWindow)
+        self.sampleRateDividerComboBox.setObjectName(u"sampleRateDividerComboBox")
+
+        self.sampleRateLayout.addWidget(self.sampleRateDividerComboBox)
+
+        self.sampleRateEqualsLabel = QLabel(ProtocolWindow)
+        self.sampleRateEqualsLabel.setObjectName(u"sampleRateEqualsLabel")
+
+        self.sampleRateLayout.addWidget(self.sampleRateEqualsLabel)
+
+        self.actualSampleRateLabel = QLabel(ProtocolWindow)
+        self.actualSampleRateLabel.setObjectName(u"actualSampleRateLabel")
+
+        self.sampleRateLayout.addWidget(self.actualSampleRateLabel)
 
 
-        self.leftLayout.addLayout(self.formLayout)
-
-        self.label_3 = QLabel(ProtocolWindow)
-        self.label_3.setObjectName(u"label_3")
-
-        self.leftLayout.addWidget(self.label_3)
+        self.leftLayout.addLayout(self.sampleRateLayout)
 
         self.nidaqStatusLabel = QLabel(ProtocolWindow)
         self.nidaqStatusLabel.setObjectName(u"nidaqStatusLabel")
@@ -68,11 +78,6 @@ class Ui_ProtocolWindow(object):
         self.pushButton.setObjectName(u"pushButton")
 
         self.leftLayout.addWidget(self.pushButton)
-
-        self.title_filter = QLabel(ProtocolWindow)
-        self.title_filter.setObjectName(u"title_filter")
-
-        self.leftLayout.addWidget(self.title_filter)
 
         self.formLayout_2 = QFormLayout()
         self.formLayout_2.setObjectName(u"formLayout_2")
@@ -109,10 +114,20 @@ class Ui_ProtocolWindow(object):
 
         self.leftLayout.addLayout(self.formLayout_2)
 
+        self.filterActionsLayout = QHBoxLayout()
+        self.filterActionsLayout.setObjectName(u"filterActionsLayout")
         self.pushButton_2 = QPushButton(ProtocolWindow)
         self.pushButton_2.setObjectName(u"pushButton_2")
 
-        self.leftLayout.addWidget(self.pushButton_2)
+        self.filterActionsLayout.addWidget(self.pushButton_2)
+
+        self.recordAndApplyButton = QPushButton(ProtocolWindow)
+        self.recordAndApplyButton.setObjectName(u"recordAndApplyButton")
+
+        self.filterActionsLayout.addWidget(self.recordAndApplyButton)
+
+
+        self.leftLayout.addLayout(self.filterActionsLayout)
 
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -142,16 +157,21 @@ class Ui_ProtocolWindow(object):
     def retranslateUi(self, ProtocolWindow):
         ProtocolWindow.setWindowTitle(QCoreApplication.translate("ProtocolWindow", u"Protocol Editor", None))
         self.title_controls.setText(QCoreApplication.translate("ProtocolWindow", u"Stimulation parameters", None))
-        self.label.setText(QCoreApplication.translate("ProtocolWindow", u"Max sample rate: 0 Hz", None))
-        self.sampleRateDividerLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Sample rate divider", None))
-        self.label_3.setText(QCoreApplication.translate("ProtocolWindow", u"Sample rate: 0 Hz", None))
+        self.sampleRateLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Sample rate:", None))
+        self.maxSampleRateLabel.setText(QCoreApplication.translate("ProtocolWindow", u"0 Hz", None))
+        self.sampleRateDivisionLabel.setText(QCoreApplication.translate("ProtocolWindow", u"\u00f7", None))
+#if QT_CONFIG(accessibility)
+        self.sampleRateDividerComboBox.setAccessibleName(QCoreApplication.translate("ProtocolWindow", u"Sample rate divider", None))
+#endif // QT_CONFIG(accessibility)
+        self.sampleRateEqualsLabel.setText(QCoreApplication.translate("ProtocolWindow", u"=", None))
+        self.actualSampleRateLabel.setText(QCoreApplication.translate("ProtocolWindow", u"0 Hz", None))
         self.nidaqStatusLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Status: NI-DAQ unavailable", None))
-        self.pushButton.setText(QCoreApplication.translate("ProtocolWindow", u"Run", None))
-        self.title_filter.setText(QCoreApplication.translate("ProtocolWindow", u"Filter", None))
+        self.pushButton.setText(QCoreApplication.translate("ProtocolWindow", u"Record", None))
         self.lowpass_label.setText(QCoreApplication.translate("ProtocolWindow", u"Low pass (Hz)", None))
         self.suppress_label.setText(QCoreApplication.translate("ProtocolWindow", u"Suppress 50Hz", None))
         self.remove_dc_offset_label.setText(QCoreApplication.translate("ProtocolWindow", u"Remove DC offset", None))
-        self.pushButton_2.setText(QCoreApplication.translate("ProtocolWindow", u"Apply", None))
+        self.pushButton_2.setText(QCoreApplication.translate("ProtocolWindow", u"Filter", None))
+        self.recordAndApplyButton.setText(QCoreApplication.translate("ProtocolWindow", u"Record && filter", None))
         self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Acquired data plot", None))
     # retranslateUi
 

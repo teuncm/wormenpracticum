@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.feature.acquisition.protocol_config import ProtocolConfig
+from app.feature.acquisition.protocol_config import SAMPLE_RATE_DIVIDERS, ProtocolConfig
 from app.feature.acquisition.protocol_mapping import encode_stim_channel_pair
 from app.feature.filter.filter_config import FilterConfig
 from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
@@ -116,15 +116,19 @@ class ProtocolView(QWidget):
         self.set_nidaq_status(NI_DAQ_UNAVAILABLE_STATUS)
         self._positive_channel = 0
         self._negative_channel = 1
+        self._max_sample_rate_hz = 0.0
+
+        for divider in SAMPLE_RATE_DIVIDERS:
+            self.ui.sampleRateDividerComboBox.addItem(str(divider), divider)
 
         self.ui.pushButton.clicked.connect(self.request_run)
-        self.ui.sampleRateDividerSpinBox.valueChanged.connect(self.protocolChanged)
+        self.ui.sampleRateDividerComboBox.currentIndexChanged.connect(
+            self._on_sample_rate_divider_changed
+        )
         self.ui.lowPassHzDoubleSpinBox.setRange(0.0, 100000.0)
         self.ui.lowPassHzDoubleSpinBox.setDecimals(2)
-        self.ui.lowPassHzDoubleSpinBox.valueChanged.connect(self.filterChanged)
-        self.ui.suppress50HzCheckBox.toggled.connect(self.filterChanged)
-        self.ui.removeDCOffsetCheckBox.toggled.connect(self.filterChanged)
         self.ui.pushButton_2.clicked.connect(self.filterChanged)
+        self.ui.recordAndApplyButton.clicked.connect(self.request_record_and_apply)
 
         self.setup_widgets()
         self.plot_pins()
@@ -223,17 +227,23 @@ class ProtocolView(QWidget):
     def update_from_config(self, protocol_config: ProtocolConfig):
         """Update protocol controls from a config object."""
         with Blocker(
-            self.ui.sampleRateDividerSpinBox,
+            self.ui.sampleRateDividerComboBox,
             *self.pinButtons,
         ):
             self._positive_channel = protocol_config.positive_channel
             self._negative_channel = protocol_config.negative_channel
-            self.ui.sampleRateDividerSpinBox.setValue(
-                protocol_config.sample_rate_divider
-            )
+            combo = self.ui.sampleRateDividerComboBox
+            combo.setCurrentIndex(combo.findData(protocol_config.sample_rate_divider))
             selected_pins = set(protocol_config.selected_pins)
             for index, button in enumerate(self.pinButtons, start=1):
-                button.setChecked(index in selected_pins)
+                # Stimulation channels are zero-based; pin labels are one-based.
+                if index == protocol_config.positive_channel + 1:
+                    button.set_pin_state(PinStateButton.RED_STATE)
+                elif index == protocol_config.negative_channel + 1:
+                    button.set_pin_state(PinStateButton.BLUE_STATE)
+                else:
+                    button.setChecked(index in selected_pins)
+        self._update_sample_rate_labels()
         self.plot_pins()
 
     def to_config(self) -> ProtocolConfig:
@@ -244,13 +254,31 @@ class ProtocolView(QWidget):
             selected_pins=[
                 index
                 for index, button in enumerate(self.pinButtons, start=1)
-                if button.isChecked()
+                if button.pin_state == PinStateButton.GREEN_STATE
             ],
-            sample_rate_divider=self.ui.sampleRateDividerSpinBox.value(),
+            sample_rate_divider=self.ui.sampleRateDividerComboBox.currentData(),
         )
 
+    def set_max_sample_rate(self, sample_rate_hz: float):
+        """Update the maximum rate and the displayed rate after division."""
+        self._max_sample_rate_hz = sample_rate_hz
+        self._update_sample_rate_labels()
+
+    def _update_sample_rate_labels(self):
+        """Display both sample rates in Hz using the selected divider."""
+        divider = self.ui.sampleRateDividerComboBox.currentData()
+        self.ui.maxSampleRateLabel.setText(f"{self._max_sample_rate_hz:g} Hz")
+        self.ui.actualSampleRateLabel.setText(
+            f"{self._max_sample_rate_hz / divider:g} Hz"
+        )
+
+    def _on_sample_rate_divider_changed(self, *_):
+        """Refresh the displayed rate and publish the protocol change."""
+        self._update_sample_rate_labels()
+        self.protocolChanged.emit()
+
     def update_filter_from_config(self, filter_config: FilterConfig):
-        """Update acquisition filter controls from a config object."""
+        """Update protocol filter controls from a config object."""
         with Blocker(
             self.ui.lowPassHzDoubleSpinBox,
             self.ui.suppress50HzCheckBox,
@@ -261,7 +289,7 @@ class ProtocolView(QWidget):
             self.ui.removeDCOffsetCheckBox.setChecked(filter_config.remove_dc_offset)
 
     def to_filter_config(self) -> FilterConfig:
-        """Read the acquisition filter controls into a config object."""
+        """Read the protocol filter controls into a config object."""
         return FilterConfig(
             low_pass_cutoff_hz=self.ui.lowPassHzDoubleSpinBox.value(),
             suppress_50hz=self.ui.suppress50HzCheckBox.isChecked(),
@@ -280,6 +308,11 @@ class ProtocolView(QWidget):
 
     def request_run(self):
         self.run_requested.emit()
+
+    def request_record_and_apply(self):
+        """Record synchronously, then apply the current filter settings."""
+        self.run_requested.emit()
+        self.filterChanged.emit()
 
     def get_selected_stim_channels(self):
         return self._positive_channel + 1, self._negative_channel + 1

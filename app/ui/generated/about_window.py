@@ -36,6 +36,13 @@ class Ui_AboutWindow(object):
 
         self.verticalLayout.addWidget(self.aboutTextEdit)
 
+        self.projectLinksLabel = QLabel(AboutWindow)
+        self.projectLinksLabel.setObjectName(u"projectLinksLabel")
+        self.projectLinksLabel.setOpenExternalLinks(True)
+        self.projectLinksLabel.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse|Qt.TextInteractionFlag.LinksAccessibleByKeyboard)
+
+        self.verticalLayout.addWidget(self.projectLinksLabel)
+
 
         self.retranslateUi(AboutWindow)
 
@@ -48,5 +55,6 @@ class Ui_AboutWindow(object):
         self.aboutTextEdit.setPlainText(QCoreApplication.translate("AboutWindow", u"This app was made by x y z.\n"
 "\n"
 "The low-pass filter uses a fourth-order Butterworth algorithm, applied forwards and backwards using SciPy's sosfiltfilt for zero-phase filtering.", None))
+        self.projectLinksLabel.setText(QCoreApplication.translate("AboutWindow", u"<a href=\"https://github.com/teuncm/wormenpracticum/issues\">Report a bug</a> \u00b7 <a href=\"https://github.com/teuncm/wormenpracticum\">GitHub project</a>", None))
     # retranslateUi
 

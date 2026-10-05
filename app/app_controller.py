@@ -6,7 +6,7 @@ from pprint import pprint
 from typing import cast
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from app.app_model import AppModel
 from app.app_view import AppView
@@ -32,7 +32,7 @@ from app.shared.constants import (
     DEFAULT_STIMULUS_CONFIG,
 )
 from app.shared.settings import create_app_settings
-from app.shared.view_helpers import info_box, set_font_size
+from app.shared.view_helpers import confirmation_box, info_box, set_font_size
 
 
 class AppController:
@@ -73,7 +73,7 @@ class AppController:
 
         self.app_view.clear_tabs()
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
-        self.app_view.add_tab(self.protocol_view, "Data\nacquisition")
+        self.app_view.add_tab(self.protocol_view, "Protocol")
         self.app_view.add_tab(self.analyze_io_view, "Analyze\nIO")
         self.app_view.add_tab(self.analyze_speed_view, "Analyze\nspeed")
         self.app_view.add_tab(self.analyze_tetanus_view, "Analyze\ntetanus")
@@ -102,16 +102,15 @@ class AppController:
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_view.data_load_requested.connect(self.load_experiment_data)
+        self.app_view.new_experiment_requested.connect(self.new_experiment)
+        self.app_view.data_clear_requested.connect(self.clear_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
         self.app_view.stimulus_load_requested.connect(self.load_stimulus_state)
         self.app_view.stimulus_save_requested.connect(self.save_stimulus_state)
         self.app_view.protocol_load_requested.connect(self.load_protocol_state)
         self.app_view.protocol_save_requested.connect(self.save_protocol_state)
-        self.app_view.filter_load_requested.connect(self.load_filter_state)
-        self.app_view.filter_save_requested.connect(self.save_filter_state)
         self.app_view.stimulus_reset_requested.connect(self.reset_stimulus_state)
         self.app_view.protocol_reset_requested.connect(self.reset_protocol_state)
-        self.app_view.filter_reset_requested.connect(self.reset_filter_state)
         self.app_view.debug_requested.connect(self.show_debug_view)
         self.app_view.about_requested.connect(self.show_about_view)
         self.app_view.preferences_requested.connect(self.show_preferences_view)
@@ -154,7 +153,8 @@ class AppController:
         self.protocol_view.set_nidaq_status(self.nidaq_model.device_status)
 
     def show_debug_view(self):
-        """Show the debug window without changing its captured snapshot."""
+        """Refresh the app state snapshot whenever the debug window is opened."""
+        self.debug_view.refresh()
         self.debug_view.show()
         self.debug_view.raise_()
         self.debug_view.activateWindow()
@@ -226,45 +226,98 @@ class AppController:
         self.load_named_state("stimulus", "stim_config")
 
     def save_protocol_state(self):
-        self.save_named_state("protocol", "protocol_config")
+        """Save protocol and filter settings together using their existing JSON keys."""
+        self.save_named_state("protocol", "protocol_config", "filter_config")
 
     def load_protocol_state(self):
-        self.load_named_state("protocol", "protocol_config")
+        """Load combined settings or a legacy protocol file."""
+        self.load_named_state("protocol", "protocol_config", "filter_config")
 
-    def save_filter_state(self):
-        self.save_named_state("filter", "filter_config")
+    def new_experiment(self):
+        """Start a fresh experiment after the user confirms discarding current state."""
+        dialog = confirmation_box(
+            message="Start a new experiment? Stimulus and protocol settings will be reset, "
+            "and currently loaded data will be cleared. Unsaved changes will be lost.",
+            title="New experiment",
+            parent=self.app_view,
+        )
+        if dialog.exec() != QMessageBox.StandardButton.Yes:
+            return
 
-    def load_filter_state(self):
-        self.load_named_state("filter", "filter_config")
+        self.stimulus_view.ui.stepSlider.setValue(0)
+        self.app_model.clear_experiment_data()
+        self.app_model.import_state(
+            {
+                "stim_config": DEFAULT_STIMULUS_CONFIG.to_dict(),
+                "protocol_config": dataclasses.asdict(DEFAULT_PROTOCOL_CONFIG),
+                "filter_config": dataclasses.asdict(DEFAULT_FILTER_CONFIG),
+            }
+        )
 
     def reset_stimulus_state(self):
+        """Restore the default stimulus and confirm that the reset completed."""
+        if (
+            confirmation_box(
+                message="Reset stimulus settings to their defaults? Current stimulus settings will be lost.",
+                title="Reset stimulus",
+                parent=self.app_view,
+            ).exec()
+            != QMessageBox.StandardButton.Yes
+        ):
+            return
+        self.stimulus_view.ui.stepSlider.setValue(0)
         self.app_model.import_state({"stim_config": DEFAULT_STIMULUS_CONFIG.to_dict()})
+        info_box(message="Stimulus has been reset.", title="Reset complete").exec()
 
     def reset_protocol_state(self):
+        """Restore the default protocol and filter settings."""
+        if (
+            confirmation_box(
+                message="Reset protocol and filter settings to their defaults? Current settings will be lost.",
+                title="Reset protocol",
+                parent=self.app_view,
+            ).exec()
+            != QMessageBox.StandardButton.Yes
+        ):
+            return
         self.app_model.import_state(
-            {"protocol_config": dataclasses.asdict(DEFAULT_PROTOCOL_CONFIG)}
+            {
+                "protocol_config": dataclasses.asdict(DEFAULT_PROTOCOL_CONFIG),
+                "filter_config": dataclasses.asdict(DEFAULT_FILTER_CONFIG),
+            }
         )
+        info_box(message="Protocol has been reset.", title="Reset complete").exec()
 
-    def reset_filter_state(self):
-        self.app_model.import_state(
-            {"filter_config": dataclasses.asdict(DEFAULT_FILTER_CONFIG)}
-        )
+    def clear_experiment_data(self):
+        """Clear the loaded recording only after confirmation, then report completion."""
+        if (
+            confirmation_box(
+                message="Clear currently loaded data and recording metadata? Unsaved data will be lost.",
+                title="Clear data",
+                parent=self.app_view,
+            ).exec()
+            != QMessageBox.StandardButton.Yes
+        ):
+            return
+        self.app_model.clear_experiment_data()
+        info_box(message="Data has been cleared.", title="Clear complete").exec()
 
-    def save_named_state(self, state_name: str, state_key: str):
-        """Save one app state section to a typed JSON file."""
+    def save_named_state(self, state_name: str, *state_keys: str):
+        """Save the requested app state sections to a typed JSON file."""
         filename = data_dialog.show_save_json_dialog()
         if filename is None:
             info_box(message="No file name was given.").exec()
             return
 
         filename = self._state_filename(filename, state_name)
-        state = {state_key: self.app_model.export_state()[state_key]}
+        exported_state = self.app_model.export_state()
+        state = {key: exported_state[key] for key in state_keys}
         msg = data_io.write_metadata(filename, state)
         if msg:
             info_box(message=f"Error saving {state_name}: {msg}").exec()
 
-    def load_named_state(self, state_name: str, state_key: str):
-        """Load one app state section from JSON into the app model."""
+    def load_named_state(self, state_name: str, state_key: str, *extra_keys: str):
+        """Load requested sections, retaining support for legacy unwrapped settings."""
         filename = data_dialog.show_load_json_dialog()
         if filename is None:
             info_box(message="No file was selected.").exec()
@@ -275,7 +328,10 @@ class AppController:
             info_box(message=f"Error loading {state_name}: {state}").exec()
             return
 
-        if state_key not in state:
+        keys = (state_key, *extra_keys)
+        if any(key in state for key in keys):
+            state = {key: state[key] for key in keys if key in state}
+        else:
             state = {state_key: state}
 
         self.app_model.import_state(state)

@@ -98,6 +98,14 @@ class AppModel(QObject):
         if "experiment_metadata" in state:
             self.experiment_metadata = state["experiment_metadata"]
 
+    def clear_experiment_data(self):
+        """Clear the loaded recording and its metadata, then refresh analysis views."""
+        self.raw_data_df = None
+        self.filtered_data_df = None
+        self.experiment_config = {}
+        self.experiment_metadata = {}
+        self.experiment_data_changed.emit()
+
     def update_raw_data(self, df: pd.DataFrame):
         """Update raw data with a new dataframe."""
         if self.raw_data_df is not None and self.raw_data_df.equals(df):

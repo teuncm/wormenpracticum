@@ -147,17 +147,16 @@ class HorizontalTabBar(QTabBar):
 
 
 class AppView(QMainWindow):
+    new_experiment_requested = Signal()
+    data_clear_requested = Signal()
     data_load_requested = Signal()
     data_save_requested = Signal()
     stimulus_load_requested = Signal()
     stimulus_save_requested = Signal()
     protocol_load_requested = Signal()
     protocol_save_requested = Signal()
-    filter_load_requested = Signal()
-    filter_save_requested = Signal()
     stimulus_reset_requested = Signal()
     protocol_reset_requested = Signal()
-    filter_reset_requested = Signal()
     debug_requested = Signal()
     about_requested = Signal()
     preferences_requested = Signal()
@@ -180,20 +179,19 @@ class AppView(QMainWindow):
         self.ui.menuFile.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
+        self.ui.actionNew.triggered.connect(self.new_experiment_requested.emit)
+        self.ui.actionClear_data.triggered.connect(self.data_clear_requested.emit)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)
         self.ui.actionLoad_stimulus.triggered.connect(self.stimulus_load_requested.emit)
         self.ui.actionSave_stimulus.triggered.connect(self.stimulus_save_requested.emit)
         self.ui.actionLoad_protocol.triggered.connect(self.protocol_load_requested.emit)
         self.ui.actionSave_protocol.triggered.connect(self.protocol_save_requested.emit)
-        self.ui.actionLoad_filter.triggered.connect(self.filter_load_requested.emit)
-        self.ui.actionSave_filter.triggered.connect(self.filter_save_requested.emit)
         self.ui.actionReset_stimulus.triggered.connect(
             self.stimulus_reset_requested.emit
         )
         self.ui.actionReset_protocol.triggered.connect(
             self.protocol_reset_requested.emit
         )
-        self.ui.actionReset_filter.triggered.connect(self.filter_reset_requested.emit)
         self.ui.actionDebug.triggered.connect(self.debug_requested.emit)
         self.ui.actionAbout.triggered.connect(self.about_requested.emit)
         self.ui.actionPreferences.triggered.connect(self.preferences_requested.emit)

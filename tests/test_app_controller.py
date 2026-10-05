@@ -2,10 +2,13 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QPushButton
+import pandas as pd
+import pytest
+from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton
 
 from app.app_controller import AppController
 from app.feature.acquisition.protocol_config import ProtocolConfig
+from app.feature.acquisition.protocol_view import PinStateButton
 from app.feature.filter.filter_config import FilterConfig
 from app.feature.stimulus.pulse import Pulse
 from app.feature.stimulus.stimulus_config import StimulusConfig
@@ -16,6 +19,113 @@ from app.shared.constants import (
     DEFAULT_STIMULUS_CONFIG,
     TITLE_LABEL_POINT_SIZE_INCREASE,
 )
+
+
+@pytest.mark.parametrize("confirm", [False, True])
+def test_new_experiment_requires_confirmation(monkeypatch, confirm):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    model = controller.app_model
+    model.update_stim_config(StimulusConfig(0.1, 1.5, [], n_steps=2))
+    model.update_protocol_config(ProtocolConfig(2, 3, [5], 4))
+    model.update_filter_config(FilterConfig(250.0, False, False))
+    data = pd.DataFrame({"t_(s)": [0.0, 0.001], "pin1": [0.1, 0.2]})
+    model.update_raw_data(data)
+    model.experiment_metadata = {"run": 3}
+    original_state = model.export_state()
+    dialogs = []
+
+    def answer(dialog):
+        dialogs.append(dialog)
+        assert model.export_state() == original_state
+        assert model.raw_data_df is data
+        assert dialog.defaultButton() == dialog.button(
+            QMessageBox.StandardButton.Cancel
+        )
+        return (
+            QMessageBox.StandardButton.Yes
+            if confirm
+            else QMessageBox.StandardButton.Cancel
+        )
+
+    monkeypatch.setattr(QMessageBox, "exec", answer)
+    try:
+        controller.app_view.ui.actionNew.trigger()
+        assert len(dialogs) == 1
+        if confirm:
+            assert model.stim_config == DEFAULT_STIMULUS_CONFIG
+            assert model.protocol_config == DEFAULT_PROTOCOL_CONFIG
+            assert model.filter_config == DEFAULT_FILTER_CONFIG
+            assert model.raw_data_df is None
+            assert model.filtered_data_df is None
+            assert model.experiment_metadata == {}
+        else:
+            assert model.export_state() == original_state
+            assert model.raw_data_df is data
+            assert model.experiment_metadata == {"run": 3}
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+@pytest.mark.parametrize(
+    "action_name", ["actionReset_stimulus", "actionReset_protocol", "actionClear_data"]
+)
+def test_cancel_edit_action_preserves_state(monkeypatch, action_name):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    model = controller.app_model
+    model.update_stim_config(StimulusConfig(0.1, 1.5, [], n_steps=2))
+    model.update_protocol_config(ProtocolConfig(2, 3, [5], 4))
+    model.update_filter_config(FilterConfig(250.0, False, False))
+    data = pd.DataFrame({"t_(s)": [0.0, 0.001], "pin1": [0.1, 0.2]})
+    model.update_raw_data(data)
+    model.experiment_metadata = {"run": 3}
+    original_state = model.export_state()
+    dialogs = []
+
+    def cancel(dialog):
+        dialogs.append(dialog.icon())
+        assert model.export_state() == original_state
+        assert model.raw_data_df is data
+        assert dialog.defaultButton() == dialog.button(
+            QMessageBox.StandardButton.Cancel
+        )
+        return QMessageBox.StandardButton.Cancel
+
+    monkeypatch.setattr(QMessageBox, "exec", cancel)
+    try:
+        getattr(controller.app_view.ui, action_name).trigger()
+        assert dialogs == [QMessageBox.Icon.Question]
+        assert model.export_state() == original_state
+        assert model.raw_data_df is data
+        assert model.filtered_data_df is data
+        assert model.experiment_metadata == {"run": 3}
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+def test_clear_data_preserves_settings(reset_messages):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    model = controller.app_model
+    model.update_raw_data(pd.DataFrame({"t_(s)": [0.0, 0.001], "pin1": [0.1, 0.2]}))
+    model.experiment_metadata = {"run": 3}
+    model.experiment_config = {"name": "recording"}
+    state = model.export_state()
+    try:
+        controller.app_view.ui.actionClear_data.trigger()
+        assert model.raw_data_df is None
+        assert model.filtered_data_df is None
+        assert model.experiment_metadata == {}
+        assert model.experiment_config == {}
+        assert model.export_state() == state
+        assert controller.analyze_io_view.curve.getData() == (None, None)
+        assert reset_messages == [("Clear complete", "Data has been cleared.")]
+    finally:
+        controller.app_view.close()
+        app.processEvents()
 
 
 def test_load_data_action_is_connected(monkeypatch):
@@ -92,7 +202,7 @@ def test_save_stimulus_state_writes_typed_json(monkeypatch):
     app.processEvents()
 
 
-def test_save_protocol_and_filter_actions_are_connected(monkeypatch):
+def test_save_protocol_action_is_connected(monkeypatch):
     app = QApplication.instance() or QApplication([])
     save_requests = []
 
@@ -101,18 +211,12 @@ def test_save_protocol_and_filter_actions_are_connected(monkeypatch):
         "save_protocol_state",
         lambda self: save_requests.append("protocol"),
     )
-    monkeypatch.setattr(
-        AppController,
-        "save_filter_state",
-        lambda self: save_requests.append("filter"),
-    )
 
     controller = AppController()
     controller.app_view.ui.actionSave_protocol.trigger()
-    controller.app_view.ui.actionSave_filter.trigger()
     app.processEvents()
 
-    assert save_requests == ["protocol", "filter"]
+    assert save_requests == ["protocol"]
     controller.app_view.close()
     app.processEvents()
 
@@ -131,15 +235,47 @@ def test_save_protocol_and_filter_state_write_typed_json(monkeypatch):
 
     controller = AppController()
     controller.save_protocol_state()
-    controller.save_filter_state()
 
     assert writes[0][0].endswith("test.protocol.json")
-    assert set(writes[0][1]) == {"protocol_config"}
-    assert writes[1][0].endswith("test.filter.json")
-    assert set(writes[1][1]) == {"filter_config"}
+    assert set(writes[0][1]) == {"protocol_config", "filter_config"}
+    assert len(writes) == 1
 
     controller.app_view.close()
     app.processEvents()
+
+
+@pytest.mark.parametrize("file_kind", ["combined", "legacy", "unwrapped"])
+def test_load_protocol_restores_settings(monkeypatch, file_kind):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    state = controller.app_model.export_state()
+    state["protocol_config"]["sample_rate_divider"] = 8
+    state["filter_config"]["low_pass_cutoff_hz"] = 250.0
+    expected_filter = controller.app_model.filter_config
+    if file_kind == "combined":
+        payload = {key: state[key] for key in ("protocol_config", "filter_config")}
+        expected_filter = FilterConfig(**state["filter_config"])
+    elif file_kind == "legacy":
+        payload = {"protocol_config": state["protocol_config"]}
+    else:
+        payload = state["protocol_config"]
+
+    monkeypatch.setattr(
+        data_dialog, "show_load_json_dialog", lambda: "test.protocol.json"
+    )
+    monkeypatch.setattr(data_io, "read_metadata", lambda filename: payload)
+    try:
+        controller.app_view.ui.actionLoad_protocol.trigger()
+        assert controller.app_model.protocol_config.sample_rate_divider == 8
+        assert controller.protocol_view.ui.sampleRateDividerComboBox.currentData() == 8
+        assert controller.app_model.filter_config == expected_filter
+        assert (
+            controller.protocol_view.ui.lowPassHzDoubleSpinBox.value()
+            == expected_filter.low_pass_cutoff_hz
+        )
+    finally:
+        controller.app_view.close()
+        app.processEvents()
 
 
 def test_reset_config_actions_are_connected(monkeypatch):
@@ -156,24 +292,33 @@ def test_reset_config_actions_are_connected(monkeypatch):
         "reset_protocol_state",
         lambda self: reset_requests.append("protocol"),
     )
-    monkeypatch.setattr(
-        AppController,
-        "reset_filter_state",
-        lambda self: reset_requests.append("filter"),
-    )
 
     controller = AppController()
     controller.app_view.ui.actionReset_stimulus.trigger()
     controller.app_view.ui.actionReset_protocol.trigger()
-    controller.app_view.ui.actionReset_filter.trigger()
     app.processEvents()
 
-    assert reset_requests == ["stimulus", "protocol", "filter"]
+    assert reset_requests == ["stimulus", "protocol"]
     controller.app_view.close()
     app.processEvents()
 
 
-def test_reset_config_actions_restore_default_configs():
+@pytest.fixture
+def reset_messages(monkeypatch):
+    """Capture reset confirmations without blocking tests on a modal dialog."""
+    messages = []
+
+    def record_message(dialog):
+        if dialog.icon() == QMessageBox.Icon.Question:
+            return QMessageBox.StandardButton.Yes
+        messages.append((dialog.windowTitle(), dialog.text()))
+        return QMessageBox.StandardButton.Ok
+
+    monkeypatch.setattr(QMessageBox, "exec", record_message)
+    return messages
+
+
+def test_reset_config_actions_restore_default_configs(reset_messages):
     app = QApplication.instance() or QApplication([])
     controller = AppController()
 
@@ -203,15 +348,21 @@ def test_reset_config_actions_restore_default_configs():
 
     controller.app_view.ui.actionReset_stimulus.trigger()
     controller.app_view.ui.actionReset_protocol.trigger()
-    controller.app_view.ui.actionReset_filter.trigger()
     app.processEvents()
 
+    assert reset_messages == [
+        ("Reset complete", "Stimulus has been reset."),
+        ("Reset complete", "Protocol has been reset."),
+    ]
     assert controller.app_model.stim_config == DEFAULT_STIMULUS_CONFIG
     assert controller.app_model.stim_config is not DEFAULT_STIMULUS_CONFIG
     assert controller.app_model.protocol_config == DEFAULT_PROTOCOL_CONFIG
     assert controller.app_model.protocol_config is not DEFAULT_PROTOCOL_CONFIG
     assert controller.app_model.filter_config == DEFAULT_FILTER_CONFIG
     assert controller.app_model.filter_config is not DEFAULT_FILTER_CONFIG
+    controller.protocol_view.ui.lowPassHzDoubleSpinBox.setValue(123.0)
+    assert controller.app_model.filter_config == DEFAULT_FILTER_CONFIG
+    controller.filter_controller.update_ui_from_model()
     protocol_view_config = controller.protocol_view.to_config()
     assert (
         protocol_view_config.positive_channel
@@ -224,10 +375,10 @@ def test_reset_config_actions_restore_default_configs():
     assert [
         index
         for index, button in enumerate(controller.protocol_view.pinButtons, start=1)
-        if button.isChecked()
+        if button.pin_state == PinStateButton.GREEN_STATE
     ] == DEFAULT_PROTOCOL_CONFIG.selected_pins
     assert (
-        controller.protocol_view.ui.sampleRateDividerSpinBox.value()
+        controller.protocol_view.ui.sampleRateDividerComboBox.currentData()
         == DEFAULT_PROTOCOL_CONFIG.sample_rate_divider
     )
     assert (
@@ -247,20 +398,19 @@ def test_reset_config_actions_restore_default_configs():
     app.processEvents()
 
 
-def test_reset_config_actions_restore_ui_after_ui_edits():
+def test_reset_config_actions_restore_ui_after_ui_edits(reset_messages):
     app = QApplication.instance() or QApplication([])
     controller = AppController()
 
     controller.protocol_view.pinButtons[0].setChecked(True)
     controller.protocol_view.pinButtons[-1].setChecked(False)
-    controller.protocol_view.ui.sampleRateDividerSpinBox.setValue(3)
+    controller.protocol_view.ui.sampleRateDividerComboBox.setCurrentIndex(2)
     controller.protocol_view.ui.lowPassHzDoubleSpinBox.setValue(123.0)
     controller.protocol_view.ui.suppress50HzCheckBox.setChecked(False)
     controller.protocol_view.ui.removeDCOffsetCheckBox.setChecked(False)
     app.processEvents()
 
     controller.app_view.ui.actionReset_protocol.trigger()
-    controller.app_view.ui.actionReset_filter.trigger()
     app.processEvents()
 
     protocol_view_config = controller.protocol_view.to_config()
@@ -275,10 +425,10 @@ def test_reset_config_actions_restore_ui_after_ui_edits():
     assert [
         index
         for index, button in enumerate(controller.protocol_view.pinButtons, start=1)
-        if button.isChecked()
+        if button.pin_state == PinStateButton.GREEN_STATE
     ] == DEFAULT_PROTOCOL_CONFIG.selected_pins
     assert (
-        controller.protocol_view.ui.sampleRateDividerSpinBox.value()
+        controller.protocol_view.ui.sampleRateDividerComboBox.currentData()
         == DEFAULT_PROTOCOL_CONFIG.sample_rate_divider
     )
     assert (
@@ -298,17 +448,17 @@ def test_reset_config_actions_restore_ui_after_ui_edits():
     app.processEvents()
 
 
-def test_reset_protocol_restores_pins_after_bulk_pin_edit():
+def test_reset_protocol_restores_pins_after_bulk_pin_edit(reset_messages):
     app = QApplication.instance() or QApplication([])
     controller = AppController()
-    select_all_button = controller.protocol_view.findChild(
-        QPushButton, "selectAllPinsButton"
+    deselect_all_button = controller.protocol_view.findChild(
+        QPushButton, "deselectAllPinsButton"
     )
 
-    select_all_button.click()
+    deselect_all_button.click()
     app.processEvents()
 
-    assert controller.app_model.protocol_config.selected_pins == list(range(1, 17))
+    assert controller.app_model.protocol_config.selected_pins == []
 
     controller.app_view.ui.actionReset_protocol.trigger()
     app.processEvents()
@@ -316,7 +466,7 @@ def test_reset_protocol_restores_pins_after_bulk_pin_edit():
     assert [
         index
         for index, button in enumerate(controller.protocol_view.pinButtons, start=1)
-        if button.isChecked()
+        if button.pin_state == PinStateButton.GREEN_STATE
     ] == DEFAULT_PROTOCOL_CONFIG.selected_pins
 
     controller.app_view.close()

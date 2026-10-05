@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+SAMPLE_RATE_DIVIDERS = tuple(2**power for power in range(11))
+
 
 @dataclass
 class ProtocolConfig:
@@ -20,4 +22,12 @@ class ProtocolConfig:
         self.positive_channel = positive_channel
         self.negative_channel = negative_channel
         self.selected_pins = selected_pins
-        self.sample_rate_divider = sample_rate_divider
+        # Keep older saved dividers within the supported powers of two.
+        self.sample_rate_divider = next(
+            (
+                divider
+                for divider in SAMPLE_RATE_DIVIDERS
+                if divider >= sample_rate_divider
+            ),
+            SAMPLE_RATE_DIVIDERS[-1],
+        )
