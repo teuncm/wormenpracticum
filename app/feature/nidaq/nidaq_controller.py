@@ -1,12 +1,18 @@
+from dataclasses import asdict
+
 import numpy as np
 import pandas as pd
 from nidaqmx.constants import AcquisitionType, TerminalConfiguration
+from nidaqmx.errors import Error as NidaqError
 from nidaqmx.stream_readers import AnalogMultiChannelReader
 from nidaqmx.stream_writers import AnalogMultiChannelWriter
 from nidaqmx.system import System
 from nidaqmx.task import Task
 
-from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
+from app.feature.nidaq.nidaq_constants import (
+    NI_DAQ_BASE_SAMPLE_RATE_HZ,
+    NI_DAQ_UNAVAILABLE_STATUS,
+)
 
 
 class NidaqController:
@@ -18,7 +24,7 @@ class NidaqController:
         """Discover NI-DAQ devices and update model state accordingly."""
         try:
             system = System.local()
-        except Exception as exc:
+        except (NidaqError, OSError) as exc:
             self.nidaq_model.set_discovery_state(None, str(exc))
             return False
 
@@ -33,7 +39,12 @@ class NidaqController:
         return False
 
     def execute(self):
-        sr = 15600
+        """Send all stimulus steps in one buffer and record on the shared clock."""
+        if self.nidaq_model.device_name is None:
+            raise RuntimeError(NI_DAQ_UNAVAILABLE_STATUS)
+
+        protocol = self.app_model.protocol_config
+        sr = NI_DAQ_BASE_SAMPLE_RATE_HZ / protocol.sample_rate_divider
         waveform, ts = self.app_model.stim_generator.sample_all(sr_hz=sr)
 
         waveform = np.ascontiguousarray(np.ravel(waveform), dtype=np.float64)
@@ -41,8 +52,21 @@ class NidaqController:
         if n_samples == 0:
             raise ValueError("The stimulus buffer must contain samples.")
         timeout = n_samples / sr + 2.0
+        generator = self.app_model.stim_generator
+        recording_config = {
+            "stim_config": generator.config.to_dict(),
+            "protocol_config": asdict(protocol),
+        }
+        recording_metadata = {
+            "device_name": self.nidaq_model.device_name,
+            "sample_rate_hz": sr,
+            "stimulus_size_samples": generator.config.stim.n_samples(sr),
+            "stimulus_count": len(generator.stims),
+            "sample_count": n_samples,
+            # Keep the existing CSV names; physical pin numbers are one-based.
+            "pin_channels": {f"ai{i}_(V)": i + 1 for i in range(16)},
+        }
 
-        protocol = self.app_model.protocol_config
         routing_word, routing_flags = self.generate_routing_mask(
             positive_channel=protocol.positive_channel + 1,
             negative_channel=protocol.negative_channel + 1,
@@ -96,10 +120,10 @@ class NidaqController:
             )
 
             # preload AO data
-            writer = AnalogMultiChannelWriter(ao_task.out_stream)
+            writer = AnalogMultiChannelWriter(ao_task.out_stream, auto_start=False)
             reader = AnalogMultiChannelReader(ai_task.in_stream)
 
-            writer.write_many_sample(ao_data)
+            writer.write_many_sample(ao_data, timeout=timeout)
 
             ai_task.start()
             ao_task.start()
@@ -112,21 +136,16 @@ class NidaqController:
 
             ao_task.wait_until_done(timeout=timeout)
 
-            # Update app model with new data
-            t = pd.Series(ts, name="t_(s)")
+        # Rows follow the entire sequence in time; columns separate pins only.
+        df = pd.DataFrame(ai_data.T, columns=list(recording_metadata["pin_channels"]))
+        df.insert(0, "t_(s)", ts)
+        self.app_model.update_recording(df, recording_metadata, recording_config)
 
-            channels = [
-                pd.Series(ai_data[i, :], name=f"ai{i}_(V)")
-                for i in range(ai_data.shape[0])
-            ]
-
-            df = pd.concat([t, *channels], axis=1)
-
-            self.app_model.update_raw_data(df)
-
-    def magic(self):
-        if self.discover():
-            self.execute()
+    def run(self):
+        """Discover a device, then send and record the complete stimulus sequence."""
+        if not self.discover():
+            raise RuntimeError(self.nidaq_model.device_status)
+        self.execute()
 
     def generate_routing_mask(
         self, positive_channel: int, negative_channel: int

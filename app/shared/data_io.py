@@ -58,3 +58,23 @@ def read_metadata(file_path) -> dict | str:
             return json.load(f)
     except Exception as e:
         return str(e)
+
+
+def read_recording_metadata(file_path) -> tuple[dict, dict] | str:
+    """Read the existing recording JSON wrapper into metadata and saved settings."""
+    state = read_metadata(file_path)
+    if isinstance(state, str):
+        return state
+    if (
+        not isinstance(state, dict)
+        or "metadata" not in state
+        or any(
+            not isinstance(state.get(key, {}), dict)
+            for key in ("metadata", "experiment_config", "stim_config")
+        )
+    ):
+        return "Invalid recording format."
+    config = dict(state.get("experiment_config", {}))
+    if "stim_config" in state:
+        config["stim_config"] = state["stim_config"]
+    return state["metadata"], config

@@ -15,8 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QSizePolicy,
-    QSlider, QSpacerItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QHBoxLayout, QLabel,
+    QSizePolicy, QSlider, QSpacerItem, QVBoxLayout,
+    QWidget)
 
 class Ui_AnalyzeIOWindow(object):
     def setupUi(self, AnalyzeIOWindow):
@@ -45,6 +46,23 @@ class Ui_AnalyzeIOWindow(object):
         self.channelSlider.setOrientation(Qt.Orientation.Horizontal)
 
         self.leftLayout.addWidget(self.channelSlider)
+
+        self.extremaLayout = QHBoxLayout()
+        self.extremaLayout.setObjectName(u"extremaLayout")
+        self.minCheckBox = QCheckBox(AnalyzeIOWindow)
+        self.minCheckBox.setObjectName(u"minCheckBox")
+        self.minCheckBox.setChecked(True)
+
+        self.extremaLayout.addWidget(self.minCheckBox)
+
+        self.maxCheckBox = QCheckBox(AnalyzeIOWindow)
+        self.maxCheckBox.setObjectName(u"maxCheckBox")
+        self.maxCheckBox.setChecked(True)
+
+        self.extremaLayout.addWidget(self.maxCheckBox)
+
+
+        self.leftLayout.addLayout(self.extremaLayout)
 
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -78,6 +96,14 @@ class Ui_AnalyzeIOWindow(object):
 #if QT_CONFIG(accessibility)
         self.channelSlider.setAccessibleName(QCoreApplication.translate("AnalyzeIOWindow", u"Measurement channel", None))
 #endif // QT_CONFIG(accessibility)
+        self.minCheckBox.setText(QCoreApplication.translate("AnalyzeIOWindow", u"Min", None))
+#if QT_CONFIG(tooltip)
+        self.minCheckBox.setToolTip(QCoreApplication.translate("AnalyzeIOWindow", u"Mark the first occurrence of the minimum voltage in each stimulus.", None))
+#endif // QT_CONFIG(tooltip)
+        self.maxCheckBox.setText(QCoreApplication.translate("AnalyzeIOWindow", u"Max", None))
+#if QT_CONFIG(tooltip)
+        self.maxCheckBox.setToolTip(QCoreApplication.translate("AnalyzeIOWindow", u"Mark the first occurrence of the maximum voltage in each stimulus.", None))
+#endif // QT_CONFIG(tooltip)
         self.title_overview.setText(QCoreApplication.translate("AnalyzeIOWindow", u"Recorded stimuli", None))
     # retranslateUi
 

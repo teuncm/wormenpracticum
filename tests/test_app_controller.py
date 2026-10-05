@@ -1,4 +1,5 @@
 import os
+from unittest.mock import MagicMock
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -19,6 +20,188 @@ from app.shared.constants import (
     DEFAULT_STIMULUS_CONFIG,
     TITLE_LABEL_POINT_SIZE_INCREASE,
 )
+from tools.worm_recording_gen import gen_dummy_recording
+
+
+def test_metadata_menu_save_load_preserves_samples_and_refreshes_analysis(
+    monkeypatch, tmp_path
+):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    filename = tmp_path / "standalone.json"
+    monkeypatch.setattr(data_dialog, "show_save_json_dialog", lambda: str(filename))
+    monkeypatch.setattr(data_dialog, "show_load_json_dialog", lambda: str(filename))
+    data, payload = gen_dummy_recording(0.01, 3, 4)
+    model = controller.app_model
+    model.update_recording(data, payload["metadata"], payload["experiment_config"])
+    filtered = data.copy()
+    filtered["ai0_(V)"] *= 2
+    model.update_filtered_data(filtered)
+    settings = model.export_state()
+    try:
+        controller.app_view.ui.actionSave_metadata.trigger()
+        saved = data_io.read_metadata(filename)
+        assert set(saved) == {"metadata", "experiment_config", "stim_config"}
+        assert saved["stim_config"] == payload["stim_config"]
+        assert saved["experiment_config"] == payload["experiment_config"]
+        for key, value in payload["metadata"].items():
+            assert saved["metadata"][key] == value
+        model.update_recording_metadata({}, {})
+        assert controller.analyze_speed_view.ui.stimulusComboBox.count() == 0
+        controller.app_view.ui.actionLoad_metadata.trigger()
+        assert model.experiment_metadata == saved["metadata"]
+        assert model.experiment_config == saved["experiment_config"]
+        assert model.raw_data_df is data
+        assert model.filtered_data_df is filtered
+        assert model.export_state() == settings
+        assert len(controller.analyze_io_view.responses) == 3
+        assert controller.analyze_speed_view.ui.stimulusComboBox.count() == 3
+        assert len(controller.analyze_tetanus_view.peak_markers.points()) == 96
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+@pytest.mark.parametrize(
+    "case", ["cancel", "invalid_json", "wrong_format", "wrong_count", "no_data"]
+)
+def test_load_metadata_failure_preserves_recording(monkeypatch, tmp_path, case):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    model = controller.app_model
+    data, payload = gen_dummy_recording(0.01, 3, 4)
+    if case != "no_data":
+        model.update_recording(data, payload["metadata"], payload["experiment_config"])
+    filename = tmp_path / "metadata.json"
+    if case == "invalid_json":
+        filename.write_text("invalid json")
+    elif case == "wrong_format":
+        data_io.write_metadata(filename, {"stim_config": {}})
+    else:
+        data_io.write_metadata(filename, {"metadata": {"sample_count": 999}})
+    monkeypatch.setattr(
+        data_dialog,
+        "show_load_json_dialog",
+        lambda: None if case == "cancel" else str(filename),
+    )
+    messages = []
+    monkeypatch.setattr(
+        QMessageBox, "exec", lambda dialog: messages.append(dialog.text())
+    )
+    previous_metadata = model.experiment_metadata
+    previous_config = model.experiment_config
+    previous_data = model.raw_data_df
+    try:
+        controller.app_view.ui.actionLoad_metadata.trigger()
+        assert model.experiment_metadata is previous_metadata
+        assert model.experiment_config is previous_config
+        assert model.raw_data_df is previous_data
+        assert bool(messages) == (case != "cancel")
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+@pytest.mark.parametrize("error", [None, RuntimeError("Device disconnected")])
+def test_record_button_runs_protocol_and_reports_errors(monkeypatch, error):
+    app = QApplication.instance() or QApplication([])
+    messages = []
+    monkeypatch.setattr(
+        QMessageBox, "exec", lambda dialog: messages.append(dialog.text())
+    )
+    controller = AppController()
+    controller.nidaq_controller.run = MagicMock(side_effect=error)
+    try:
+        controller.protocol_view.ui.pushButton.click()
+        controller.nidaq_controller.run.assert_called_once_with()
+        assert messages == ([] if error is None else [f"Recording failed: {error}"])
+        assert controller.protocol_view.ui.actualSampleRateLabel.text() == "15600 Hz"
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+def test_recording_csv_json_round_trip_preserves_recorded_settings(
+    monkeypatch, tmp_path
+):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    filename = str(tmp_path / "recording.csv")
+    monkeypatch.setattr(data_dialog, "show_save_dialog", lambda: filename)
+    monkeypatch.setattr(data_dialog, "show_load_dialog", lambda: filename)
+    monkeypatch.setattr(
+        QMessageBox, "exec", lambda dialog: QMessageBox.StandardButton.Ok
+    )
+    data = pd.DataFrame(
+        {
+            "t_(s)": [0.0, 0.001, 0.002, 0.003],
+            "ai0_(V)": [0.1, 0.2, 0.3, 0.4],
+            "ai1_(V)": [-0.1, -0.2, -0.3, -0.4],
+        }
+    )
+    metadata = {
+        "sample_rate_hz": 1000.0,
+        "stimulus_size_samples": 2,
+        "stimulus_count": 2,
+        "sample_count": 4,
+        "pin_channels": {"ai0_(V)": 1, "ai1_(V)": 2},
+    }
+    config = {
+        "stim_config": StimulusConfig(0.002, 3.0, [], n_steps=2).to_dict(),
+        "protocol_config": {
+            "positive_channel": 0,
+            "negative_channel": 1,
+            "selected_pins": [3],
+            "sample_rate_divider": 1,
+        },
+    }
+    observed_metadata = []
+    controller.app_model.experiment_data_changed.connect(
+        lambda: observed_metadata.append(dict(controller.app_model.experiment_metadata))
+    )
+    try:
+        controller.app_model.update_recording(data, metadata, config)
+        assert observed_metadata == [metadata]
+        # Changing controls must not change the settings saved with the recording.
+        controller.app_model.update_stim_config(StimulusConfig(0.1, 3.0, [], n_steps=5))
+        controller.save_experiment_data()
+        saved = data_io.read_metadata(tmp_path / "recording.json")
+        assert set(saved) == {"metadata", "experiment_config", "stim_config"}
+        assert saved["stim_config"] == config["stim_config"]
+        assert saved["experiment_config"] == config
+        for key, value in metadata.items():
+            assert saved["metadata"][key] == value
+        assert saved["metadata"]["file"] == "recording"
+        controller.app_model.clear_experiment_data()
+        controller.load_experiment_data()
+        pd.testing.assert_frame_equal(controller.app_model.raw_data_df, data)
+        assert controller.app_model.experiment_metadata == saved["metadata"]
+        assert controller.app_model.experiment_config == config
+        assert controller.app_model.stim_config.n_steps == 5
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+def test_load_csv_without_json_clears_previous_recording_metadata(
+    monkeypatch, tmp_path
+):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    filename = tmp_path / "legacy.csv"
+    data = pd.DataFrame({"t_(s)": [0.0, 0.001], "ai0_(V)": [0.1, 0.2]})
+    data_io.write_data(filename, data)
+    monkeypatch.setattr(data_dialog, "show_load_dialog", lambda: str(filename))
+    controller.app_model.experiment_metadata = {"stimulus_count": 10}
+    controller.app_model.experiment_config = {"stim_config": {"n_steps": 10}}
+    try:
+        controller.load_experiment_data()
+        pd.testing.assert_frame_equal(controller.app_model.raw_data_df, data)
+        assert controller.app_model.experiment_metadata == {}
+        assert controller.app_model.experiment_config == {}
+    finally:
+        controller.app_view.close()
+        app.processEvents()
 
 
 @pytest.mark.parametrize("confirm", [False, True])

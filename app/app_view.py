@@ -150,6 +150,8 @@ class AppView(QMainWindow):
     new_experiment_requested = Signal()
     data_clear_requested = Signal()
     data_load_requested = Signal()
+    metadata_load_requested = Signal()
+    metadata_save_requested = Signal()
     data_save_requested = Signal()
     stimulus_load_requested = Signal()
     stimulus_save_requested = Signal()
@@ -179,6 +181,8 @@ class AppView(QMainWindow):
         self.ui.menuFile.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         self.ui.actionLoad_data.triggered.connect(self.on_load_triggered)
+        self.ui.actionLoad_metadata.triggered.connect(self.metadata_load_requested.emit)
+        self.ui.actionSave_metadata.triggered.connect(self.metadata_save_requested.emit)
         self.ui.actionNew.triggered.connect(self.new_experiment_requested.emit)
         self.ui.actionClear_data.triggered.connect(self.data_clear_requested.emit)
         self.ui.actionSave_data.triggered.connect(self.on_save_triggered)

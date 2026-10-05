@@ -5,6 +5,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import cast
 
+from nidaqmx.errors import Error as NidaqError
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -14,12 +15,17 @@ from app.feature.about.about_view import AboutView
 from app.feature.acquisition.protocol_controller import ProtocolController
 from app.feature.acquisition.protocol_view import ProtocolView
 from app.feature.analysis.analyze_io_controller import AnalyzeIOController
+from app.feature.analysis.analyze_speed_controller import AnalyzeSpeedController
+from app.feature.analysis.analyze_tetanus_controller import AnalyzeTetanusController
 from app.feature.analysis.analyze_view_io import AnalyzeIOView
 from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
 from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
 from app.feature.debug.debug_view import DebugView
 from app.feature.filter.filter_controller import FilterController
-from app.feature.nidaq.nidaq_constants import NI_DAQ_DISCOVERY_POLL_INTERVAL_MS
+from app.feature.nidaq.nidaq_constants import (
+    NI_DAQ_BASE_SAMPLE_RATE_HZ,
+    NI_DAQ_DISCOVERY_POLL_INTERVAL_MS,
+)
 from app.feature.nidaq.nidaq_controller import NidaqController
 from app.feature.nidaq.nidaq_model import NidaqModel
 from app.feature.preferences.preferences_view import PreferencesView
@@ -64,6 +70,7 @@ class AppController:
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
+        self.protocol_view.set_max_sample_rate(NI_DAQ_BASE_SAMPLE_RATE_HZ)
         self.about_view = AboutView()
         self.analyze_io_view = AnalyzeIOView()
         self.analyze_speed_view = AnalyzeSpeedView()
@@ -89,6 +96,12 @@ class AppController:
         self.analyze_io_controller = AnalyzeIOController(
             self.app_model, self.analyze_io_view
         )
+        self.analyze_speed_controller = AnalyzeSpeedController(
+            self.app_model, self.analyze_speed_view
+        )
+        self.analyze_tetanus_controller = AnalyzeTetanusController(
+            self.app_model, self.analyze_tetanus_view
+        )
 
     def restore_preferences(self):
         point_size = cast(int, self.settings.value("ui/font_size", 10, int))
@@ -102,6 +115,8 @@ class AppController:
     def connect_data_signals(self):
         """Connect signals for loading and saving data."""
         self.app_view.data_load_requested.connect(self.load_experiment_data)
+        self.app_view.metadata_load_requested.connect(self.load_experiment_metadata)
+        self.app_view.metadata_save_requested.connect(self.save_recording_metadata)
         self.app_view.new_experiment_requested.connect(self.new_experiment)
         self.app_view.data_clear_requested.connect(self.clear_experiment_data)
         self.app_view.data_save_requested.connect(self.save_experiment_data)
@@ -117,12 +132,17 @@ class AppController:
         self.preferences_view.font_size_changed.connect(
             self.update_font_size_preference
         )
-        self.protocol_view.run_requested.connect(self.run_magic)
+        self.protocol_view.run_requested.connect(self.run_protocol)
         self.nidaq_model.discovery_state_changed.connect(self.update_nidaq_label)
 
-    def run_magic(self):
-        """In the magic function we will connect to a DAQ and send a hello world signal."""
-        self.nidaq_controller.magic()
+    def run_protocol(self):
+        """Send the configured sequence and report recording errors to the student."""
+        try:
+            self.nidaq_controller.run()
+        except (NidaqError, RuntimeError, ValueError, OSError) as exc:
+            info_box(
+                message=f"Recording failed: {exc}", title="Recording failed"
+            ).exec()
 
     def init_nidaq(self):
         """Initialize nidaq connection polling."""
@@ -183,10 +203,11 @@ class AppController:
             return
 
         msg = data_io.write_data(filename, self.app_model.raw_data_df)
-        self.save_experiment_metadata(filename)
         if msg:
             info_box(message=f"Error saving data: {msg}").exec()
         else:
+            if self.save_experiment_metadata(filename):
+                return
             success_box = info_box(
                 message="Data saved successfully. File location has been copied to the clipboard.",
             )
@@ -195,8 +216,10 @@ class AppController:
 
             QApplication.clipboard().setText(filename)
 
-    def load_experiment_data(self):
-        filename = data_dialog.show_load_dialog()
+    def load_experiment_data(self, filename: str | None = None):
+        """Load a supplied recording or choose one, including its JSON sidecar."""
+        if filename is None:
+            filename = data_dialog.show_load_dialog()
         if filename is None:
             info_box(message="No file was selected.").exec()
             return
@@ -206,7 +229,46 @@ class AppController:
             info_box(message=f"Error loading data: {df}").exec()
             return
 
-        self.app_model.update_raw_data(df)
+        metadata = {}
+        config = {}
+        metadata_path = Path(filename).with_suffix(".json")
+        if metadata_path.exists():
+            state = data_io.read_recording_metadata(metadata_path)
+            if isinstance(state, str):
+                info_box(message=f"Error loading metadata: {state}").exec()
+                return
+            metadata, config = state
+        self.app_model.update_recording(df, metadata, config)
+
+    def load_experiment_metadata(self):
+        """Attach selected recording JSON to the current data and refresh analysis."""
+        data = self.app_model.raw_data_df
+        if data is None:
+            info_box(message="Load recording data before loading its metadata.").exec()
+            return
+        filename = data_dialog.show_load_json_dialog()
+        if filename is None:
+            return
+        state = data_io.read_recording_metadata(filename)
+        if isinstance(state, str):
+            info_box(message=f"Error loading metadata: {state}").exec()
+            return
+        metadata, config = state
+        if "sample_count" in metadata and metadata["sample_count"] != len(data):
+            info_box(
+                message="Error loading metadata: sample count does not match the loaded recording."
+            ).exec()
+            return
+        self.app_model.update_recording_metadata(metadata, config)
+
+    def save_recording_metadata(self):
+        """Save metadata separately using the same JSON structure as CSV sidecars."""
+        if self.app_model.raw_data_df is None:
+            info_box(message="There is no recording metadata to save.").exec()
+            return
+        filename = data_dialog.show_save_json_dialog()
+        if filename is not None:
+            self.save_experiment_metadata(filename)
 
     def save_state(self, filename):
         """Save the entire state of the application to a file."""
@@ -360,10 +422,13 @@ class AppController:
         }
         experiment_metadata = self.app_model.experiment_metadata or {}
         metadata_aggregate = {
-            "metadata": save_metadata | experiment_metadata,
+            "metadata": experiment_metadata | save_metadata,
             "experiment_config": self.app_model.experiment_config,
-            "stim_config": self.app_model.stim_config.to_dict(),
+            "stim_config": self.app_model.experiment_config.get(
+                "stim_config", self.app_model.stim_config.to_dict()
+            ),
         }
         msg = data_io.write_metadata(metadata_filename, metadata_aggregate)
         if msg:
             info_box(message=f"Error saving metadata: {msg}").exec()
+        return msg

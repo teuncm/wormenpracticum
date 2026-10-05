@@ -14,4 +14,8 @@ class AnalyzeIOController:
 
     def update_ui_from_model(self) -> None:
         """Refresh the IO plot from the model's filtered data."""
-        self.view.set_data(self.app_model.filtered_data_df)
+        self.view.set_data(
+            self.app_model.filtered_data_df,
+            self.app_model.experiment_metadata,
+            self.app_model.experiment_config,
+        )

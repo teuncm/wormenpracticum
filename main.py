@@ -1,4 +1,6 @@
+import argparse
 import sys
+from pathlib import Path
 
 from PySide6.QtGui import QGuiApplication, QIcon, Qt
 from PySide6.QtWidgets import QApplication
@@ -13,6 +15,11 @@ from app.shared.view_helpers import set_font_size
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Wormenpracticum lab application")
+    parser.add_argument(
+        "--recording", type=Path, help="Open a CSV recording in Analyze IO"
+    )
+    args, qt_args = parser.parse_known_args()
     # Avoid scaling issues on high DPI displays.
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -20,7 +27,7 @@ def main():
     configure_windows_app_user_model_id()
     configure_app_identity()
 
-    app = QApplication(sys.argv)
+    app = QApplication([sys.argv[0], *qt_args])
 
     # Global window icon
     app_icon = QIcon(resource_path("app/ui/icon.ico"))
@@ -31,6 +38,9 @@ def main():
 
     controller = AppController()
     controller.app_view.setWindowIcon(app_icon)
+    if args.recording is not None:
+        controller.load_experiment_data(str(args.recording))
+        controller.app_view.set_current_tab_index(2)
     controller.start()
 
     sys.exit(app.exec())

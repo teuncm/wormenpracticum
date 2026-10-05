@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 
 import pandas as pd
@@ -115,12 +116,26 @@ class AppModel(QObject):
         self.filtered_data_df = df
         self.experiment_data_changed.emit()
 
+    def update_recording(self, df: pd.DataFrame, metadata: dict, config: dict):
+        """Replace a recording and its settings together before notifying views."""
+        self.experiment_metadata = copy.deepcopy(metadata)
+        self.experiment_config = copy.deepcopy(config)
+        self.raw_data_df = df
+        self.filtered_data_df = df
+        self.experiment_data_changed.emit()
+
     def update_filtered_data(self, df: pd.DataFrame):
         """Update filtered data with a new dataframe."""
         if self.filtered_data_df is not None and self.filtered_data_df.equals(df):
             return
 
         self.filtered_data_df = df
+        self.experiment_data_changed.emit()
+
+    def update_recording_metadata(self, metadata: dict, config: dict):
+        """Refresh recorded settings and analysis without replacing any samples."""
+        self.experiment_metadata = copy.deepcopy(metadata)
+        self.experiment_config = copy.deepcopy(config)
         self.experiment_data_changed.emit()
 
     def update_stim_config(self, stim_config: StimulusConfig):

@@ -70,6 +70,8 @@
     <addaction name="separator"/>
     <addaction name="actionLoad_data"/>
     <addaction name="actionSave_data"/>
+    <addaction name="actionLoad_metadata"/>
+    <addaction name="actionSave_metadata"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -113,6 +115,16 @@
   <action name="actionSave_data">
    <property name="text">
     <string>Save data...</string>
+   </property>
+  </action>
+  <action name="actionLoad_metadata">
+   <property name="text">
+    <string>Load metadata...</string>
+   </property>
+  </action>
+  <action name="actionSave_metadata">
+   <property name="text">
+    <string>Save metadata...</string>
    </property>
   </action>
   <action name="actionAbout">

@@ -13,13 +13,8 @@ class ProtocolController:
 
 	def connect_data_signals(self):
 		"""Data signals are owned by feature controllers."""
-		self.protocol_view.run_requested.connect(self._on_run_requested)
 		self.protocol_view.protocolChanged.connect(self._on_view_protocol_changed)
 		self.app_model.protocol_config_changed.connect(self.update_ui_from_model)
-
-	def _on_run_requested(self):
-		"""Run-request handler placeholder for future NI-DAQ integration."""
-		return
 
 	def _on_view_protocol_changed(self):
 		self._updating_model_from_view = True
