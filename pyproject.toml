@@ -3,7 +3,7 @@ name = "wormenpracticum"
 version = "0.0.1"
 description = "Python rewrite of the UvA Psychobiologie wormenpracticum."
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "nidaqmx>=1.4.1",
     "numpy>=2.4.2",
