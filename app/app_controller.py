@@ -20,6 +20,8 @@ from app.feature.analysis.analyze_tetanus_controller import AnalyzeTetanusContro
 from app.feature.analysis.analyze_view_io import AnalyzeIOView
 from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
 from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
+from app.feature.analysis.analyze_view_yolo import AnalyzeYoloView
+from app.feature.analysis.analyze_yolo_controller import AnalyzeYoloController
 from app.feature.debug.debug_view import DebugView
 from app.feature.filter.filter_controller import FilterController
 from app.feature.nidaq.nidaq_constants import (
@@ -75,6 +77,7 @@ class AppController:
         self.analyze_io_view = AnalyzeIOView()
         self.analyze_speed_view = AnalyzeSpeedView()
         self.analyze_tetanus_view = AnalyzeTetanusView()
+        self.analyze_yolo_view = AnalyzeYoloView()
         self.debug_view = DebugView(self.app_model)
         self.preferences_view = PreferencesView()
 
@@ -84,6 +87,7 @@ class AppController:
         self.app_view.add_tab(self.analyze_io_view, "Analyze\nIO")
         self.app_view.add_tab(self.analyze_speed_view, "Analyze\nspeed")
         self.app_view.add_tab(self.analyze_tetanus_view, "Analyze\ntetanus")
+        self.app_view.add_tab(self.analyze_yolo_view, "Analyze\nYolo")
         self.app_view.set_current_tab_index(1)
 
         self.stimulus_controller = StimulusController(
@@ -101,6 +105,9 @@ class AppController:
         )
         self.analyze_tetanus_controller = AnalyzeTetanusController(
             self.app_model, self.analyze_tetanus_view
+        )
+        self.analyze_yolo_controller = AnalyzeYoloController(
+            self.app_model, self.analyze_yolo_view
         )
 
     def restore_preferences(self):
