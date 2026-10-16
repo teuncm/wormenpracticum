@@ -24,7 +24,7 @@ def speed_analysis():
     app.processEvents()
 
 
-def test_speed_shows_one_stimulus_across_all_pins_with_offsets(speed_analysis):
+def test_speed_shows_one_stimulus_across_all_pins_with_total_amplitude(speed_analysis):
     model, view, _ = speed_analysis
     data, payload = gen_dummy_recording(0.02, 3, 4)
     original = data.copy()
@@ -33,7 +33,8 @@ def test_speed_shows_one_stimulus_across_all_pins_with_offsets(speed_analysis):
     assert view.ui.stimulusComboBox.count() == 3
     assert len(view.curves) == len(view.pin_labels) == 16
     view.ui.stimulusComboBox.setCurrentIndex(1)
-    view.ui.offsetSpinBox.setValue(0.2)
+    view.ui.amplitudeSpinBox.setValue(3.2)
+    assert view.plot_widget.viewRange()[1] == pytest.approx((-0.1, 3.1))
     for pin, curve in enumerate(view.curves):
         x, y = curve.getOriginalDataset()
         segment = data.iloc[size : 2 * size]
@@ -47,7 +48,7 @@ def test_speed_shows_one_stimulus_across_all_pins_with_offsets(speed_analysis):
     filtered["ai3_(V)"] *= 2
     model.update_filtered_data(filtered)
     assert view.ui.stimulusComboBox.currentIndex() == 1
-    assert view.ui.offsetSpinBox.value() == 0.2
+    assert view.ui.amplitudeSpinBox.value() == 3.2
     np.testing.assert_allclose(
         view.curves[3].getOriginalDataset()[1],
         filtered["ai3_(V)"].iloc[size : 2 * size] + 0.6,
@@ -121,7 +122,7 @@ def test_speed_extrema_checkboxes_keep_offsets_and_report_raw_voltage(
             ]
         ) * (pin + 1)
     model.update_recording(data, payload["metadata"], payload["experiment_config"])
-    view.ui.offsetSpinBox.setValue(2.0)
+    view.ui.amplitudeSpinBox.setValue(32.0)
     assert view.ui.minCheckBox.isChecked() and view.ui.maxCheckBox.isChecked()
     curves = list(view.curves)
     view.plot_widget.setRange(xRange=(0.001, 0.005), yRange=(-1, 1), padding=0)
@@ -168,3 +169,19 @@ def test_speed_extrema_skip_nonfinite_pins_and_clear_with_recording(speed_analys
     assert len(view.peak_markers.points()) == 0
     assert not view.ui.minCheckBox.isEnabled()
     assert not view.ui.maxCheckBox.isEnabled()
+
+
+def test_speed_amplitude_uses_total_span_and_preserves_time_zoom(speed_analysis):
+    model, view, _ = speed_analysis
+    data, payload = gen_dummy_recording(0.02, 2, 4)
+    model.update_recording(data, payload["metadata"], payload["experiment_config"])
+    view.plot_widget.setXRange(0.001, 0.005, padding=0)
+    previous_x_range = view.plot_widget.viewRange()[0]
+
+    view.ui.amplitudeSpinBox.setValue(16.0)
+
+    assert view.plot_widget.viewRange()[0] == pytest.approx(previous_x_range)
+    assert view.plot_widget.viewRange()[1] == pytest.approx((-0.5, 15.5))
+    for rank in range(16):
+        _, samples = view.curves[rank].getOriginalDataset()
+        assert samples[0] - data[f"ai{rank}_(V)"].iloc[0] == pytest.approx(rank)

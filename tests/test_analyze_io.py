@@ -90,6 +90,28 @@ def test_io_handles_missing_data_and_replacement_channels(io_analysis):
         assert view.ui.channelLabel.text() == "Channel: no data"
 
 
+def test_io_amplitude_centers_raw_selected_trace_and_preserves_time_zoom(io_analysis):
+    model, view, _ = io_analysis
+    data, payload = gen_dummy_recording(0.01, 2, 4)
+    model.update_recording(data, payload["metadata"], payload["experiment_config"])
+    view.ui.amplitudeSpinBox.setValue(4.0)
+    view.plot_widget.setXRange(0.001, 0.005, padding=0)
+    previous_x_range = view.plot_widget.viewRange()[0]
+
+    view.ui.amplitudeSpinBox.setValue(10.0)
+
+    assert view.plot_widget.viewRange()[0] == pytest.approx(previous_x_range)
+    assert view.plot_widget.viewRange()[1] == pytest.approx((-5.0, 5.0))
+    np.testing.assert_array_equal(view.curve.getOriginalDataset()[1], data["ai0_(V)"])
+    point = view.peak_markers.points()[0]
+    assert (
+        point.pos().y() == data.loc[data["t_(s)"] == point.pos().x(), "ai0_(V)"].item()
+    )
+    assert "Recorded minimum:" in view._peak_tooltip(
+        point.pos().x(), point.pos().y(), point.data()
+    )
+
+
 def test_io_plots_one_concatenated_trace_and_marks_peaks_for_selected_pin(io_analysis):
     model, view, _ = io_analysis
     data, payload = gen_dummy_recording(0.01, 3, 4)

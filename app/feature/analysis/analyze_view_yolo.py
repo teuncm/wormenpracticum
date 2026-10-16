@@ -8,6 +8,19 @@ from PySide6.QtWidgets import QWidget
 
 from app.feature.analysis.display_selection import parse_display_selection
 from app.feature.analysis.io_recording import StimulusResponse, split_stimulus_responses
+from app.feature.analysis.region_selection import (
+    DetectionRegionEditor,
+    bounded_extrema,
+    clear_region_guides,
+    draw_region_guides,
+    parse_region_bound,
+)
+from app.feature.analysis.vertical_scale import (
+    add_vertical_zoom,
+    apply_vertical_range,
+    default_total_amplitude,
+    vertical_pin_layout,
+)
 from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.analyze_yolo_window import Ui_AnalyzeYoloWindow
 
@@ -20,16 +33,22 @@ class AnalyzeYoloView(QWidget):
 
         self.ui = Ui_AnalyzeYoloWindow()
         self.ui.setupUi(self)
+        self._region_editor = DetectionRegionEditor(
+            self.ui.detectionStartLineEdit,
+            self.ui.detectionEndLineEdit,
+            self.ui.regionErrorLabel,
+        )
 
         setup_ui_custom(self)
         frame, self.plot_widget = create_plot_widget(
             x_label="Time", x_units="s", y_label="Voltage", y_units="V"
         )
-        self.ui.rightLayout.addWidget(frame)
+        self.vertical_zoom = add_vertical_zoom(self.ui.rightLayout, frame)
         # Keep the helper's disabled mouse navigation; clicks still set region bounds.
         self.plot_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.plot_widget.installEventFilter(self)
-        self.plot_widget.scene().installEventFilter(self)
+        self._plot_scene = self.plot_widget.scene()
+        self._plot_scene.installEventFilter(self)
         self.plot_widget.getAxis("left").enableAutoSIPrefix(False)
         self.peak_markers = pg.ScatterPlotItem(
             size=11,
@@ -62,14 +81,12 @@ class AnalyzeYoloView(QWidget):
         self.ui.amplitudeSpinBox.valueChanged.connect(
             lambda _value: self.plot_recording(preserve_x=True)
         )
+        self.vertical_zoom.zoomChanged.connect(
+            lambda _factor: self.plot_recording(preserve_x=True)
+        )
         self.ui.pinsLineEdit.editingFinished.connect(self._apply_pin_selection)
         self.ui.stimuliLineEdit.editingFinished.connect(self._apply_stimulus_selection)
-        self.ui.detectionStartLineEdit.editingFinished.connect(
-            self._apply_detection_region
-        )
-        self.ui.detectionEndLineEdit.editingFinished.connect(
-            self._apply_detection_region
-        )
+        self._region_editor.changed.connect(self._detection_region_changed)
         self.ui.minCheckBox.toggled.connect(self.update_peak_markers)
         self.ui.maxCheckBox.toggled.connect(self.update_peak_markers)
         self.ui.showDetectionStartCheckBox.toggled.connect(self.update_guide_lines)
@@ -82,9 +99,8 @@ class AnalyzeYoloView(QWidget):
 
     def eventFilter(self, watched, event) -> bool:
         """Block plot keyboard navigation without affecting the input controls."""
-        if (
-            watched in (self.plot_widget, self.plot_widget.scene())
-            and event.type() == QEvent.Type.KeyPress
+        if event.type() == QEvent.Type.KeyPress and (
+            watched is self.plot_widget or watched is self._plot_scene
         ):
             return True
         return super().eventFilter(watched, event)
@@ -126,9 +142,7 @@ class AnalyzeYoloView(QWidget):
                     self._marker_error = f"Min/max detection unavailable: {exc}"
                 if not self._amplitude_initialized:
                     values = data[self._channels].to_numpy(dtype=float)
-                    finite = values[np.isfinite(values)]
-                    span = float(np.ptp(finite)) if finite.size else 0.0
-                    amplitude = max(0.001, span * 1.2) * len(self._channels)
+                    amplitude = default_total_amplitude(values, len(self._channels))
                     with Blocker(self.ui.amplitudeSpinBox):
                         self.ui.amplitudeSpinBox.setValue(amplitude)
                     self._amplitude_initialized = True
@@ -172,39 +186,18 @@ class AnalyzeYoloView(QWidget):
 
     def _apply_detection_region(self) -> None:
         """Validate optional inclusive local-time bounds and update markers only."""
-        try:
-            lower = self._parse_region_bound(self.ui.detectionStartLineEdit.text())
-            upper = self._parse_region_bound(self.ui.detectionEndLineEdit.text())
-            if lower is not None and upper is not None and lower > upper:
-                raise ValueError("Detection start must not exceed detection end.")
-        except ValueError as exc:
-            self.ui.regionErrorLabel.setText(str(exc))
-            self.ui.detectionStartLineEdit.setStyleSheet("color: #b00020")
-            self.ui.detectionEndLineEdit.setStyleSheet("color: #b00020")
-            return
-        self._detection_region_ms = (lower, upper)
-        self.ui.regionErrorLabel.clear()
-        self.ui.detectionStartLineEdit.setStyleSheet("")
-        self.ui.detectionEndLineEdit.setStyleSheet("")
+        self._region_editor.apply()
+
+    def _detection_region_changed(self) -> None:
+        """Refresh region state, markers, and lines after valid edits."""
+        self._detection_region_ms = self._region_editor.bounds_ms
         self.update_peak_markers()
         self.update_guide_lines()
 
     @staticmethod
     def _parse_region_bound(text: str) -> float | None:
         """Parse a blank or finite nonnegative millisecond value."""
-        if not text.strip():
-            return None
-        try:
-            bound = float(text.strip())
-        except ValueError as exc:
-            raise ValueError(
-                "Detection bounds must be finite nonnegative milliseconds."
-            ) from exc
-        if not np.isfinite(bound) or bound < 0:
-            raise ValueError(
-                "Detection bounds must be finite nonnegative milliseconds."
-            )
-        return bound
+        return parse_region_bound(text)
 
     def _set_region_from_click(self, event) -> None:
         """Set a region bound from a click inside a displayed stimulus trace."""
@@ -221,14 +214,8 @@ class AnalyzeYoloView(QWidget):
         local_time = self._local_stimulus_time(timestamp)
         if local_time is None:
             return
-        text = f"{local_time * 1000:.12g}"
-        target = (
-            self.ui.detectionStartLineEdit
-            if event.button() == Qt.MouseButton.LeftButton
-            else self.ui.detectionEndLineEdit
-        )
-        target.setText(text)
-        self._apply_detection_region()
+        side = "start" if event.button() == Qt.MouseButton.LeftButton else "end"
+        self._region_editor.set_bound_ms(side, local_time * 1000)
 
     def _local_stimulus_time(self, timestamp: float) -> float | None:
         """Map an original timestamp to local seconds within a displayed stimulus."""
@@ -322,6 +309,7 @@ class AnalyzeYoloView(QWidget):
             for column in self._channels
             if self._physical_pins.get(column) in self._displayed_pins
         ]
+        self.vertical_zoom.setEnabled(bool(self._channels))
         self.ui.amplitudeSpinBox.setEnabled(bool(self._channels))
         self.ui.minCheckBox.setEnabled(bool(self._responses and displayed_channels))
         self.ui.maxCheckBox.setEnabled(bool(self._responses and displayed_channels))
@@ -346,7 +334,9 @@ class AnalyzeYoloView(QWidget):
                 float(displayed_responses[-1].times_s[-1])
                 + 1 / self._metadata["sample_rate_hz"]
             )
-        amplitude = self.ui.amplitudeSpinBox.value()
+        amplitude = self.vertical_zoom.visible_amplitude(
+            self.ui.amplitudeSpinBox.value()
+        )
         channel_count = len(displayed_channels)
         if channel_count == 0:
             self.plot_widget.setTitle("No selected pins")
@@ -354,12 +344,12 @@ class AnalyzeYoloView(QWidget):
                 "No selected pins are present in this recording. Choose available pin IDs."
             )
             return
-        channel_spacing = amplitude / channel_count
+        channel_spacing, offsets = vertical_pin_layout(amplitude, channel_count)
         mapping = self._metadata.get("pin_channels", {})
         if not isinstance(mapping, dict):
             mapping = {}
         for rank, column in enumerate(displayed_channels):
-            offset = rank * channel_spacing
+            offset = offsets[rank]
             samples = self._data[column].to_numpy()
             if self._responses:
                 plot_times, plot_samples = self._selected_stimulus_trace(times, samples)
@@ -414,10 +404,7 @@ class AnalyzeYoloView(QWidget):
             status += f" {self._marker_error}"
         self.ui.recordingStatusLabel.setText(status)
         self.plot_widget.autoRange()
-        lower = -amplitude / (2 * channel_count)
-        upper = amplitude * (1 - 1 / (2 * channel_count))
-        self.plot_widget.enableAutoRange(axis=pg.ViewBox.YAxis, enable=False)
-        self.plot_widget.setYRange(lower, upper, padding=0)
+        apply_vertical_range(self.plot_widget, amplitude, channel_count)
         duration = max(last_time - first_time, 1e-6)
         if previous_x_range is None:
             self.plot_widget.setXRange(
@@ -428,51 +415,28 @@ class AnalyzeYoloView(QWidget):
 
     def _clear_guide_lines(self) -> None:
         """Remove reference lines without disturbing traces or plot ranges."""
-        for lines in self.guide_lines.values():
-            for line in lines:
-                self.plot_widget.removeItem(line)
-            lines.clear()
+        clear_region_guides(self.plot_widget, self.guide_lines)
 
     def update_guide_lines(self) -> None:
         """Show stimulus starts and local detection bounds on the recording timeline."""
         self._clear_guide_lines()
-        if not self.curves:
+        if not self.curves or not self._responses:
             return
-        lower_ms, upper_ms = self._detection_region_ms
-        settings = (
-            ("start", 0.0, self.ui.showStimulusStartsCheckBox.isChecked(), "#888888"),
-            (
-                "lower",
-                lower_ms,
-                self.ui.showDetectionStartCheckBox.isChecked(),
-                "#1971c2",
-            ),
-            (
-                "upper",
-                upper_ms,
-                self.ui.showDetectionEndCheckBox.isChecked(),
-                "#e67700",
-            ),
+        responses = [
+            response
+            for response in self._responses
+            if response.number in self._displayed_stimuli
+        ]
+        draw_region_guides(
+            self.plot_widget,
+            self.guide_lines,
+            responses,
+            self._detection_region_ms,
+            show_start=self.ui.showStimulusStartsCheckBox.isChecked(),
+            show_lower=self.ui.showDetectionStartCheckBox.isChecked(),
+            show_upper=self.ui.showDetectionEndCheckBox.isChecked(),
+            sample_rate_hz=self._metadata["sample_rate_hz"],
         )
-        rate = self._metadata.get("sample_rate_hz")
-        for response in self._responses:
-            if response.number not in self._displayed_stimuli:
-                continue
-            start_s = float(response.times_s[0])
-            duration_ms = len(response.times_s) / rate * 1000
-            for kind, bound_ms, visible, color in settings:
-                # Unset bounds have no line; out-of-stimulus bounds cannot mark a neighbour.
-                if not visible or bound_ms is None or bound_ms > duration_ms:
-                    continue
-                line = pg.InfiniteLine(
-                    pos=start_s + bound_ms / 1000,
-                    angle=90,
-                    movable=False,
-                    pen=pg.mkPen(color, width=1, style=Qt.PenStyle.DotLine),
-                )
-                line.setZValue(-10 if kind == "start" else -5)
-                self.plot_widget.addItem(line, ignoreBounds=True)
-                self.guide_lines[kind].append(line)
 
     @staticmethod
     def _peak_tooltip(x: float, y: float, data: dict) -> str:
@@ -512,26 +476,4 @@ class AnalyzeYoloView(QWidget):
         self, response: StimulusResponse
     ) -> dict[str, tuple[float, float]]:
         """Find first finite extrema within the inclusive local-time region."""
-        lower_ms, upper_ms = self._detection_region_ms
-        local_ms = (response.times_s - response.times_s[0]) * 1000
-        mask = np.isfinite(response.samples_v)
-        if lower_ms is not None:
-            mask &= (local_ms >= lower_ms) | np.isclose(
-                local_ms, lower_ms, rtol=0, atol=1e-6
-            )
-        if upper_ms is not None:
-            mask &= (local_ms <= upper_ms) | np.isclose(
-                local_ms, upper_ms, rtol=0, atol=1e-6
-            )
-        indices = np.flatnonzero(mask)
-        if not indices.size:
-            return {}
-        samples = response.samples_v[indices]
-        selected = {
-            "min": indices[np.argmin(samples)],
-            "max": indices[np.argmax(samples)],
-        }
-        return {
-            kind: (float(response.times_s[index]), float(response.samples_v[index]))
-            for kind, index in selected.items()
-        }
+        return bounded_extrema(response, self._detection_region_ms)

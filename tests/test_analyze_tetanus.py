@@ -28,7 +28,8 @@ def test_tetanus_shows_all_samples_and_pins_without_selectors(tetanus_analysis):
     model, view, _ = tetanus_analysis
     data, payload = gen_dummy_recording(0.02, 3, 4)
     model.update_recording(data, payload["metadata"], payload["experiment_config"])
-    view.ui.offsetSpinBox.setValue(0.2)
+    view.ui.amplitudeSpinBox.setValue(3.2)
+    assert view.plot_widget.viewRange()[1] == pytest.approx((-0.1, 3.1))
     assert not view.findChildren(QComboBox)
     assert len(view.curves) == len(view.pin_labels) == 16
     for pin, curve in enumerate(view.curves):
@@ -42,7 +43,7 @@ def test_tetanus_shows_all_samples_and_pins_without_selectors(tetanus_analysis):
     np.testing.assert_allclose(
         view.curves[3].getOriginalDataset()[1], filtered["ai3_(V)"] + 0.6
     )
-    assert view.ui.offsetSpinBox.value() == 0.2
+    assert view.ui.amplitudeSpinBox.value() == 3.2
 
 
 @pytest.mark.parametrize(
@@ -58,7 +59,7 @@ def test_tetanus_extrema_per_stimulus_and_pin(tetanus_analysis, show_min, show_m
         )
     data["t_(s)"] += 5
     model.update_recording(data, payload["metadata"], payload["experiment_config"])
-    view.ui.offsetSpinBox.setValue(2.0)
+    view.ui.amplitudeSpinBox.setValue(32.0)
     curves = list(view.curves)
     view.plot_widget.setRange(xRange=(5.001, 5.005), yRange=(-1, 1), padding=0)
     previous_range = view.plot_widget.viewRange()
@@ -117,3 +118,19 @@ def test_tetanus_keeps_full_traces_when_boundaries_are_missing(
     assert len(view.peak_markers.points()) == 0
     assert not view.ui.minCheckBox.isEnabled()
     assert "Min/max detection unavailable" in view.ui.recordingStatusLabel.text()
+
+
+def test_tetanus_amplitude_uses_total_span_and_preserves_time_zoom(tetanus_analysis):
+    model, view, _ = tetanus_analysis
+    data, payload = gen_dummy_recording(0.02, 3, 4)
+    model.update_recording(data, payload["metadata"], payload["experiment_config"])
+    view.plot_widget.setXRange(0.001, 0.005, padding=0)
+    previous_x_range = view.plot_widget.viewRange()[0]
+
+    view.ui.amplitudeSpinBox.setValue(16.0)
+
+    assert view.plot_widget.viewRange()[0] == pytest.approx(previous_x_range)
+    assert view.plot_widget.viewRange()[1] == pytest.approx((-0.5, 15.5))
+    for rank in range(16):
+        _, samples = view.curves[rank].getOriginalDataset()
+        assert samples[0] - data[f"ai{rank}_(V)"].iloc[0] == pytest.approx(rank)

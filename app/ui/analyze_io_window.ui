@@ -40,6 +40,75 @@
       </widget>
      </item>
      <item>
+      <widget class="QLabel" name="amplitudeLabel">
+       <property name="text"><string>Total visible amplitude</string></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="amplitudeSpinBox">
+       <property name="suffix"><string> V</string></property>
+       <property name="decimals"><number>6</number></property>
+       <property name="minimum"><double>0.000001</double></property>
+       <property name="maximum"><double>1000000.000000</double></property>
+       <property name="singleStep"><double>0.010000</double></property>
+       <property name="value"><double>1.000000</double></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="detectionStartLabel">
+       <property name="text"><string>Detection start (ms within stimulus)</string></property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="detectionStartLayout">
+       <item>
+        <widget class="QLineEdit" name="detectionStartLineEdit">
+         <property name="placeholderText"><string>From start</string></property>
+         <property name="toolTip"><string>Optional inclusive lower time bound. Left click the plot to set it.</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="showDetectionStartCheckBox">
+         <property name="text"><string>Show bound</string></property>
+         <property name="checked"><bool>true</bool></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="showStimulusStartsCheckBox">
+         <property name="text"><string>Stimulus starts</string></property>
+         <property name="checked"><bool>true</bool></property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QLabel" name="detectionEndLabel">
+       <property name="text"><string>Detection end (ms within stimulus)</string></property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="detectionEndLayout">
+       <item>
+        <widget class="QLineEdit" name="detectionEndLineEdit">
+         <property name="placeholderText"><string>To end</string></property>
+         <property name="toolTip"><string>Optional inclusive upper time bound. Right click the plot to set it.</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="showDetectionEndCheckBox">
+         <property name="text"><string>Show bound</string></property>
+         <property name="checked"><bool>true</bool></property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QLabel" name="regionErrorLabel">
+       <property name="text"><string/></property>
+       <property name="wordWrap"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item>
       <layout class="QHBoxLayout" name="extremaLayout">
        <item>
         <widget class="QCheckBox" name="minCheckBox">
