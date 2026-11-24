@@ -98,6 +98,23 @@
       </widget>
      </item>
      <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="rightLayout">
+     <item>
       <widget class="QCheckBox" name="highlight_selected_pulse_checkbox">
        <property name="text">
         <string>Highlight selected pulse</string>
@@ -115,22 +132,12 @@
       </widget>
      </item>
      <item>
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
+      <layout class="QVBoxLayout" name="waveformLayout"/>
      </item>
      <item>
-      <widget class="QLabel" name="title_slider">
+      <widget class="QLabel" name="stimulusPositionLabel">
        <property name="text">
-        <string>Stimulus slider</string>
+        <string>Stimulus 1 of 1</string>
        </property>
       </widget>
      </item>
@@ -138,17 +145,6 @@
       <widget class="QSlider" name="stepSlider">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QVBoxLayout" name="rightLayout">
-     <item>
-      <widget class="QLabel" name="title_plot">
-       <property name="text">
-        <string>Stimulus plot</string>
        </property>
       </widget>
      </item>

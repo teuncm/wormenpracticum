@@ -88,7 +88,8 @@ class StimulusView(QDialog):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
 
-        self.ui.rightLayout.addWidget(frame)
+        self.ui.waveformLayout.addWidget(frame)
+        self.ui.rightLayout.setStretchFactor(self.ui.waveformLayout, 1)
         self.plotWidget = plot
 
         double_spin_helper(
@@ -156,15 +157,13 @@ class StimulusView(QDialog):
         segment.segmentChanged.connect(self.stimulusChanged)
         self.renumber_tabs()
 
-    def update_step_slider(self, n_steps):
-        max_idx = n_steps - 1
-        self.ui.stepSlider.setMaximum(max_idx)
+    def update_step_slider(self, n_steps: int) -> None:
+        """Update the slider range before the controller redraws the preview."""
+        self.ui.stepSlider.setMaximum(n_steps - 1)
 
-        if self.ui.stepSlider.value() > max_idx:
-            self.ui.stepSlider.setValue(max_idx)
-
-        # Emit stepChanged to update the plot.
-        self.stepChanged.emit()
+    def show_step_position(self, step: int, n_steps: int) -> None:
+        """Display the one-based position of the preview within the sequence."""
+        self.ui.stimulusPositionLabel.setText(f"Stimulus {step + 1} of {n_steps}")
 
     def clear_plot(self):
         self.plotWidget.clear()
@@ -186,18 +185,10 @@ class StimulusView(QDialog):
                 name="Stimulus",
             )
 
-    def draw_segment_bounds(self, lt, rt, tp, bt, center=None):
-        guide_color = "b"
-
-        # Mark segment bounds more clearly.
-        self.plotWidget.addItem(
-            create_guide_line(lt, 90, guide_color, style=Qt.PenStyle.DashLine)
-        )
-        self.plotWidget.addItem(create_guide_line(rt, 90, guide_color))
-        if center is not None:
-            self.plotWidget.addItem(create_guide_line(center, 90, guide_color))
-        self.plotWidget.addItem(create_guide_line(tp, 0, guide_color))
-        self.plotWidget.addItem(create_guide_line(bt, 0, guide_color))
+    def draw_segment_bounds(self, start_s: float, end_s: float) -> None:
+        """Mark the highlighted pulse's visible start and end."""
+        for boundary in (start_s, end_s):
+            self.plotWidget.addItem(create_guide_line(boundary, 90, color="b"))
 
     def draw_voltage_limit(self, limit_v):
         self.plotWidget.addItem(

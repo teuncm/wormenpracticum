@@ -28,11 +28,17 @@ class StimulusController:
         self.stimulus_view.voltageBoundaryChanged.connect(self.update_plot)
 
     def _on_model_stim_config_changed(self):
-        # Reflect model change in view parameter fields
+        """Refresh the preview and fit its axes when the sequence changes."""
         self.update_ui_from_model()
-
-        # Reflect model change in plot
         self.update_plot()
+
+        # Use bounds across every stimulus so stepping preserves the voltage scale.
+        generator = self.app_model.stim_generator
+        _, peak_v = self.app_model.get_y_bounds()
+        limit_v = generator.config.limit_v
+        span_v = min(peak_v, limit_v) if peak_v else limit_v
+        self.stimulus_view.plotWidget.setXRange(*self.app_model.get_x_bounds())
+        self.stimulus_view.plotWidget.setYRange(-span_v, span_v)
 
     def _on_view_stim_config_changed(self):
         """Update stimulus model data from the stimulus view and refresh the plot."""
@@ -60,7 +66,6 @@ class StimulusController:
         )
 
         self.app_model.update_stim_config(stim_config)
-        self.stimulus_view.update_step_slider(stim_config.n_steps)
 
     def update_ui_from_model(self):
         """Update stimulus view parameter fields from the stimulus model."""
@@ -68,7 +73,9 @@ class StimulusController:
         tab_widget = self.stimulus_view.ui.segmentTabWidget
         prev_index = tab_widget.currentIndex()
 
-        with Blocker(self.stimulus_view):
+        # Clamp the selected step before drawing against the new sequence.
+        with Blocker(self.stimulus_view, self.stimulus_view.ui.stepSlider):
+            self.stimulus_view.update_step_slider(stim_config.n_steps)
             self.stimulus_view.ui.durSpinBox.setValue(stim_config.stim.dur_s)
             self.stimulus_view.ui.nSpinBox.setValue(stim_config.n_steps)
 
@@ -98,6 +105,7 @@ class StimulusController:
                 tab_widget.setCurrentIndex(restore_index)
 
     def update_plot(self, *_):
+        """Draw the selected step without changing the preview axes."""
         self.stimulus_view.clear_plot()
         self.stimulus_view.draw_zero_line()
 
@@ -119,31 +127,15 @@ class StimulusController:
             self.stimulus_view.ui.highlight_selected_pulse_checkbox.isChecked()
             and 0 <= cur_tab < len(pulses)
         ):
-            current_pulse = pulses[cur_tab]
             y, t = self.app_model.stim_generator.sample_at_idx(
                 train_plot_sr, cur_step, cur_tab
             )
             self.stimulus_view.update_train_plot((t, y), color="b", width=2)
 
-            if len(t) > 0 and len(y) > 0:
-                center = None
-                if not current_pulse.is_monophasic:
-                    center = (t[0] + t[-1]) / 2
+            if t.size:
+                # The end boundary is one sample interval beyond the last visible sample.
+                self.stimulus_view.draw_segment_bounds(t[0], t[-1] + 1 / train_plot_sr)
 
-                self.stimulus_view.draw_segment_bounds(
-                    t[0], t[-1], y.max(), y.min(), center
-                )
-
-        x_bounds = self.app_model.get_x_bounds()
-        # Keep the voltage limits visible when there are no pulses to scale to.
-        y_bounds = (
-            self.app_model.get_y_bounds()
-            if pulses
-            else (-DEFAULT_LIMIT_V, DEFAULT_LIMIT_V)
+        self.stimulus_view.show_step_position(
+            cur_step, self.app_model.stim_generator.config.n_steps
         )
-
-        if x_bounds is not None and y_bounds is not None:
-            self.stimulus_view.plotWidget.setXRange(*x_bounds)
-            self.stimulus_view.plotWidget.setYRange(*y_bounds)
-
-        self.stimulus_view.plotWidget.setTitle(f"Stimulus {cur_step + 1}")

@@ -111,3 +111,39 @@ def test_delete_all_pulses_and_add_again(monkeypatch, highlight):
         view.close()
         view.deleteLater()
         app.processEvents()
+
+
+def test_preview_keeps_sequence_scale_and_clamps_step_when_sequence_shrinks():
+    app = QApplication.instance() or QApplication([])
+    model = AppModel()
+    view = StimulusView()
+    controller = StimulusController(model, view)
+
+    def configure_steps(count):
+        controller.app_model.update_stim_config(
+            StimulusConfig(
+                dur_s=0.01,
+                limit_v=1.5,
+                n_steps=count,
+                pulses=[Pulse(amp_v=0.2, start_s=0.001, dur_s=0.002, step_amp_v=0.3)],
+            )
+        )
+
+    try:
+        configure_steps(3)
+        start_range = view.plotWidget.viewRange()[1]
+        assert start_range[1] >= 0.8
+        assert view.ui.stimulusPositionLabel.text() == "Stimulus 1 of 3"
+
+        view.ui.stepSlider.setValue(2)
+        assert view.ui.stimulusPositionLabel.text() == "Stimulus 3 of 3"
+        assert view.plotWidget.viewRange()[1] == pytest.approx(start_range)
+
+        configure_steps(1)
+        assert view.ui.stepSlider.value() == view.ui.stepSlider.maximum() == 0
+        assert view.ui.stimulusPositionLabel.text() == "Stimulus 1 of 1"
+        assert view.plotWidget.viewRange()[1][1] < start_range[1]
+    finally:
+        view.close()
+        view.deleteLater()
+        app.processEvents()

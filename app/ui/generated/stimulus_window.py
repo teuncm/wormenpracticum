@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'stimulus_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.11.2
+## Created by: Qt User Interface Compiler version 6.12.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -82,41 +82,41 @@ class Ui_StimulusWindow(object):
 
         self.leftLayout.addWidget(self.segmentTabWidget)
 
-        self.highlight_selected_pulse_checkbox = QCheckBox(StimulusWindow)
-        self.highlight_selected_pulse_checkbox.setObjectName(u"highlight_selected_pulse_checkbox")
-
-        self.leftLayout.addWidget(self.highlight_selected_pulse_checkbox)
-
-        self.show_voltage_boundary_checkbox = QCheckBox(StimulusWindow)
-        self.show_voltage_boundary_checkbox.setObjectName(u"show_voltage_boundary_checkbox")
-        self.show_voltage_boundary_checkbox.setChecked(True)
-
-        self.leftLayout.addWidget(self.show_voltage_boundary_checkbox)
-
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.leftLayout.addItem(self.verticalSpacer)
-
-        self.title_slider = QLabel(StimulusWindow)
-        self.title_slider.setObjectName(u"title_slider")
-
-        self.leftLayout.addWidget(self.title_slider)
-
-        self.stepSlider = QSlider(StimulusWindow)
-        self.stepSlider.setObjectName(u"stepSlider")
-        self.stepSlider.setOrientation(Qt.Orientation.Horizontal)
-
-        self.leftLayout.addWidget(self.stepSlider)
 
 
         self.flowLayout.addLayout(self.leftLayout)
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.setObjectName(u"rightLayout")
-        self.title_plot = QLabel(StimulusWindow)
-        self.title_plot.setObjectName(u"title_plot")
+        self.highlight_selected_pulse_checkbox = QCheckBox(StimulusWindow)
+        self.highlight_selected_pulse_checkbox.setObjectName(u"highlight_selected_pulse_checkbox")
 
-        self.rightLayout.addWidget(self.title_plot)
+        self.rightLayout.addWidget(self.highlight_selected_pulse_checkbox)
+
+        self.show_voltage_boundary_checkbox = QCheckBox(StimulusWindow)
+        self.show_voltage_boundary_checkbox.setObjectName(u"show_voltage_boundary_checkbox")
+        self.show_voltage_boundary_checkbox.setChecked(True)
+
+        self.rightLayout.addWidget(self.show_voltage_boundary_checkbox)
+
+        self.waveformLayout = QVBoxLayout()
+        self.waveformLayout.setObjectName(u"waveformLayout")
+
+        self.rightLayout.addLayout(self.waveformLayout)
+
+        self.stimulusPositionLabel = QLabel(StimulusWindow)
+        self.stimulusPositionLabel.setObjectName(u"stimulusPositionLabel")
+
+        self.rightLayout.addWidget(self.stimulusPositionLabel)
+
+        self.stepSlider = QSlider(StimulusWindow)
+        self.stepSlider.setObjectName(u"stepSlider")
+        self.stepSlider.setOrientation(Qt.Orientation.Horizontal)
+
+        self.rightLayout.addWidget(self.stepSlider)
 
 
         self.flowLayout.addLayout(self.rightLayout)
@@ -141,7 +141,6 @@ class Ui_StimulusWindow(object):
         self.add_pulse_button.setText(QCoreApplication.translate("StimulusWindow", u"Add pulse", None))
         self.highlight_selected_pulse_checkbox.setText(QCoreApplication.translate("StimulusWindow", u"Highlight selected pulse", None))
         self.show_voltage_boundary_checkbox.setText(QCoreApplication.translate("StimulusWindow", u"Show voltage limit (1.5V)", None))
-        self.title_slider.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus slider", None))
-        self.title_plot.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus plot", None))
+        self.stimulusPositionLabel.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus 1 of 1", None))
     # retranslateUi
 
