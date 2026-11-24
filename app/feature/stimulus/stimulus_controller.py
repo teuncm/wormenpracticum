@@ -1,3 +1,5 @@
+from PySide6.QtCore import QPointF
+
 from app.app_model import AppModel
 from app.feature.stimulus.pulse import Pulse
 from app.feature.stimulus.pulse_tab_view import PulseTabView
@@ -26,12 +28,30 @@ class StimulusController:
         self.stimulus_view.stepChanged.connect(self.update_plot)
         self.stimulus_view.stimulusHighlightChanged.connect(self.update_plot)
         self.stimulus_view.voltageBoundaryChanged.connect(self.update_plot)
+        self.stimulus_view.start_handle.dragged.connect(self._drag_pulse_start)
+        self.stimulus_view.end_handle.dragged.connect(self._drag_pulse_end)
+        for handle in (self.stimulus_view.start_handle, self.stimulus_view.end_handle):
+            handle.sigPositionChangeFinished.connect(self._finish_pulse_drag)
+
+    def _finish_pulse_drag(self, *_):
+        """Refresh handle visibility and fit the edited sequence after release."""
+        self.update_plot()
+        self._fit_preview_axes()
 
     def _on_model_stim_config_changed(self):
         """Refresh the preview and fit its axes when the sequence changes."""
-        self.update_ui_from_model()
+        # Drag edits already update the open tab. Keep the axes still under the pointer.
+        dragging = (
+            self.stimulus_view.start_handle.moving
+            or self.stimulus_view.end_handle.moving
+        )
+        if not dragging:
+            self.update_ui_from_model()
         self.update_plot()
+        if not dragging:
+            self._fit_preview_axes()
 
+    def _fit_preview_axes(self, *_):
         # Use bounds across every stimulus so stepping preserves the voltage scale.
         generator = self.app_model.stim_generator
         _, peak_v = self.app_model.get_y_bounds()
@@ -39,6 +59,43 @@ class StimulusController:
         span_v = min(peak_v, limit_v) if peak_v else limit_v
         self.stimulus_view.plotWidget.setXRange(*self.app_model.get_x_bounds())
         self.stimulus_view.plotWidget.setYRange(-span_v, span_v)
+
+    def _drag_pulse_start(self, position: QPointF) -> None:
+        tab = self.stimulus_view.ui.segmentTabWidget.currentWidget()
+        if not isinstance(tab, PulseTabView):
+            return
+        step = self.stimulus_view.ui.stepSlider.value()
+        spins = tab.spinboxes
+        limit = self.app_model.stim_generator.config.limit_v
+        height = max(-limit, min(position.y(), limit))
+        if not tab.monophasic_checkbox.isChecked():
+            # A biphasic pulse has a positive top even if its first phase is negative.
+            first_phase = spins["amp_v"].value() + step * spins["step_amp_v"].value()
+            height = max(0.0, height) * (-1 if first_phase < 0 else 1)
+        self._set_pulse_fields(
+            tab,
+            start_s=position.x() - step * spins["step_start_s"].value(),
+            amp_v=height - step * spins["step_amp_v"].value(),
+        )
+
+    def _drag_pulse_end(self, position: QPointF) -> None:
+        tab = self.stimulus_view.ui.segmentTabWidget.currentWidget()
+        if not isinstance(tab, PulseTabView):
+            return
+        step = self.stimulus_view.ui.stepSlider.value()
+        spins = tab.spinboxes
+        # Convert the dragged endpoint at this step back to the base duration.
+        start_s = spins["start_s"].value() + step * spins["step_start_s"].value()
+        self._set_pulse_fields(
+            tab, dur_s=position.x() - start_s - step * spins["step_dur_s"].value()
+        )
+
+    def _set_pulse_fields(self, tab: PulseTabView, **values: float) -> None:
+        """Let the spin boxes clamp and round a drag, then publish one update."""
+        with Blocker(tab):
+            for field, value in values.items():
+                tab.spinboxes[field].setValue(value)
+        tab.segmentChanged.emit()
 
     def _on_view_stim_config_changed(self):
         """Update stimulus model data from the stimulus view and refresh the plot."""
@@ -107,6 +164,7 @@ class StimulusController:
     def update_plot(self, *_):
         """Draw the selected step without changing the preview axes."""
         self.stimulus_view.clear_plot()
+        self.stimulus_view.hide_pulse_handles()
         self.stimulus_view.draw_zero_line()
 
         if self.stimulus_view.ui.show_voltage_boundary_checkbox.isChecked():
@@ -134,7 +192,14 @@ class StimulusController:
 
             if t.size:
                 # The end boundary is one sample interval beyond the last visible sample.
-                self.stimulus_view.draw_segment_bounds(t[0], t[-1] + 1 / train_plot_sr)
+                end_s = t[-1] + 1 / train_plot_sr
+                self.stimulus_view.draw_segment_bounds(t[0], end_s)
+                pulse = pulses[cur_tab]
+                limit = self.app_model.stim_generator.config.limit_v
+                level = max(-limit, min(pulse.amp_v, limit))
+                top_v = level if pulse.is_monophasic else abs(level)
+                middle_v = level / 2 if pulse.is_monophasic else 0.0
+                self.stimulus_view.position_pulse_handles(t[0], end_s, top_v, middle_v)
 
         self.stimulus_view.show_step_position(
             cur_step, self.app_model.stim_generator.config.n_steps

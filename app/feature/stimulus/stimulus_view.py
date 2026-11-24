@@ -1,5 +1,5 @@
 import pyqtgraph as pg
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QPointF, QSize, Qt, Signal
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QDialog,
@@ -34,6 +34,33 @@ class PulseTabBar(QTabBar):
             size.width(),
             size.height() + 15,
         )
+
+
+class StimulusPreviewViewBox(pg.ViewBox):
+    """Allow wheel zoom while reserving plot drags for pulse handles."""
+
+    def mouseDragEvent(self, event, axis=None):
+        event.ignore()
+
+
+class PulseHandle(pg.TargetItem):
+    """Report drag coordinates and let the preview place the handle after rounding."""
+
+    dragged = Signal(QPointF)
+
+    def mouseDragEvent(self, event):
+        if event.button() != Qt.MouseButton.LeftButton:
+            return
+        event.accept()
+        if event.isStart():
+            self.symbolOffset = self.pos() - self.mapToView(event.buttonDownPos())
+            self.moving = True
+        if not self.moving:
+            return
+        self.dragged.emit(self.symbolOffset + self.mapToView(event.pos()))
+        if event.isFinish():
+            self.moving = False
+            self.sigPositionChangeFinished.emit(self)
 
 
 class StimulusView(QDialog):
@@ -78,8 +105,13 @@ class StimulusView(QDialog):
         )
 
         frame, plot = create_plot_widget(
-            x_label="Time", x_units="ms", y_label="Voltage", y_units="V"
+            x_label="Time",
+            x_units="ms",
+            y_label="Voltage",
+            y_units="V",
+            view_box=StimulusPreviewViewBox(),
         )
+        plot.setMouseEnabled(x=True, y=True)
         # Display milliseconds while keeping waveform coordinates in seconds.
         time_axis = plot.getAxis("bottom")
         time_axis.enableAutoSIPrefix(False)
@@ -91,6 +123,16 @@ class StimulusView(QDialog):
         self.ui.waveformLayout.addWidget(frame)
         self.ui.rightLayout.setStretchFactor(self.ui.waveformLayout, 1)
         self.plotWidget = plot
+        self.start_handle = PulseHandle(size=13, symbol="o", pen="b", brush="w")
+        self.end_handle = PulseHandle(size=12, symbol="s", pen="b", brush="w")
+        for handle, tooltip in (
+            (self.start_handle, "Drag to change pulse start and amplitude"),
+            (self.end_handle, "Drag left or right to change pulse duration"),
+        ):
+            handle.setToolTip(tooltip)
+            handle.setZValue(10)
+            plot.addItem(handle, ignoreBounds=True)
+            handle.hide()
 
         double_spin_helper(
             self.ui.durSpinBox,
@@ -166,7 +208,24 @@ class StimulusView(QDialog):
         self.ui.stimulusPositionLabel.setText(f"Stimulus {step + 1} of {n_steps}")
 
     def clear_plot(self):
-        self.plotWidget.clear()
+        # Keep the handle items attached so the scene can finish an active drag.
+        for item in list(self.plotWidget.getPlotItem().items):
+            if item not in (self.start_handle, self.end_handle):
+                self.plotWidget.removeItem(item)
+
+    def position_pulse_handles(
+        self, start_s: float, end_s: float, top_v: float, middle_v: float
+    ) -> None:
+        """Place the handles at the corners of the highlighted pulse."""
+        self.start_handle.setPos(start_s, top_v)
+        self.end_handle.setPos(end_s, middle_v)
+        self.start_handle.show()
+        self.end_handle.show()
+
+    def hide_pulse_handles(self) -> None:
+        for handle in (self.start_handle, self.end_handle):
+            if not handle.moving:
+                handle.hide()
 
     def draw_zero_line(self):
         self.plotWidget.addItem(

@@ -47,6 +47,7 @@ def create_plot_widget(
     y_label=None,
     y_units=None,
     frame: QFrame | None = None,
+    view_box: pg.ViewBox | None = None,
 ) -> tuple[QFrame, pg.PlotWidget]:
     """Create a plot widget in a frame."""
     if frame is None:
@@ -56,7 +57,7 @@ def create_plot_widget(
     layout = QVBoxLayout(frame)
     layout.setContentsMargins(0, 0, 0, 0)
 
-    plot = pg.PlotWidget()
+    plot = pg.PlotWidget(viewBox=view_box)
     plot.showGrid(x=True, y=True, alpha=PLOT_GRID_ALPHA_DEFAULT)
     plot.setMouseEnabled(x=False, y=False)
     plot.setClipToView(True)

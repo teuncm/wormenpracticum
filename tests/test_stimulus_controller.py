@@ -5,6 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 import pytest
+from PySide6.QtCore import QPointF
 from PySide6.QtWidgets import QApplication
 
 from app.app_model import AppModel
@@ -143,6 +144,66 @@ def test_preview_keeps_sequence_scale_and_clamps_step_when_sequence_shrinks():
         assert view.ui.stepSlider.value() == view.ui.stepSlider.maximum() == 0
         assert view.ui.stimulusPositionLabel.text() == "Stimulus 1 of 1"
         assert view.plotWidget.viewRange()[1][1] < start_range[1]
+    finally:
+        view.close()
+        view.deleteLater()
+        app.processEvents()
+
+
+def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
+    app = QApplication.instance() or QApplication([])
+    model = AppModel()
+    view = StimulusView()
+    controller = StimulusController(model, view)
+    try:
+        controller.app_model.update_stim_config(
+            StimulusConfig(
+                dur_s=0.02,
+                limit_v=1.5,
+                n_steps=3,
+                pulses=[
+                    Pulse(
+                        amp_v=-0.4,
+                        start_s=0.003,
+                        dur_s=0.003,
+                        step_amp_v=-0.1,
+                        step_start_s=0.001,
+                        step_dur_s=0.001,
+                    )
+                ],
+            )
+        )
+        view.ui.stepSlider.setValue(2)
+        assert view.start_handle.isVisible() and view.end_handle.isVisible()
+        assert view.start_handle.pos().y() == pytest.approx(0.6)
+        assert view.end_handle.pos().y() == pytest.approx(0.0)
+        original_range = view.plotWidget.viewRange()
+        tab = view.ui.segmentTabWidget.currentWidget()
+
+        view.start_handle.moving = True
+        view.start_handle.dragged.emit(QPointF(0.007, 0.8))
+        assert view.ui.segmentTabWidget.currentWidget() is tab
+        assert view.plotWidget.viewRange() == original_range
+        view.start_handle.moving = False
+        view.start_handle.sigPositionChangeFinished.emit(view.start_handle)
+
+        view.end_handle.dragged.emit(QPointF(0.015, 0.4))
+        pulse = model.stim_config.stim.pulses[0]
+        assert (pulse.start_s, pulse.amp_v, pulse.dur_s) == pytest.approx(
+            (0.005, -0.6, 0.006)
+        )
+        assert (pulse.step_start_s, pulse.step_amp_v, pulse.step_dur_s) == (
+            0.001,
+            -0.1,
+            0.001,
+        )
+        assert (
+            view.ui.segmentTabWidget.currentWidget().spinboxes["dur_s"].value() == 0.006
+        )
+
+        view.ui.highlight_selected_pulse_checkbox.setChecked(False)
+        assert not view.start_handle.isVisible()
+        assert not view.end_handle.isVisible()
     finally:
         view.close()
         view.deleteLater()
