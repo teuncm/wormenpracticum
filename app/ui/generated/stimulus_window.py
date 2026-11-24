@@ -91,6 +91,11 @@ class Ui_StimulusWindow(object):
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.setObjectName(u"rightLayout")
+        self.waveformLayout = QVBoxLayout()
+        self.waveformLayout.setObjectName(u"waveformLayout")
+
+        self.rightLayout.addLayout(self.waveformLayout)
+
         self.highlight_selected_pulse_checkbox = QCheckBox(StimulusWindow)
         self.highlight_selected_pulse_checkbox.setObjectName(u"highlight_selected_pulse_checkbox")
 
@@ -101,11 +106,6 @@ class Ui_StimulusWindow(object):
         self.show_voltage_boundary_checkbox.setChecked(True)
 
         self.rightLayout.addWidget(self.show_voltage_boundary_checkbox)
-
-        self.waveformLayout = QVBoxLayout()
-        self.waveformLayout.setObjectName(u"waveformLayout")
-
-        self.rightLayout.addLayout(self.waveformLayout)
 
         self.stimulusPositionLabel = QLabel(StimulusWindow)
         self.stimulusPositionLabel.setObjectName(u"stimulusPositionLabel")

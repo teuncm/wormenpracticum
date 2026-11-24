@@ -1,6 +1,6 @@
 import pyqtgraph as pg
 from PySide6.QtCore import QPointF, QSize, Qt, Signal
-from PySide6.QtGui import QCursor
+from PySide6.QtGui import QCursor, QPainterPath
 from PySide6.QtWidgets import (
     QDialog,
     QSizePolicy,
@@ -37,7 +37,18 @@ class PulseTabBar(QTabBar):
 
 
 class StimulusPreviewViewBox(pg.ViewBox):
-    """Allow wheel zoom while reserving plot drags for pulse handles."""
+    """Allow vertical wheel zoom while reserving plot drags for pulse handles."""
+
+    def wheelEvent(self, event, axis=None):
+        if axis == pg.ViewBox.XAxis or not self.mouseEnabled()[1]:
+            event.ignore()
+            return
+
+        # Keep pyqtgraph's wheel sensitivity and anchor scaling to the zero line.
+        factor = 1.02 ** (event.delta() * self.state["wheelScaleFactor"])
+        self.scaleBy(y=factor, center=(0, 0))
+        event.accept()
+        self.sigRangeChangedManually.emit([False, True])
 
     def mouseDragEvent(self, event, axis=None):
         event.ignore()
@@ -48,17 +59,42 @@ class PulseHandle(pg.TargetItem):
 
     dragged = Signal(QPointF)
 
-    def mouseDragEvent(self, event):
-        if event.button() != Qt.MouseButton.LeftButton:
-            return
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setAcceptedMouseButtons(Qt.MouseButton.LeftButton)
+
+    def shape(self) -> QPainterPath:
+        """Use a 24-pixel grab area at every zoom level."""
+        transform = self.deviceTransform_()
+        if transform is None:
+            return super().shape()
+        inverse, invertible = transform.inverted()
+        if not invertible:
+            return super().shape()
+        hitbox = QPainterPath()
+        hitbox.addEllipse(transform.map(QPointF()), 12, 12)
+        return inverse.map(hitbox)
+
+    def paint(self, painter, *_):
+        # TargetItem normally paints its hitbox. Paint only the original symbol.
+        painter.setPen(self.currentPen)
+        painter.setBrush(self.currentBrush)
+        painter.drawPath(super().shape())
+
+    def mousePressEvent(self, event):
+        # Accept the press so Qt keeps delivering moves and the cursor during the drag.
         event.accept()
-        if event.isStart():
-            self.symbolOffset = self.pos() - self.mapToView(event.buttonDownPos())
-            self.moving = True
+        self.symbolOffset = self.pos() - self.mapToView(event.pos())
+        self.moving = True
+
+    def mouseMoveEvent(self, event):
         if not self.moving:
             return
         self.dragged.emit(self.symbolOffset + self.mapToView(event.pos()))
-        if event.isFinish():
+
+    def mouseReleaseEvent(self, event):
+        if self.moving:
             self.moving = False
             self.sigPositionChangeFinished.emit(self)
 
@@ -111,11 +147,14 @@ class StimulusView(QDialog):
             y_units="V",
             view_box=StimulusPreviewViewBox(),
         )
-        plot.setMouseEnabled(x=True, y=True)
+        plot.setMouseEnabled(x=False, y=True)
         # Display milliseconds while keeping waveform coordinates in seconds.
         time_axis = plot.getAxis("bottom")
         time_axis.enableAutoSIPrefix(False)
         time_axis.setScale(1000)
+        # Reserve room for signed tick labels so vertical zoom cannot move the plot sideways.
+        tick_label_width = plot.fontMetrics().horizontalAdvance("-000.000")
+        plot.getAxis("left").setWidth(tick_label_width + 12)
         self.ui.stepSlider.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )

@@ -115,6 +115,9 @@
    <item>
     <layout class="QVBoxLayout" name="rightLayout">
      <item>
+      <layout class="QVBoxLayout" name="waveformLayout"/>
+     </item>
+     <item>
       <widget class="QCheckBox" name="highlight_selected_pulse_checkbox">
        <property name="text">
         <string>Highlight selected pulse</string>
@@ -130,9 +133,6 @@
         <bool>true</bool>
        </property>
       </widget>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="waveformLayout"/>
      </item>
      <item>
       <widget class="QLabel" name="stimulusPositionLabel">
