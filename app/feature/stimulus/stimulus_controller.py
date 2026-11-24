@@ -28,6 +28,7 @@ class StimulusController:
         self.stimulus_view.stepChanged.connect(self.update_plot)
         self.stimulus_view.stimulusHighlightChanged.connect(self.update_plot)
         self.stimulus_view.voltageBoundaryChanged.connect(self.update_plot)
+        self.stimulus_view.previewTimeClicked.connect(self._select_pulse_at_time)
         self.stimulus_view.start_handle.dragged.connect(self._drag_pulse_start)
         self.stimulus_view.end_handle.dragged.connect(self._drag_pulse_end)
         for handle in (self.stimulus_view.start_handle, self.stimulus_view.end_handle):
@@ -160,6 +161,22 @@ class StimulusController:
             if tab_widget.count() > 0:
                 restore_index = min(max(prev_index, 0), tab_widget.count() - 1)
                 tab_widget.setCurrentIndex(restore_index)
+
+    def _select_pulse_at_time(self, time_s: float) -> None:
+        """Select the pulse whose sampled interval contains the click."""
+        generator = self.app_model.stim_generator
+        step = self.stimulus_view.ui.stepSlider.value()
+        stimulus = generator.stims[step]
+        sample_rate = TARGET_N_SAMPLES_PULSE_PLOT / stimulus.dur_s
+
+        # Later pulses overwrite earlier pulses where their visible samples overlap.
+        for index in range(len(stimulus.pulses) - 1, -1, -1):
+            _, start, count = stimulus.pulse_overlap(
+                stimulus.pulses[index], sample_rate
+            )
+            if start / sample_rate <= time_s < (start + count) / sample_rate:
+                self.stimulus_view.ui.segmentTabWidget.setCurrentIndex(index)
+                return
 
     def update_plot(self, *_):
         """Draw the selected step without changing the preview axes."""

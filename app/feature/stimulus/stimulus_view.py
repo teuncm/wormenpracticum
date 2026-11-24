@@ -39,6 +39,15 @@ class PulseTabBar(QTabBar):
 class StimulusPreviewViewBox(pg.ViewBox):
     """Allow vertical wheel zoom while reserving plot drags for pulse handles."""
 
+    time_clicked = Signal(float)
+
+    def mouseClickEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            event.accept()
+            self.time_clicked.emit(self.mapSceneToView(event.scenePos()).x())
+        else:
+            super().mouseClickEvent(event)
+
     def wheelEvent(self, event, axis=None):
         if axis == pg.ViewBox.XAxis or not self.mouseEnabled()[1]:
             event.ignore()
@@ -104,6 +113,7 @@ class StimulusView(QDialog):
     stepChanged = Signal()
     stimulusHighlightChanged = Signal(bool)
     voltageBoundaryChanged = Signal(bool)
+    previewTimeClicked = Signal(float)
 
     def __init__(self):
         super().__init__()
@@ -140,12 +150,14 @@ class StimulusView(QDialog):
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
         )
 
+        view_box = StimulusPreviewViewBox()
+        view_box.time_clicked.connect(self.previewTimeClicked)
         frame, plot = create_plot_widget(
             x_label="Time",
             x_units="ms",
             y_label="Voltage",
             y_units="V",
-            view_box=StimulusPreviewViewBox(),
+            view_box=view_box,
         )
         plot.setMouseEnabled(x=False, y=True)
         # Display milliseconds while keeping waveform coordinates in seconds.
