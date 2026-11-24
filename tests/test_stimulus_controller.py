@@ -201,6 +201,17 @@ def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
             view.ui.segmentTabWidget.currentWidget().spinboxes["dur_s"].value() == 0.006
         )
 
+        # A later step can collapse even when the base duration is positive.
+        view.ui.segmentTabWidget.currentWidget().spinboxes["step_dur_s"].setValue(
+            -0.003
+        )
+        assert not view.start_handle.isVisible()
+        assert view.end_handle.isVisible()
+        assert view.end_handle.pos() == QPointF(0.007, 0.0)
+        view.end_handle.dragged.emit(QPointF(0.009, 0.0))
+        assert model.stim_config.stim.pulses[0].dur_s == pytest.approx(0.008)
+        assert view.start_handle.isVisible()
+
         view.ui.highlight_selected_pulse_checkbox.setChecked(False)
         assert not view.start_handle.isVisible()
         assert not view.end_handle.isVisible()

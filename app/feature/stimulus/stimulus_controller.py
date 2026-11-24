@@ -185,22 +185,34 @@ class StimulusController:
             self.stimulus_view.ui.highlight_selected_pulse_checkbox.isChecked()
             and 0 <= cur_tab < len(pulses)
         ):
-            y, t = self.app_model.stim_generator.sample_at_idx(
-                train_plot_sr, cur_step, cur_tab
-            )
-            self.stimulus_view.update_train_plot((t, y), color="b", width=2)
-
-            if t.size:
-                # The end boundary is one sample interval beyond the last visible sample.
-                end_s = t[-1] + 1 / train_plot_sr
-                self.stimulus_view.draw_segment_bounds(t[0], end_s)
-                pulse = pulses[cur_tab]
-                limit = self.app_model.stim_generator.config.limit_v
-                level = max(-limit, min(pulse.amp_v, limit))
-                top_v = level if pulse.is_monophasic else abs(level)
-                middle_v = level / 2 if pulse.is_monophasic else 0.0
-                self.stimulus_view.position_pulse_handles(t[0], end_s, top_v, middle_v)
+            pulse = pulses[cur_tab]
+            if pulse.dur_s <= 0:
+                if 0 <= pulse.start_s <= target_dur:
+                    # A collapsed pulse has only an endpoint at its configured start.
+                    self.stimulus_view.start_handle.hide()
+                    self.stimulus_view.show_duration_handle(pulse.start_s, 0.0)
+            else:
+                self._plot_highlighted_pulse(pulse, train_plot_sr, cur_step, cur_tab)
 
         self.stimulus_view.show_step_position(
             cur_step, self.app_model.stim_generator.config.n_steps
         )
+
+    def _plot_highlighted_pulse(
+        self, pulse: Pulse, sample_rate: float, step: int, tab: int
+    ) -> None:
+        """Draw the visible pulse samples and their editing controls."""
+        generator = self.app_model.stim_generator
+        y, t = generator.sample_at_idx(sample_rate, step, tab)
+        self.stimulus_view.update_train_plot((t, y), color="b", width=2)
+        if not t.size:
+            return
+
+        # The end boundary is one sample interval beyond the last visible sample.
+        end_s = t[-1] + 1 / sample_rate
+        self.stimulus_view.draw_segment_bounds(t[0], end_s)
+        limit = generator.config.limit_v
+        level = max(-limit, min(pulse.amp_v, limit))
+        top_v = level if pulse.is_monophasic else abs(level)
+        middle_v = level / 2 if pulse.is_monophasic else 0.0
+        self.stimulus_view.position_pulse_handles(t[0], end_s, top_v, middle_v)

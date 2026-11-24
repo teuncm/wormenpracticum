@@ -257,8 +257,12 @@ class StimulusView(QDialog):
     ) -> None:
         """Place the handles at the corners of the highlighted pulse."""
         self.start_handle.setPos(start_s, top_v)
-        self.end_handle.setPos(end_s, middle_v)
         self.start_handle.show()
+        self.show_duration_handle(end_s, middle_v)
+
+    def show_duration_handle(self, end_s: float, middle_v: float) -> None:
+        """Expose the pulse endpoint even when there is no waveform to highlight."""
+        self.end_handle.setPos(end_s, middle_v)
         self.end_handle.show()
 
     def hide_pulse_handles(self) -> None:
