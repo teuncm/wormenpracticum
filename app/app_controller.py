@@ -81,13 +81,13 @@ class AppController:
         self.preferences_view = PreferencesView()
 
         self.app_view.clear_tabs()
-        self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
-        self.app_view.add_tab(self.protocol_view, "Protocol")
-        self.app_view.add_tab(self.filter_view, "Filtering")
-        self.app_view.add_tab(self.analyze_io_view, "Analyze\nIO")
-        self.app_view.add_tab(self.analyze_speed_view, "Analyze\nspeed")
-        self.app_view.add_tab(self.analyze_tetanus_view, "Analyze\ntetanus")
-        self.app_view.add_tab(self.analyze_yolo_view, "Analyze\nYolo")
+        self.app_view.add_tab(self.stimulus_view, "1. Stimulus")
+        self.app_view.add_tab(self.protocol_view, "2. Record")
+        self.app_view.add_tab(self.filter_view, "3. Filter")
+        self.app_view.add_tab(self.analyze_io_view, "4a. IO")
+        self.app_view.add_tab(self.analyze_speed_view, "4b. Speed")
+        self.app_view.add_tab(self.analyze_tetanus_view, "4c. Tetanus")
+        self.app_view.add_tab(self.analyze_yolo_view, "4d. Yolo")
         self.app_view.set_current_tab(self.protocol_view)
 
         self.stimulus_controller = StimulusController(
