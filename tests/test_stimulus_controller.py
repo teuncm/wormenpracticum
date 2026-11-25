@@ -5,7 +5,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QPointF
+from PySide6.QtCore import QPointF, Qt
+from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 
 from app.app_model import AppModel
@@ -215,9 +216,72 @@ def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
         assert model.stim_config.stim.pulses[0].dur_s == pytest.approx(0.008)
         assert view.start_handle.isVisible()
 
+        view.ui.segmentTabWidget.currentWidget().monophasic_checkbox.setChecked(True)
+        assert view.end_handle.isVisible()
+        assert view.end_handle.pos().y() == 0.0
+        assert view.start_handle.pos().y() < 0.0
+
         view.ui.highlight_selected_pulse_checkbox.setChecked(False)
         assert not view.start_handle.isVisible()
         assert not view.end_handle.isVisible()
+    finally:
+        view.close()
+        view.deleteLater()
+        app.processEvents()
+
+
+def test_preview_cursors_follow_pulse_body_and_drag_handles():
+    app = QApplication.instance() or QApplication([])
+    view = StimulusView()
+    controller = StimulusController(AppModel(), view)
+    controller.app_model.update_stim_config(
+        StimulusConfig(
+            dur_s=0.05,
+            limit_v=1.5,
+            pulses=[
+                Pulse(0.8, 0.005, 0.015),
+                Pulse(-0.6, 0.03, 0.015, is_monophasic=True),
+            ],
+        )
+    )
+    view.resize(1200, 600)
+    view.show()
+    app.processEvents()
+
+    plot = view.plotWidget
+    viewport = plot.viewport()
+    view_box = plot.getViewBox()
+
+    def check_cursor(time_s, voltage_v, expected):
+        position = plot.mapFromScene(
+            view_box.mapViewToScene(QPointF(time_s, voltage_v))
+        )
+        QTest.mouseMove(viewport, position)
+        app.processEvents()
+        assert viewport.cursor().shape() == expected
+        return position
+
+    try:
+        check_cursor(0.011, 0.3, Qt.CursorShape.PointingHandCursor)
+        check_cursor(0.005, 0.8, Qt.CursorShape.SizeAllCursor)
+        check_cursor(0.02, 0.0, Qt.CursorShape.SizeHorCursor)
+        check_cursor(0.026, -0.3, Qt.CursorShape.ArrowCursor)
+        check_cursor(0.011, -0.3, Qt.CursorShape.ArrowCursor)
+
+        # The hover region passes clicks through even on an unselected pulse.
+        position = check_cursor(0.038, -0.3, Qt.CursorShape.PointingHandCursor)
+        QTest.mouseClick(viewport, Qt.MouseButton.LeftButton, pos=position)
+        app.processEvents()
+        assert view.ui.segmentTabWidget.currentIndex() == 1
+        check_cursor(0.03, -0.6, Qt.CursorShape.SizeAllCursor)
+
+        position = check_cursor(0.045, 0.0, Qt.CursorShape.SizeHorCursor)
+        QTest.mousePress(viewport, Qt.MouseButton.LeftButton, pos=position)
+        drag_end = check_cursor(0.047, 0.3, Qt.CursorShape.SizeHorCursor)
+        QTest.mouseRelease(viewport, Qt.MouseButton.LeftButton, pos=drag_end)
+
+        view.ui.highlight_selected_pulse_checkbox.setChecked(False)
+        check_cursor(0.038, -0.3, Qt.CursorShape.PointingHandCursor)
     finally:
         view.close()
         view.deleteLater()

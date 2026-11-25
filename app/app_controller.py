@@ -14,16 +14,14 @@ from app.app_view import AppView
 from app.feature.about.about_view import AboutView
 from app.feature.acquisition.protocol_controller import ProtocolController
 from app.feature.acquisition.protocol_view import ProtocolView
-from app.feature.analysis.analyze_io_controller import AnalyzeIOController
-from app.feature.analysis.analyze_speed_controller import AnalyzeSpeedController
-from app.feature.analysis.analyze_tetanus_controller import AnalyzeTetanusController
+from app.feature.analysis.analysis_controller import AnalysisController
 from app.feature.analysis.analyze_view_io import AnalyzeIOView
 from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
 from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
 from app.feature.analysis.analyze_view_yolo import AnalyzeYoloView
-from app.feature.analysis.analyze_yolo_controller import AnalyzeYoloController
 from app.feature.debug.debug_view import DebugView
 from app.feature.filter.filter_controller import FilterController
+from app.feature.filter.filter_view import FilterView
 from app.feature.nidaq.nidaq_constants import (
     NI_DAQ_BASE_SAMPLE_RATE_HZ,
     NI_DAQ_DISCOVERY_POLL_INTERVAL_MS,
@@ -72,6 +70,7 @@ class AppController:
         self.app_view = AppView()
         self.stimulus_view = StimulusView()
         self.protocol_view = ProtocolView()
+        self.filter_view = FilterView()
         self.protocol_view.set_max_sample_rate(NI_DAQ_BASE_SAMPLE_RATE_HZ)
         self.about_view = AboutView()
         self.analyze_io_view = AnalyzeIOView()
@@ -84,11 +83,12 @@ class AppController:
         self.app_view.clear_tabs()
         self.app_view.add_tab(self.stimulus_view, "Stimulus\ndesigner")
         self.app_view.add_tab(self.protocol_view, "Protocol")
+        self.app_view.add_tab(self.filter_view, "Filtering")
         self.app_view.add_tab(self.analyze_io_view, "Analyze\nIO")
         self.app_view.add_tab(self.analyze_speed_view, "Analyze\nspeed")
         self.app_view.add_tab(self.analyze_tetanus_view, "Analyze\ntetanus")
         self.app_view.add_tab(self.analyze_yolo_view, "Analyze\nYolo")
-        self.app_view.set_current_tab_index(1)
+        self.app_view.set_current_tab(self.protocol_view)
 
         self.stimulus_controller = StimulusController(
             self.app_model, self.stimulus_view
@@ -96,18 +96,20 @@ class AppController:
         self.protocol_controller = ProtocolController(
             self.app_model, self.protocol_view
         )
-        self.filter_controller = FilterController(self.app_model, self.protocol_view)
-        self.analyze_io_controller = AnalyzeIOController(
-            self.app_model, self.analyze_io_view
+        self.filter_controller = FilterController(self.app_model, self.filter_view)
+
+        tabs = self.app_view.ui.tabWidget
+        self.analyze_io_controller = AnalysisController(
+            self.app_model, self.analyze_io_view, tabs=tabs
         )
-        self.analyze_speed_controller = AnalyzeSpeedController(
-            self.app_model, self.analyze_speed_view
+        self.analyze_speed_controller = AnalysisController(
+            self.app_model, self.analyze_speed_view, tabs=tabs
         )
-        self.analyze_tetanus_controller = AnalyzeTetanusController(
-            self.app_model, self.analyze_tetanus_view
+        self.analyze_tetanus_controller = AnalysisController(
+            self.app_model, self.analyze_tetanus_view, tabs=tabs
         )
-        self.analyze_yolo_controller = AnalyzeYoloController(
-            self.app_model, self.analyze_yolo_view
+        self.analyze_yolo_controller = AnalysisController(
+            self.app_model, self.analyze_yolo_view, tabs=tabs
         )
 
     def restore_preferences(self):
@@ -240,7 +242,7 @@ class AppController:
         config = {}
         metadata_path = Path(filename).with_suffix(".json")
         if metadata_path.exists():
-            state = data_io.read_recording_metadata(metadata_path)
+            state = data_io.read_recording_metadata(metadata_path, row_count=len(df))
             if isinstance(state, str):
                 info_box(message=f"Error loading metadata: {state}").exec()
                 return
@@ -256,16 +258,11 @@ class AppController:
         filename = data_dialog.show_load_json_dialog()
         if filename is None:
             return
-        state = data_io.read_recording_metadata(filename)
+        state = data_io.read_recording_metadata(filename, row_count=len(data))
         if isinstance(state, str):
             info_box(message=f"Error loading metadata: {state}").exec()
             return
         metadata, config = state
-        if "sample_count" in metadata and metadata["sample_count"] != len(data):
-            info_box(
-                message="Error loading metadata: sample count does not match the loaded recording."
-            ).exec()
-            return
         self.app_model.update_recording_metadata(metadata, config)
 
     def save_recording_metadata(self):

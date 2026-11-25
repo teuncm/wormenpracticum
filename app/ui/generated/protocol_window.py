@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'protocol_window.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.11.2
+## Created by: Qt User Interface Compiler version 6.12.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
-    QFormLayout, QHBoxLayout, QLabel, QPushButton,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QHBoxLayout, QLabel,
+    QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout,
+    QWidget)
 
 class Ui_ProtocolWindow(object):
     def setupUi(self, ProtocolWindow):
@@ -79,56 +79,6 @@ class Ui_ProtocolWindow(object):
 
         self.leftLayout.addWidget(self.pushButton)
 
-        self.formLayout_2 = QFormLayout()
-        self.formLayout_2.setObjectName(u"formLayout_2")
-        self.lowpass_label = QLabel(ProtocolWindow)
-        self.lowpass_label.setObjectName(u"lowpass_label")
-
-        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lowpass_label)
-
-        self.lowPassHzDoubleSpinBox = QDoubleSpinBox(ProtocolWindow)
-        self.lowPassHzDoubleSpinBox.setObjectName(u"lowPassHzDoubleSpinBox")
-
-        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lowPassHzDoubleSpinBox)
-
-        self.suppress_label = QLabel(ProtocolWindow)
-        self.suppress_label.setObjectName(u"suppress_label")
-
-        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.suppress_label)
-
-        self.suppress50HzCheckBox = QCheckBox(ProtocolWindow)
-        self.suppress50HzCheckBox.setObjectName(u"suppress50HzCheckBox")
-
-        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.suppress50HzCheckBox)
-
-        self.remove_dc_offset_label = QLabel(ProtocolWindow)
-        self.remove_dc_offset_label.setObjectName(u"remove_dc_offset_label")
-
-        self.formLayout_2.setWidget(2, QFormLayout.ItemRole.LabelRole, self.remove_dc_offset_label)
-
-        self.removeDCOffsetCheckBox = QCheckBox(ProtocolWindow)
-        self.removeDCOffsetCheckBox.setObjectName(u"removeDCOffsetCheckBox")
-
-        self.formLayout_2.setWidget(2, QFormLayout.ItemRole.FieldRole, self.removeDCOffsetCheckBox)
-
-
-        self.leftLayout.addLayout(self.formLayout_2)
-
-        self.filterActionsLayout = QHBoxLayout()
-        self.filterActionsLayout.setObjectName(u"filterActionsLayout")
-        self.pushButton_2 = QPushButton(ProtocolWindow)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-
-        self.filterActionsLayout.addWidget(self.pushButton_2)
-
-        self.recordAndApplyButton = QPushButton(ProtocolWindow)
-        self.recordAndApplyButton.setObjectName(u"recordAndApplyButton")
-
-        self.filterActionsLayout.addWidget(self.recordAndApplyButton)
-
-
-        self.leftLayout.addLayout(self.filterActionsLayout)
-
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.leftLayout.addItem(self.verticalSpacer_2)
@@ -167,11 +117,6 @@ class Ui_ProtocolWindow(object):
         self.actualSampleRateLabel.setText(QCoreApplication.translate("ProtocolWindow", u"0 Hz", None))
         self.nidaqStatusLabel.setText(QCoreApplication.translate("ProtocolWindow", u"Status: NI-DAQ unavailable", None))
         self.pushButton.setText(QCoreApplication.translate("ProtocolWindow", u"Record", None))
-        self.lowpass_label.setText(QCoreApplication.translate("ProtocolWindow", u"Low pass (Hz)", None))
-        self.suppress_label.setText(QCoreApplication.translate("ProtocolWindow", u"Suppress 50Hz", None))
-        self.remove_dc_offset_label.setText(QCoreApplication.translate("ProtocolWindow", u"Remove DC offset", None))
-        self.pushButton_2.setText(QCoreApplication.translate("ProtocolWindow", u"Filter", None))
-        self.recordAndApplyButton.setText(QCoreApplication.translate("ProtocolWindow", u"Record && filter", None))
-        self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Acquired data plot", None))
+        self.title_lanes.setText(QCoreApplication.translate("ProtocolWindow", u"Pin assignments", None))
     # retranslateUi
 

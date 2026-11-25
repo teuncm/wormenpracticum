@@ -126,7 +126,12 @@ class AppModel(QObject):
 
     def update_filtered_data(self, df: pd.DataFrame):
         """Update filtered data with a new dataframe."""
-        if self.filtered_data_df is not None and self.filtered_data_df.equals(df):
+        # Applying an identity filter still replaces the initial raw-data alias.
+        if (
+            self.filtered_data_df is not None
+            and self.filtered_data_df is not self.raw_data_df
+            and self.filtered_data_df.equals(df)
+        ):
             return
 
         self.filtered_data_df = df

@@ -10,7 +10,6 @@ from app.app_model import AppModel
 from app.feature.acquisition.protocol_config import ProtocolConfig
 from app.feature.acquisition.protocol_controller import ProtocolController
 from app.feature.acquisition.protocol_view import PinStateButton, ProtocolView
-from app.feature.filter.filter_controller import FilterController
 
 
 def test_sample_rate_dropdown_updates_rate_and_protocol():
@@ -35,70 +34,6 @@ def test_sample_rate_dropdown_updates_rate_and_protocol():
         assert [combo.itemData(i) for i in range(combo.count())] == expected_dividers
         controller.update_ui_from_model()
         assert view.to_config() == model.protocol_config
-    finally:
-        view.close()
-        view.deleteLater()
-        app.processEvents()
-
-
-def test_record_and_apply_records_before_applying_settings():
-    app = QApplication.instance() or QApplication([])
-    model = AppModel()
-    view = ProtocolView()
-    controller = FilterController(model, view)
-    events = []
-    view.run_requested.connect(lambda: events.append("record"))
-    model.filter_config_changed.connect(lambda: events.append("apply"))
-
-    try:
-        view.ui.lowPassHzDoubleSpinBox.setValue(250.0)
-        view.ui.recordAndApplyButton.click()
-        assert events == ["record", "apply"]
-        assert model.filter_config.low_pass_cutoff_hz == 250.0
-        controller.update_ui_from_model()
-        layout = view.ui.leftLayout
-        assert layout.indexOf(view.ui.pushButton) < layout.indexOf(view.ui.formLayout_2)
-        assert layout.indexOf(view.ui.formLayout_2) < layout.indexOf(
-            view.ui.filterActionsLayout
-        )
-    finally:
-        view.close()
-        view.deleteLater()
-        app.processEvents()
-
-
-def test_filter_settings_apply_only_when_requested():
-    app = QApplication.instance() or QApplication([])
-    model = AppModel()
-    view = ProtocolView()
-    controller = FilterController(model, view)
-
-    try:
-        original_config = model.filter_config
-        view.ui.lowPassHzDoubleSpinBox.setValue(250.0)
-        view.ui.suppress50HzCheckBox.setChecked(False)
-        view.ui.removeDCOffsetCheckBox.setChecked(False)
-        assert model.filter_config == original_config
-
-        view.ui.pushButton_2.click()
-        assert model.filter_config == view.to_filter_config()
-        assert model.filter_config.low_pass_cutoff_hz == 250.0
-
-        view.ui.lowPassHzDoubleSpinBox.setValue(300.0)
-        assert model.filter_config.low_pass_cutoff_hz == 250.0
-        view.ui.lowPassHzDoubleSpinBox.setValue(400.0)
-        view.ui.suppress50HzCheckBox.setChecked(True)
-        view.ui.removeDCOffsetCheckBox.setChecked(True)
-        assert model.filter_config.low_pass_cutoff_hz == 250.0
-        assert not model.filter_config.suppress_50hz
-        assert not model.filter_config.remove_dc_offset
-        view.ui.pushButton_2.click()
-        assert model.filter_config == view.to_filter_config()
-
-        view.ui.lowPassHzDoubleSpinBox.setValue(500.0)
-        assert model.filter_config.low_pass_cutoff_hz == 400.0
-        controller.update_ui_from_model()
-        assert view.ui.lowPassHzDoubleSpinBox.value() == 400.0
     finally:
         view.close()
         view.deleteLater()

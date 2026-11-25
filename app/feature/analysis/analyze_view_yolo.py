@@ -13,7 +13,6 @@ from app.feature.analysis.region_selection import (
     bounded_extrema,
     clear_region_guides,
     draw_region_guides,
-    parse_region_bound,
 )
 from app.feature.analysis.vertical_scale import (
     add_vertical_zoom,
@@ -21,6 +20,7 @@ from app.feature.analysis.vertical_scale import (
     default_total_amplitude,
     vertical_pin_layout,
 )
+from app.shared.recording_metadata import recording_pin_channels
 from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.analyze_yolo_window import Ui_AnalyzeYoloWindow
 
@@ -119,17 +119,14 @@ class AnalyzeYoloView(QWidget):
         self._physical_pins = {}
         self._marker_error = ""
         if data is not None and not data.empty and "t_(s)" in data:
-            mapping = self._metadata.get("pin_channels", {})
-            if not isinstance(mapping, dict):
-                mapping = {}
+            mapping = recording_pin_channels(self._metadata)
             self._channels = [column for column in data if column != "t_(s)"]
             column_order = {
                 column: rank + 1 for rank, column in enumerate(self._channels)
             }
             self._physical_pins = {
-                column: self._physical_pin(
-                    mapping.get(column), column, column_order[column]
-                )
+                column: mapping.get(column)
+                or self._fallback_pin(column, column_order[column])
                 for column in self._channels
             }
             self._channels.sort(key=lambda column: self._physical_pins[column])
@@ -150,14 +147,8 @@ class AnalyzeYoloView(QWidget):
         self.plot_recording()
 
     @staticmethod
-    def _physical_pin(value: object, column: str, fallback_order: int) -> int:
-        """Resolve a positive physical pin ID, falling back to stable AI IDs."""
-        try:
-            numeric = float(value)
-            if np.isfinite(numeric) and numeric >= 1 and numeric.is_integer():
-                return int(numeric)
-        except (TypeError, ValueError):
-            pass
+    def _fallback_pin(column: str, fallback_order: int) -> int:
+        """Infer a pin number from the AI channel name or original CSV order."""
         match = re.fullmatch(r"ai(\d+)(?:_.*)?", column)
         return int(match.group(1)) + 1 if match else fallback_order
 
@@ -194,42 +185,19 @@ class AnalyzeYoloView(QWidget):
         self.update_peak_markers()
         self.update_guide_lines()
 
-    @staticmethod
-    def _parse_region_bound(text: str) -> float | None:
-        """Parse a blank or finite nonnegative millisecond value."""
-        return parse_region_bound(text)
-
     def _set_region_from_click(self, event) -> None:
-        """Set a region bound from a click inside a displayed stimulus trace."""
-        if event.button() not in (
-            Qt.MouseButton.LeftButton,
-            Qt.MouseButton.RightButton,
-        ):
-            return
-        view_box = self.plot_widget.getPlotItem().getViewBox()
-        scene_position = event.scenePos()
-        if not view_box.sceneBoundingRect().contains(scene_position):
-            return
-        timestamp = float(view_box.mapSceneToView(scene_position).x())
-        local_time = self._local_stimulus_time(timestamp)
-        if local_time is None:
-            return
-        side = "start" if event.button() == Qt.MouseButton.LeftButton else "end"
-        self._region_editor.set_bound_ms(side, local_time * 1000)
+        self._region_editor.set_bound_from_click(
+            event, self.plot_widget.getViewBox(), self._local_stimulus_time
+        )
 
     def _local_stimulus_time(self, timestamp: float) -> float | None:
         """Map an original timestamp to local seconds within a displayed stimulus."""
-        size = self._metadata.get("stimulus_size_samples")
-        if type(size) is not int or size <= 0:
-            return None
-        times = self._data["t_(s)"].to_numpy() if self._data is not None else []
         for response in self._responses:
             if response.number not in self._displayed_stimuli:
                 continue
-            start = (response.number - 1) * size
-            end = min(start + len(response.times_s), len(times))
-            if start < end and times[start] <= timestamp <= times[end - 1]:
-                return timestamp - float(times[start])
+            times = response.times_s
+            if times[0] <= timestamp <= times[-1]:
+                return timestamp - float(times[0])
         return None
 
     def _apply_pin_selection(self) -> None:
@@ -269,9 +237,9 @@ class AnalyzeYoloView(QWidget):
         self, times: np.ndarray, samples: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
         """Join selected stimulus slices with NaN separators to preserve gaps."""
-        size = self._metadata.get("stimulus_size_samples")
-        if type(size) is not int or size <= 0:
+        if not self._responses:
             return times, samples
+        size = self._metadata["stimulus_size_samples"]
         time_parts = []
         sample_parts = []
         previous_number = None
@@ -345,9 +313,6 @@ class AnalyzeYoloView(QWidget):
             )
             return
         channel_spacing, offsets = vertical_pin_layout(amplitude, channel_count)
-        mapping = self._metadata.get("pin_channels", {})
-        if not isinstance(mapping, dict):
-            mapping = {}
         for rank, column in enumerate(displayed_channels):
             offset = offsets[rank]
             samples = self._data[column].to_numpy()
@@ -364,7 +329,7 @@ class AnalyzeYoloView(QWidget):
                 )
             )
             pin_id = self._physical_pins[column]
-            pin = f"Pin {mapping[column]}" if column in mapping else f"Pin {pin_id}"
+            pin = f"Pin {pin_id}"
             label = pg.TextItem(pin, color="k", anchor=(1, 0.5))
             label.setPos(first_time, offset)
             self.plot_widget.addItem(label, ignoreBounds=True)

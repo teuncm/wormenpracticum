@@ -19,6 +19,7 @@ from app.feature.stimulus.signal import get_time_frame_s, quantize_time_point
 from app.feature.stimulus.stimulus_config import StimulusConfig
 from app.shared import data_io
 from app.shared.constants import DEFAULT_LIMIT_V
+from app.shared.recording_metadata import build_recording_metadata
 
 
 def gen_propagation_recording(
@@ -69,9 +70,11 @@ def gen_propagation_recording(
     response = np.sin(np.linspace(0, 2 * np.pi, width + 1))
     response[[0, -1]] = 0.0
     response *= amplitude_v / np.max(np.abs(response))
-    pin_channels = {f"ai{wire}_(V)": wire + 1 for wire in range(16)}
     data = {"t_(s)": get_time_frame_s(size * stimulus_count, rate)}
-    for wire, column in enumerate(pin_channels):
+    metadata = build_recording_metadata(
+        "SyntheticPropagationDAQ", rate, size, stimulus_count, len(data["t_(s)"])
+    )
+    for wire, column in enumerate(metadata["pin_channels"]):
         samples = np.zeros(size)
         offset = start + wire * delay
         samples[offset : offset + len(response)] = response
@@ -85,22 +88,15 @@ def gen_propagation_recording(
         n_steps=stimulus_count,
     ).to_dict()
     protocol = ProtocolConfig(0, 1, list(range(3, 17)), sample_rate_divider)
+    metadata["propagation"] = {
+        "shape": "full_sine",
+        "amplitude_v": amplitude_v,
+        "start_sample": start,
+        "peak_width_samples": width,
+        "wire_delay_samples": delay,
+    }
     payload = {
-        "metadata": {
-            "device_name": "SyntheticPropagationDAQ",
-            "sample_rate_hz": rate,
-            "stimulus_size_samples": size,
-            "stimulus_count": stimulus_count,
-            "sample_count": size * stimulus_count,
-            "pin_channels": pin_channels,
-            "propagation": {
-                "shape": "full_sine",
-                "amplitude_v": amplitude_v,
-                "start_sample": start,
-                "peak_width_samples": width,
-                "wire_delay_samples": delay,
-            },
-        },
+        "metadata": metadata,
         "experiment_config": {
             "stim_config": stim_config,
             "protocol_config": asdict(protocol),

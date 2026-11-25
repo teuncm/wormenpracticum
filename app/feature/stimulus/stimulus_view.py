@@ -1,8 +1,12 @@
+from itertools import pairwise
+
+import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QPointF, QSize, Qt, Signal
 from PySide6.QtGui import QCursor, QPainterPath
 from PySide6.QtWidgets import (
     QDialog,
+    QGraphicsRectItem,
     QSizePolicy,
     QTabBar,
 )
@@ -68,9 +72,9 @@ class PulseHandle(pg.TargetItem):
 
     dragged = Signal(QPointF)
 
-    def __init__(self, **kwargs):
+    def __init__(self, cursor: Qt.CursorShape, **kwargs):
         super().__init__(**kwargs)
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setCursor(cursor)
         self.setAcceptedMouseButtons(Qt.MouseButton.LeftButton)
 
     def shape(self) -> QPainterPath:
@@ -174,8 +178,12 @@ class StimulusView(QDialog):
         self.ui.waveformLayout.addWidget(frame)
         self.ui.rightLayout.setStretchFactor(self.ui.waveformLayout, 1)
         self.plotWidget = plot
-        self.start_handle = PulseHandle(size=13, symbol="o", pen="b", brush="w")
-        self.end_handle = PulseHandle(size=12, symbol="s", pen="b", brush="w")
+        self.start_handle = PulseHandle(
+            Qt.CursorShape.SizeAllCursor, size=13, symbol="o", pen="b", brush="w"
+        )
+        self.end_handle = PulseHandle(
+            Qt.CursorShape.SizeHorCursor, size=12, symbol="s", pen="b", brush="w"
+        )
         for handle, tooltip in (
             (self.start_handle, "Drag to change pulse start and amplitude"),
             (self.end_handle, "Drag left or right to change pulse duration"),
@@ -265,16 +273,16 @@ class StimulusView(QDialog):
                 self.plotWidget.removeItem(item)
 
     def position_pulse_handles(
-        self, start_s: float, end_s: float, top_v: float, middle_v: float
+        self, start_s: float, end_s: float, top_v: float
     ) -> None:
-        """Place the handles at the corners of the highlighted pulse."""
+        """Place the amplitude handle at the pulse level and the duration handle at zero."""
         self.start_handle.setPos(start_s, top_v)
         self.start_handle.show()
-        self.show_duration_handle(end_s, middle_v)
+        self.show_duration_handle(end_s)
 
-    def show_duration_handle(self, end_s: float, middle_v: float) -> None:
-        """Expose the pulse endpoint even when there is no waveform to highlight."""
-        self.end_handle.setPos(end_s, middle_v)
+    def show_duration_handle(self, end_s: float) -> None:
+        """Expose the pulse endpoint on the baseline, even for a collapsed pulse."""
+        self.end_handle.setPos(end_s, 0.0)
         self.end_handle.show()
 
     def hide_pulse_handles(self) -> None:
@@ -303,6 +311,33 @@ class StimulusView(QDialog):
         """Mark the highlighted pulse's visible start and end."""
         for boundary in (start_s, end_s):
             self.plotWidget.addItem(create_guide_line(boundary, 90, color="b"))
+
+    def add_pulse_hover_region(
+        self, samples_v: np.ndarray, sample_rate_hz: float
+    ) -> None:
+        """Show a pointing hand between each visible pulse phase and zero."""
+        if not samples_v.any():
+            return
+
+        # Merge adjacent samples at the same level and use the sampled endpoints.
+        changes = np.flatnonzero(samples_v[1:] != samples_v[:-1]) + 1
+        edges = np.r_[0, changes, len(samples_v)]
+        for start, end in pairwise(edges):
+            level = float(samples_v[start])
+            if not level:
+                continue
+
+            # The region only supplies the cursor. Clicks go through to the view box.
+            region = QGraphicsRectItem(
+                start / sample_rate_hz,
+                min(0.0, level),
+                (end - start) / sample_rate_hz,
+                abs(level),
+            )
+            region.setPen(pg.mkPen(None))
+            region.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+            region.setCursor(Qt.CursorShape.PointingHandCursor)
+            self.plotWidget.addItem(region, ignoreBounds=True)
 
     def draw_voltage_limit(self, limit_v):
         self.plotWidget.addItem(

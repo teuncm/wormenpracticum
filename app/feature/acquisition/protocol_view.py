@@ -13,7 +13,6 @@ from PySide6.QtWidgets import (
 
 from app.feature.acquisition.protocol_config import SAMPLE_RATE_DIVIDERS, ProtocolConfig
 from app.feature.acquisition.protocol_mapping import encode_stim_channel_pair
-from app.feature.filter.filter_config import FilterConfig
 from app.feature.nidaq.nidaq_constants import NI_DAQ_UNAVAILABLE_STATUS
 from app.shared.constants import (
     PLOT_PIN_SELECTED_PEN_WIDTH,
@@ -103,7 +102,6 @@ class PinStateButton(QPushButton):
 class ProtocolView(QWidget):
     run_requested = Signal()
     protocolChanged = Signal()
-    filterChanged = Signal()
 
     def __init__(self):
         super().__init__()
@@ -125,11 +123,6 @@ class ProtocolView(QWidget):
         self.ui.sampleRateDividerComboBox.currentIndexChanged.connect(
             self._on_sample_rate_divider_changed
         )
-        self.ui.lowPassHzDoubleSpinBox.setRange(0.0, 100000.0)
-        self.ui.lowPassHzDoubleSpinBox.setDecimals(2)
-        self.ui.pushButton_2.clicked.connect(self.filterChanged)
-        self.ui.recordAndApplyButton.clicked.connect(self.request_record_and_apply)
-
         self.setup_widgets()
         self.plot_pins()
 
@@ -277,25 +270,6 @@ class ProtocolView(QWidget):
         self._update_sample_rate_labels()
         self.protocolChanged.emit()
 
-    def update_filter_from_config(self, filter_config: FilterConfig):
-        """Update protocol filter controls from a config object."""
-        with Blocker(
-            self.ui.lowPassHzDoubleSpinBox,
-            self.ui.suppress50HzCheckBox,
-            self.ui.removeDCOffsetCheckBox,
-        ):
-            self.ui.lowPassHzDoubleSpinBox.setValue(filter_config.low_pass_cutoff_hz)
-            self.ui.suppress50HzCheckBox.setChecked(filter_config.suppress_50hz)
-            self.ui.removeDCOffsetCheckBox.setChecked(filter_config.remove_dc_offset)
-
-    def to_filter_config(self) -> FilterConfig:
-        """Read the protocol filter controls into a config object."""
-        return FilterConfig(
-            low_pass_cutoff_hz=self.ui.lowPassHzDoubleSpinBox.value(),
-            suppress_50hz=self.ui.suppress50HzCheckBox.isChecked(),
-            remove_dc_offset=self.ui.removeDCOffsetCheckBox.isChecked(),
-        )
-
     def plot_pins(self):
         """Match each pin bar to its button without changing the plot range."""
         for button, bar in zip(self.pinButtons, self._pin_bars):
@@ -308,11 +282,6 @@ class ProtocolView(QWidget):
 
     def request_run(self):
         self.run_requested.emit()
-
-    def request_record_and_apply(self):
-        """Record synchronously, then apply the current filter settings."""
-        self.run_requested.emit()
-        self.filterChanged.emit()
 
     def get_selected_stim_channels(self):
         return self._positive_channel + 1, self._negative_channel + 1

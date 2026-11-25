@@ -21,6 +21,7 @@ from app.feature.stimulus.stimulus_config import StimulusConfig
 from app.feature.stimulus.stimulus_generator import StimulusGenerator
 from app.shared import data_io
 from app.shared.constants import DEFAULT_LIMIT_V
+from app.shared.recording_metadata import build_recording_metadata
 
 
 def gen_dummy_recording(
@@ -62,12 +63,15 @@ def gen_dummy_recording(
         raise ValueError("duration_s must produce at least one sample per stimulus")
     generator = StimulusGenerator(stim_config)
     _, timestamps = generator.sample_all(rate)
+    metadata = build_recording_metadata(
+        "SyntheticDAQ", rate, stimulus_size, stimulus_count, len(timestamps)
+    )
+
     sample_indices = np.arange(len(timestamps))
     local_times = (sample_indices % stimulus_size) / rate
     step_amplitudes = (sample_indices // stimulus_size + 1) / stimulus_count
-    pin_channels = {f"ai{i}_(V)": i + 1 for i in range(16)}
     data = {"t_(s)": timestamps}
-    for index, column in enumerate(pin_channels):
+    for index, column in enumerate(metadata["pin_channels"]):
         # Frequencies stay below Nyquist at every supported divider.
         frequency = rate * (index + 1) / 128
         data[column] = (
@@ -79,14 +83,7 @@ def gen_dummy_recording(
 
     config = stim_config.to_dict()
     payload = {
-        "metadata": {
-            "device_name": "SyntheticDAQ",
-            "sample_rate_hz": rate,
-            "stimulus_size_samples": stimulus_size,
-            "stimulus_count": stimulus_count,
-            "sample_count": len(timestamps),
-            "pin_channels": pin_channels,
-        },
+        "metadata": metadata,
         "experiment_config": {
             "stim_config": config,
             "protocol_config": asdict(protocol),

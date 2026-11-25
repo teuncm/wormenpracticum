@@ -194,6 +194,7 @@ class StimulusController:
         cur_step = self.stimulus_view.ui.stepSlider.value()
         y, t = self.app_model.stim_generator.sample_at_idx(train_plot_sr, cur_step)
         self.stimulus_view.update_train_plot((t, y), color="k", width=1)
+        self.stimulus_view.add_pulse_hover_region(y, train_plot_sr)
 
         cur_tab = self.stimulus_view.ui.segmentTabWidget.currentIndex()
         pulses = self.app_model.stim_generator.stims[cur_step].pulses
@@ -206,7 +207,7 @@ class StimulusController:
                 if 0 <= pulse.start_s <= target_dur:
                     # A collapsed pulse has only an endpoint at its configured start.
                     self.stimulus_view.start_handle.hide()
-                    self.stimulus_view.show_duration_handle(pulse.start_s, 0.0)
+                    self.stimulus_view.show_duration_handle(pulse.start_s)
             else:
                 self._plot_highlighted_pulse(pulse, train_plot_sr, cur_step, cur_tab)
 
@@ -230,5 +231,4 @@ class StimulusController:
         limit = generator.config.limit_v
         level = max(-limit, min(pulse.amp_v, limit))
         top_v = level if pulse.is_monophasic else abs(level)
-        middle_v = level / 2 if pulse.is_monophasic else 0.0
-        self.stimulus_view.position_pulse_handles(t[0], end_s, top_v, middle_v)
+        self.stimulus_view.position_pulse_handles(t[0], end_s, top_v)

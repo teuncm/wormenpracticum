@@ -9,13 +9,13 @@ from app.feature.analysis.region_selection import (
     bounded_extrema,
     clear_region_guides,
     draw_region_guides,
-    parse_region_bound,
 )
 from app.feature.analysis.vertical_scale import (
     add_vertical_zoom,
     apply_vertical_range,
     default_total_amplitude,
 )
+from app.shared.recording_metadata import recording_pin_channels
 from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.analyze_io_window import Ui_AnalyzeIOWindow
 
@@ -70,6 +70,7 @@ class AnalyzeIOView(QWidget):
         self._data: pd.DataFrame | None = None
         self._channels: list[str] = []
         self._metadata = {}
+        self._pin_channels = {}
         self._config = {}
         self._amplitude_initialized = False
         self.pin_selector.currentIndexChanged.connect(self._select_pin)
@@ -110,6 +111,7 @@ class AnalyzeIOView(QWidget):
         selected = self._channels[index] if self._channels else None
         self._data = data
         self._metadata = metadata or {}
+        self._pin_channels = recording_pin_channels(self._metadata)
         self._config = config or {}
         self._channels = (
             [column for column in data.columns if column != "t_(s)"]
@@ -125,7 +127,7 @@ class AnalyzeIOView(QWidget):
             self.ui.channelSlider.setEnabled(len(self._channels) > 1)
             self.pin_selector.clear()
             for column in self._channels:
-                pin = self._metadata.get("pin_channels", {}).get(column)
+                pin = self._pin_channels.get(column)
                 self.pin_selector.addItem(f"Pin {pin}: {column}" if pin else column)
             self.pin_selector.setCurrentIndex(self.ui.channelSlider.value() - 1)
             self.pin_selector.setEnabled(bool(self._channels))
@@ -163,7 +165,7 @@ class AnalyzeIOView(QWidget):
         column = self._channels[index]
         with Blocker(self.pin_selector):
             self.pin_selector.setCurrentIndex(index)
-        pin = self._metadata.get("pin_channels", {}).get(column)
+        pin = self._pin_channels.get(column)
         self.ui.channelLabel.setText(
             f"Pin {pin}: {column}" if pin else f"Channel {index + 1:02d}: {column}"
         )
@@ -211,11 +213,6 @@ class AnalyzeIOView(QWidget):
         self.update_peak_markers()
         self.update_guide_lines()
 
-    @staticmethod
-    def _parse_region_bound(text: str) -> float | None:
-        """Keep the common bound parser available for view-level callers."""
-        return parse_region_bound(text)
-
     def _local_stimulus_time(self, timestamp: float) -> float | None:
         """Map a full recording timestamp to a stimulus-local time."""
         for response in self.responses:
@@ -224,22 +221,9 @@ class AnalyzeIOView(QWidget):
         return None
 
     def _set_region_from_click(self, event) -> None:
-        """Use left and right plot clicks to set local lower and upper bounds."""
-        if event.button() not in (
-            Qt.MouseButton.LeftButton,
-            Qt.MouseButton.RightButton,
-        ):
-            return
-        view_box = self.plot_widget.getPlotItem().getViewBox()
-        scene_position = event.scenePos()
-        if not view_box.sceneBoundingRect().contains(scene_position):
-            return
-        timestamp = float(view_box.mapSceneToView(scene_position).x())
-        local_time = self._local_stimulus_time(timestamp)
-        if local_time is None:
-            return
-        side = "start" if event.button() == Qt.MouseButton.LeftButton else "end"
-        self._region_editor.set_bound_ms(side, local_time * 1000)
+        self._region_editor.set_bound_from_click(
+            event, self.plot_widget.getViewBox(), self._local_stimulus_time
+        )
 
     def update_guide_lines(self) -> None:
         """Draw optional stimulus starts and local-time bounds for all responses."""
@@ -271,7 +255,7 @@ class AnalyzeIOView(QWidget):
         if not self.responses:
             return
         column = self._channels[self.ui.channelSlider.value() - 1]
-        pin = self._metadata.get("pin_channels", {}).get(column)
+        pin = self._pin_channels.get(column)
         selected = {
             "min": self.ui.minCheckBox.isChecked(),
             "max": self.ui.maxCheckBox.isChecked(),

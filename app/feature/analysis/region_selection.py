@@ -1,5 +1,7 @@
 """Shared peak-detection region validation, extrema, and plot guides."""
 
+from collections.abc import Callable
+
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QObject, Qt, Signal
@@ -73,6 +75,27 @@ class DetectionRegionEditor(QObject):
             raise ValueError("Bound side must be 'start' or 'end'.")
         edit.setText(f"{value_ms:.12g}")
         return self.apply()
+
+    def set_bound_from_click(
+        self,
+        event,
+        view_box: pg.ViewBox,
+        local_time_at: Callable[[float], float | None],
+    ) -> None:
+        """Set a bound from a plot click when the view maps it to a visible stimulus."""
+        side = {
+            Qt.MouseButton.LeftButton: "start",
+            Qt.MouseButton.RightButton: "end",
+        }.get(event.button())
+        position = event.scenePos()
+        if side is None or not view_box.sceneBoundingRect().contains(position):
+            return
+
+        # The full-recording and single-stimulus plots use different x coordinates.
+        timestamp = float(view_box.mapSceneToView(position).x())
+        local_time = local_time_at(timestamp)
+        if local_time is not None:
+            self.set_bound_ms(side, local_time * 1000)
 
 
 def bounded_extrema(

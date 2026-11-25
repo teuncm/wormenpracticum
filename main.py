@@ -40,7 +40,7 @@ def main():
     controller.app_view.setWindowIcon(app_icon)
     if args.recording is not None:
         controller.load_experiment_data(str(args.recording))
-        controller.app_view.set_current_tab_index(2)
+        controller.app_view.set_current_tab(controller.analyze_io_view)
     controller.start()
 
     sys.exit(app.exec())

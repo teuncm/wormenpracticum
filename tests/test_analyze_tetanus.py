@@ -7,7 +7,7 @@ import pytest
 from PySide6.QtWidgets import QApplication, QComboBox
 
 from app.app_model import AppModel
-from app.feature.analysis.analyze_tetanus_controller import AnalyzeTetanusController
+from app.feature.analysis.analysis_controller import AnalysisController
 from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
 from tools.worm_recording_gen import gen_dummy_recording
 
@@ -17,7 +17,7 @@ def tetanus_analysis():
     app = QApplication.instance() or QApplication([])
     model = AppModel()
     view = AnalyzeTetanusView()
-    controller = AnalyzeTetanusController(model, view)
+    controller = AnalysisController(model, view)
     yield model, view, controller
     view.close()
     view.deleteLater()

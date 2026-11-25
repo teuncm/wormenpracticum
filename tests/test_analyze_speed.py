@@ -7,7 +7,7 @@ import pytest
 from PySide6.QtWidgets import QApplication
 
 from app.app_model import AppModel
-from app.feature.analysis.analyze_speed_controller import AnalyzeSpeedController
+from app.feature.analysis.analysis_controller import AnalysisController
 from app.feature.analysis.analyze_view_speed import AnalyzeSpeedView
 from tools.worm_recording_gen import gen_dummy_recording
 
@@ -17,7 +17,7 @@ def speed_analysis():
     app = QApplication.instance() or QApplication([])
     model = AppModel()
     view = AnalyzeSpeedView()
-    controller = AnalyzeSpeedController(model, view)
+    controller = AnalysisController(model, view)
     yield model, view, controller
     view.close()
     view.deleteLater()

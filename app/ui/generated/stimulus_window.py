@@ -141,7 +141,7 @@ class Ui_StimulusWindow(object):
         StimulusWindow.setWindowTitle(QCoreApplication.translate("StimulusWindow", u"Stimulus Editor", None))
         self.title_stimulus.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus parameters", None))
         self.nLabel.setText(QCoreApplication.translate("StimulusWindow", u"Number of stimuli", None))
-        self.durLabel.setText(QCoreApplication.translate("StimulusWindow", u"Total duration (s)", None))
+        self.durLabel.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus duration (s)", None))
         self.title_pulse.setText(QCoreApplication.translate("StimulusWindow", u"Pulse parameters", None))
         self.add_pulse_button.setText(QCoreApplication.translate("StimulusWindow", u"Add pulse", None))
         self.title_plot.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus plot", None))

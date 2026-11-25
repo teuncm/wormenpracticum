@@ -13,6 +13,7 @@ from app.feature.nidaq.nidaq_constants import (
     NI_DAQ_BASE_SAMPLE_RATE_HZ,
     NI_DAQ_UNAVAILABLE_STATUS,
 )
+from app.shared.recording_metadata import build_recording_metadata
 
 
 class NidaqController:
@@ -57,15 +58,13 @@ class NidaqController:
             "stim_config": generator.config.to_dict(),
             "protocol_config": asdict(protocol),
         }
-        recording_metadata = {
-            "device_name": self.nidaq_model.device_name,
-            "sample_rate_hz": sr,
-            "stimulus_size_samples": generator.config.stim.n_samples(sr),
-            "stimulus_count": len(generator.stims),
-            "sample_count": n_samples,
-            # Keep the existing CSV names; physical pin numbers are one-based.
-            "pin_channels": {f"ai{i}_(V)": i + 1 for i in range(16)},
-        }
+        recording_metadata = build_recording_metadata(
+            self.nidaq_model.device_name,
+            sample_rate_hz=sr,
+            stimulus_size_samples=generator.config.stim.n_samples(sr),
+            stimulus_count=len(generator.stims),
+            sample_count=n_samples,
+        )
 
         routing_word, routing_flags = self.generate_routing_mask(
             positive_channel=protocol.positive_channel + 1,

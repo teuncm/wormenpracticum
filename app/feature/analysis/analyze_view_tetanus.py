@@ -9,7 +9,6 @@ from app.feature.analysis.region_selection import (
     bounded_extrema,
     clear_region_guides,
     draw_region_guides,
-    parse_region_bound,
 )
 from app.feature.analysis.vertical_scale import (
     add_vertical_zoom,
@@ -17,6 +16,7 @@ from app.feature.analysis.vertical_scale import (
     default_total_amplitude,
     vertical_pin_layout,
 )
+from app.shared.recording_metadata import recording_pin_channels
 from app.shared.view_helpers import Blocker, create_plot_widget, setup_ui_custom
 from app.ui.generated.analyze_tetanus_window import Ui_AnalyzeTetanusWindow
 
@@ -89,7 +89,7 @@ class AnalyzeTetanusView(QWidget):
         self._responses = []
         self._marker_error = ""
         if data is not None and not data.empty and "t_(s)" in data:
-            mapping = self._metadata.get("pin_channels", {})
+            mapping = recording_pin_channels(self._metadata)
             self._channels = [column for column in data if column != "t_(s)"]
             column_order = {
                 column: rank + 1 for rank, column in enumerate(self._channels)
@@ -142,7 +142,7 @@ class AnalyzeTetanusView(QWidget):
             self.ui.amplitudeSpinBox.value()
         )
         spacing, offsets = vertical_pin_layout(amplitude, len(self._channels))
-        mapping = self._metadata.get("pin_channels", {})
+        mapping = recording_pin_channels(self._metadata)
         for rank, column in enumerate(self._channels):
             offset = offsets[rank]
             samples = self._data[column].to_numpy()
@@ -237,11 +237,6 @@ class AnalyzeTetanusView(QWidget):
         self.update_peak_markers()
         self.update_guide_lines()
 
-    @staticmethod
-    def _parse_region_bound(text: str) -> float | None:
-        """Keep the common bound parser available for view-level callers."""
-        return parse_region_bound(text)
-
     def _local_stimulus_time(self, timestamp: float) -> float | None:
         """Map a full recording timestamp to a stimulus-local time."""
         for response in self._responses:
@@ -250,22 +245,9 @@ class AnalyzeTetanusView(QWidget):
         return None
 
     def _set_region_from_click(self, event) -> None:
-        """Use left and right plot clicks to set local lower and upper bounds."""
-        if event.button() not in (
-            Qt.MouseButton.LeftButton,
-            Qt.MouseButton.RightButton,
-        ):
-            return
-        view_box = self.plot_widget.getPlotItem().getViewBox()
-        scene_position = event.scenePos()
-        if not view_box.sceneBoundingRect().contains(scene_position):
-            return
-        timestamp = float(view_box.mapSceneToView(scene_position).x())
-        local_time = self._local_stimulus_time(timestamp)
-        if local_time is None:
-            return
-        side = "start" if event.button() == Qt.MouseButton.LeftButton else "end"
-        self._region_editor.set_bound_ms(side, local_time * 1000)
+        self._region_editor.set_bound_from_click(
+            event, self.plot_widget.getViewBox(), self._local_stimulus_time
+        )
 
     def update_guide_lines(self) -> None:
         """Draw optional stimulus starts and local-time bounds for all responses."""

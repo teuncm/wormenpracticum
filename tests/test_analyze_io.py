@@ -8,7 +8,7 @@ import pytest
 from PySide6.QtWidgets import QApplication
 
 from app.app_model import AppModel
-from app.feature.analysis.analyze_io_controller import AnalyzeIOController
+from app.feature.analysis.analysis_controller import AnalysisController
 from app.feature.analysis.analyze_view_io import AnalyzeIOView
 from app.feature.analysis.io_recording import StimulusResponse, split_stimulus_responses
 from tools.worm_recording_gen import gen_dummy_recording
@@ -20,7 +20,7 @@ def io_analysis():
     app = QApplication.instance() or QApplication([])
     model = AppModel()
     view = AnalyzeIOView()
-    controller = AnalyzeIOController(model, view)
+    controller = AnalysisController(model, view)
     yield model, view, controller
     view.close()
     view.deleteLater()

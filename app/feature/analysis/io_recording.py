@@ -8,6 +8,7 @@ import pandas as pd
 from app.feature.stimulus.pulse import Pulse
 from app.feature.stimulus.stimulus_config import StimulusConfig
 from app.feature.stimulus.stimulus_generator import StimulusGenerator
+from app.shared.recording_metadata import stimulus_layout
 
 
 @dataclass
@@ -40,17 +41,7 @@ def split_stimulus_responses(
     data: pd.DataFrame, column: str, metadata: dict, config: dict
 ) -> list[StimulusResponse]:
     """Use recorded sample boundaries and settings, never the live designer state."""
-    size = metadata.get("stimulus_size_samples")
-    count = metadata.get("stimulus_count")
-    rate = metadata.get("sample_rate_hz")
-    if type(size) is not int or size <= 0 or type(count) is not int or count <= 0:
-        raise ValueError("Stimulus size and count are missing or invalid.")
-    if not isinstance(rate, (int, float)) or not np.isfinite(rate) or rate <= 0:
-        raise ValueError("Recorded sample rate is missing or invalid.")
-    if len(data) != size * count or metadata.get("sample_count", len(data)) != len(
-        data
-    ):
-        raise ValueError("Recorded samples do not match the stimulus boundaries.")
+    size, count, rate = stimulus_layout(metadata, len(data))
 
     voltages = [None] * count
     if "stim_config" in config:

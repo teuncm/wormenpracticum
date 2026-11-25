@@ -238,9 +238,10 @@ class AppView(QMainWindow):
 
         return frame
 
-    def set_current_tab_index(self, index: int):
-        self.ui.tabWidget.setCurrentIndex(index)
-        self._update_window_title()
+    def set_current_tab(self, widget: QWidget) -> None:
+        """Select a tab by its content widget, independent of tab order."""
+        # add_tab wraps each content widget in the frame owned by QTabWidget.
+        self.ui.tabWidget.setCurrentWidget(widget.parentWidget())
 
     def _update_window_title(self, index: int | None = None):
         if index is None:

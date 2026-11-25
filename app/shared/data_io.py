@@ -2,6 +2,8 @@ import json
 
 import pandas as pd
 
+from app.shared.recording_metadata import validate_recording_metadata
+
 
 def write_data(file_path, df) -> None | str:
     """Write experiment data to a CSV file.
@@ -60,7 +62,9 @@ def read_metadata(file_path) -> dict | str:
         return str(e)
 
 
-def read_recording_metadata(file_path) -> tuple[dict, dict] | str:
+def read_recording_metadata(
+    file_path, *, row_count: int | None = None
+) -> tuple[dict, dict] | str:
     """Read the existing recording JSON wrapper into metadata and saved settings."""
     state = read_metadata(file_path)
     if isinstance(state, str):
@@ -74,7 +78,13 @@ def read_recording_metadata(file_path) -> tuple[dict, dict] | str:
         )
     ):
         return "Invalid recording format."
+    metadata = state["metadata"]
+    try:
+        validate_recording_metadata(metadata, row_count)
+    except ValueError as exc:
+        return str(exc)
+
     config = dict(state.get("experiment_config", {}))
     if "stim_config" in state:
         config["stim_config"] = state["stim_config"]
-    return state["metadata"], config
+    return metadata, config
