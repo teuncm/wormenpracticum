@@ -177,6 +177,8 @@ def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
         assert view.start_handle.isVisible() and view.end_handle.isVisible()
         assert view.start_handle.pos().y() == pytest.approx(0.6)
         assert view.end_handle.pos().y() == pytest.approx(0.0)
+        # A manual zoom must survive both the drag update and its release.
+        view.plotWidget.setYRange(-0.9, 0.9, padding=0)
         original_range = view.plotWidget.viewRange()
         tab = view.ui.segmentTabWidget.currentWidget()
 
@@ -186,6 +188,7 @@ def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
         assert view.plotWidget.viewRange() == original_range
         view.start_handle.moving = False
         view.start_handle.sigPositionChangeFinished.emit(view.start_handle)
+        assert view.plotWidget.viewRange() == original_range
 
         view.end_handle.dragged.emit(QPointF(0.015, 0.4))
         pulse = model.stim_config.stim.pulses[0]

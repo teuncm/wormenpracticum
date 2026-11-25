@@ -35,9 +35,8 @@ class StimulusController:
             handle.sigPositionChangeFinished.connect(self._finish_pulse_drag)
 
     def _finish_pulse_drag(self, *_):
-        """Refresh handle visibility and fit the edited sequence after release."""
+        """Refresh handle visibility without changing the user's view on release."""
         self.update_plot()
-        self._fit_preview_axes()
 
     def _on_model_stim_config_changed(self):
         """Refresh the preview and fit its axes when the sequence changes."""

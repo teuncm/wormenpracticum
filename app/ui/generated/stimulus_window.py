@@ -91,6 +91,11 @@ class Ui_StimulusWindow(object):
 
         self.rightLayout = QVBoxLayout()
         self.rightLayout.setObjectName(u"rightLayout")
+        self.title_plot = QLabel(StimulusWindow)
+        self.title_plot.setObjectName(u"title_plot")
+
+        self.rightLayout.addWidget(self.title_plot)
+
         self.waveformLayout = QVBoxLayout()
         self.waveformLayout.setObjectName(u"waveformLayout")
 
@@ -139,6 +144,7 @@ class Ui_StimulusWindow(object):
         self.durLabel.setText(QCoreApplication.translate("StimulusWindow", u"Total duration (s)", None))
         self.title_pulse.setText(QCoreApplication.translate("StimulusWindow", u"Pulse parameters", None))
         self.add_pulse_button.setText(QCoreApplication.translate("StimulusWindow", u"Add pulse", None))
+        self.title_plot.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus plot", None))
         self.highlight_selected_pulse_checkbox.setText(QCoreApplication.translate("StimulusWindow", u"Highlight selected pulse", None))
         self.show_voltage_boundary_checkbox.setText(QCoreApplication.translate("StimulusWindow", u"Show voltage limit (1.5V)", None))
         self.stimulusPositionLabel.setText(QCoreApplication.translate("StimulusWindow", u"Stimulus 1 of 1", None))

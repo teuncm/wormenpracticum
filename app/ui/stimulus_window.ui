@@ -115,6 +115,13 @@
    <item>
     <layout class="QVBoxLayout" name="rightLayout">
      <item>
+      <widget class="QLabel" name="title_plot">
+       <property name="text">
+        <string>Stimulus plot</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <layout class="QVBoxLayout" name="waveformLayout"/>
      </item>
      <item>
