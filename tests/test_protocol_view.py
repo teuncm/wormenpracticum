@@ -4,6 +4,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 import pyqtgraph as pg
+from PySide6.QtTest import QSignalSpy, QTest
 from PySide6.QtWidgets import QApplication, QPushButton
 
 from app.app_model import AppModel
@@ -112,6 +113,45 @@ def test_pin_colors_and_selection_keep_plot_range_stable(monkeypatch):
         app.processEvents()
         assert bars[0].opts["pen"].color() == pg.mkColor("#c92a2a")
         np.testing.assert_allclose(view.plotWidget.viewRange(), original_range)
+    finally:
+        view.close()
+        view.deleteLater()
+        app.processEvents()
+
+
+def test_hover_emphasizes_only_the_matching_pin_bar(monkeypatch):
+    monkeypatch.setitem(pg.CONFIG_OPTIONS, "useOpenGL", False)
+    app = QApplication.instance() or QApplication([])
+    view = ProtocolView()
+    view.update_from_config(ProtocolConfig(0, 1, [3], 1))
+    view.resize(900, 480)
+
+    try:
+        view.show()
+        app.processEvents()
+        title = view.ui.title_controls
+        QTest.mouseMove(title, title.rect().center())
+
+        bars = view.plotWidget.listDataItems()
+        original_pens = [bar.opts["pen"] for bar in bars]
+        original_range = view.plotWidget.viewRange()
+        protocol_changes = QSignalSpy(view.protocolChanged)
+
+        for index in (0, 2, 3):
+            button = view.pinButtons[index]
+            QTest.mouseMove(button, button.rect().center())
+            assert bars[index].opts["pen"].widthF() > original_pens[index].widthF()
+            assert bars[index].opts["pen"].color() == original_pens[index].color()
+            assert all(
+                bar.opts["pen"] == pen
+                for other, (bar, pen) in enumerate(zip(bars, original_pens))
+                if other != index
+            )
+
+        QTest.mouseMove(title, title.rect().center())
+        assert [bar.opts["pen"] for bar in bars] == original_pens
+        assert view.plotWidget.viewRange() == original_range
+        assert protocol_changes.count() == 0
     finally:
         view.close()
         view.deleteLater()

@@ -230,7 +230,7 @@ def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
         app.processEvents()
 
 
-def test_preview_cursors_follow_pulse_body_and_drag_handles():
+def test_preview_cursors_follow_pulse_selection_and_drag_handles():
     app = QApplication.instance() or QApplication([])
     view = StimulusView()
     controller = StimulusController(AppModel(), view)
@@ -262,14 +262,14 @@ def test_preview_cursors_follow_pulse_body_and_drag_handles():
         return position
 
     try:
-        check_cursor(0.011, 0.3, Qt.CursorShape.PointingHandCursor)
+        for voltage_v in (0.6, 0.0, -0.6):
+            check_cursor(0.011, voltage_v, Qt.CursorShape.PointingHandCursor)
         check_cursor(0.005, 0.8, Qt.CursorShape.SizeAllCursor)
         check_cursor(0.02, 0.0, Qt.CursorShape.SizeHorCursor)
         check_cursor(0.026, -0.3, Qt.CursorShape.ArrowCursor)
-        check_cursor(0.011, -0.3, Qt.CursorShape.ArrowCursor)
 
-        # The hover region passes clicks through even on an unselected pulse.
-        position = check_cursor(0.038, -0.3, Qt.CursorShape.PointingHandCursor)
+        # A pulse remains selectable above and below its drawn waveform.
+        position = check_cursor(0.038, 0.5, Qt.CursorShape.PointingHandCursor)
         QTest.mouseClick(viewport, Qt.MouseButton.LeftButton, pos=position)
         app.processEvents()
         assert view.ui.segmentTabWidget.currentIndex() == 1
@@ -281,7 +281,9 @@ def test_preview_cursors_follow_pulse_body_and_drag_handles():
         QTest.mouseRelease(viewport, Qt.MouseButton.LeftButton, pos=drag_end)
 
         view.ui.highlight_selected_pulse_checkbox.setChecked(False)
-        check_cursor(0.038, -0.3, Qt.CursorShape.PointingHandCursor)
+        view_box.setYRange(-0.2, 0.2, padding=0)
+        check_cursor(0.038, 0.15, Qt.CursorShape.PointingHandCursor)
+        check_cursor(0.026, 0.15, Qt.CursorShape.ArrowCursor)
     finally:
         view.close()
         view.deleteLater()

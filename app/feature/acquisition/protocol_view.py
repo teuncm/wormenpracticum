@@ -3,8 +3,10 @@ from typing import ClassVar
 import pyqtgraph as pg
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QFrame,
     QGridLayout,
     QHBoxLayout,
+    QLabel,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -24,6 +26,7 @@ from app.ui.generated.protocol_window import Ui_ProtocolWindow
 
 class PinStateButton(QPushButton):
     stateChanged = Signal(int)
+    hoverChanged = Signal()
 
     DEFAULT_STATE = 0
     GREEN_STATE = 1
@@ -31,11 +34,11 @@ class PinStateButton(QPushButton):
     BLUE_STATE = 3
     NUM_STATES = 4
 
-    _STATE_COLORS: ClassVar[dict[int, str]] = {
-        DEFAULT_STATE: "gray",
-        GREEN_STATE: "#2f9e44",
-        RED_STATE: "#c92a2a",
-        BLUE_STATE: "#1971c2",
+    STATE_APPEARANCE: ClassVar[dict[int, tuple[str, str]]] = {
+        RED_STATE: ("Stim +", "#c92a2a"),
+        BLUE_STATE: ("Stim −", "#1971c2"),
+        GREEN_STATE: ("Measure", "#2f9e44"),
+        DEFAULT_STATE: ("Off", "gray"),
     }
 
     def __init__(self, text: str):
@@ -44,6 +47,14 @@ class PinStateButton(QPushButton):
         self.setCheckable(False)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self._refresh_state_style()
+
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        self.hoverChanged.emit()
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.hoverChanged.emit()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -90,7 +101,7 @@ class PinStateButton(QPushButton):
 
     def pin_color(self) -> str:
         """Return the shared color for this pin button and its plot bar."""
-        return self._STATE_COLORS[self._pin_state]
+        return self.STATE_APPEARANCE[self._pin_state][1]
 
     def _refresh_state_style(self):
         style = "min-width: 0px; padding: 0px;"
@@ -130,14 +141,18 @@ class ProtocolView(QWidget):
         """Set up the main plot and controls."""
         frame, plot = create_plot_widget(x_label="Pin number")
         plot.hideAxis("left")
+        plot.showGrid(x=False, y=False)
+        pin_numbers = range(1, 17)
+        pin_axis = plot.getAxis("bottom")
+        pin_axis.setTicks([[(pin, str(pin)) for pin in pin_numbers]])
+        pin_axis.setStyle(tickLength=0)
 
         self.ui.rightLayout.addWidget(frame)
+        self.ui.rightLayout.addLayout(self._create_pin_legend())
         self.plotWidget = plot
         # Pin positions never change; selection should only change their styling.
         plot.setRange(xRange=(0.5, 16.5), yRange=(-0.05, 1.05), padding=0)
-        self._pin_bars = [
-            plot.plot([channel, channel], [0, 1]) for channel in range(1, 17)
-        ]
+        self._pin_bars = [plot.plot([pin, pin], [0, 1]) for pin in pin_numbers]
 
         # Create a grid of 16 buttons that cycle through the pin colors.
         pins_container = QWidget()
@@ -170,6 +185,7 @@ class ProtocolView(QWidget):
             pins_layout.addWidget(btn, i // 8, i % 8)
             btn.stateChanged.connect(lambda _state: self.plot_pins())
             btn.stateChanged.connect(lambda _state: self.protocolChanged.emit())
+            btn.hoverChanged.connect(self.plot_pins)
             self.pinButtons.append(btn)
 
         # Add Select All / Deselect All buttons below the pin grid
@@ -216,6 +232,24 @@ class ProtocolView(QWidget):
             self.ui.leftLayout.addWidget(pins_container)
         else:
             self.ui.leftLayout.insertWidget(title_index + 1, pins_container)
+
+    def _create_pin_legend(self) -> QHBoxLayout:
+        """Pair each pin role with the same color used in the plot."""
+        legend = QHBoxLayout()
+        legend.setSpacing(12)
+        legend.addStretch()
+        for role, color in PinStateButton.STATE_APPEARANCE.values():
+            entry = QHBoxLayout()
+            entry.setSpacing(5)
+
+            swatch = QFrame()
+            swatch.setFixedSize(12, 4)
+            swatch.setStyleSheet(f"background-color: {color}; border-radius: 2px;")
+            entry.addWidget(swatch, alignment=Qt.AlignmentFlag.AlignVCenter)
+            entry.addWidget(QLabel(role))
+            legend.addLayout(entry)
+        legend.addStretch()
+        return legend
 
     def update_from_config(self, protocol_config: ProtocolConfig):
         """Update protocol controls from a config object."""
@@ -271,14 +305,18 @@ class ProtocolView(QWidget):
         self.protocolChanged.emit()
 
     def plot_pins(self):
-        """Match each pin bar to its button without changing the plot range."""
+        """Match each bar to its button and emphasize the hovered pin."""
         for button, bar in zip(self.pinButtons, self._pin_bars):
             width = (
                 PLOT_PIN_SELECTED_PEN_WIDTH
                 if button.isChecked()
                 else PLOT_PIN_UNSELECTED_PEN_WIDTH
             )
-            bar.setPen(pg.mkPen(button.pin_color(), width=width))
+            if button.underMouse():
+                width += 2
+            pen = pg.mkPen(button.pin_color(), width=width)
+            pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+            bar.setPen(pen)
 
     def request_run(self):
         self.run_requested.emit()

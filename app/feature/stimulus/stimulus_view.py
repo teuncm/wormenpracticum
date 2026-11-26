@@ -1,12 +1,8 @@
-from itertools import pairwise
-
-import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QPointF, QSize, Qt, Signal
 from PySide6.QtGui import QCursor, QPainterPath
 from PySide6.QtWidgets import (
     QDialog,
-    QGraphicsRectItem,
     QSizePolicy,
     QTabBar,
 )
@@ -43,12 +39,36 @@ class PulseTabBar(QTabBar):
 class StimulusPreviewViewBox(pg.ViewBox):
     """Allow vertical wheel zoom while reserving plot drags for pulse handles."""
 
-    time_clicked = Signal(float)
+    pulse_clicked = Signal(int)
+
+    def __init__(self):
+        super().__init__()
+        self.pulse_intervals: list[tuple[float, float]] = []
+        self.setAcceptHoverEvents(True)
+
+    def _pulse_at(self, scene_position: QPointF) -> int | None:
+        """Find the selectable pulse at this time, regardless of voltage."""
+        time_s = self.mapSceneToView(scene_position).x()
+        # Later pulses overwrite earlier ones where their samples overlap.
+        for index in reversed(range(len(self.pulse_intervals))):
+            start_s, end_s = self.pulse_intervals[index]
+            if start_s <= time_s < end_s:
+                return index
+        return None
+
+    def hoverMoveEvent(self, event):
+        if self._pulse_at(event.scenePos()) is None:
+            self.unsetCursor()
+        else:
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
+        super().hoverMoveEvent(event)
 
     def mouseClickEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             event.accept()
-            self.time_clicked.emit(self.mapSceneToView(event.scenePos()).x())
+            index = self._pulse_at(event.scenePos())
+            if index is not None:
+                self.pulse_clicked.emit(index)
         else:
             super().mouseClickEvent(event)
 
@@ -117,7 +137,7 @@ class StimulusView(QDialog):
     stepChanged = Signal()
     stimulusHighlightChanged = Signal(bool)
     voltageBoundaryChanged = Signal(bool)
-    previewTimeClicked = Signal(float)
+    previewPulseClicked = Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -154,14 +174,14 @@ class StimulusView(QDialog):
             SEGMENT_VIEW_STIMULUS_HIGHLIGHT_DEFAULT
         )
 
-        view_box = StimulusPreviewViewBox()
-        view_box.time_clicked.connect(self.previewTimeClicked)
+        self.preview_view_box = StimulusPreviewViewBox()
+        self.preview_view_box.pulse_clicked.connect(self.previewPulseClicked)
         frame, plot = create_plot_widget(
             x_label="Time",
             x_units="ms",
             y_label="Voltage",
             y_units="V",
-            view_box=view_box,
+            view_box=self.preview_view_box,
         )
         plot.setMouseEnabled(x=False, y=True)
         # Display milliseconds while keeping waveform coordinates in seconds.
@@ -311,33 +331,6 @@ class StimulusView(QDialog):
         """Mark the highlighted pulse's visible start and end."""
         for boundary in (start_s, end_s):
             self.plotWidget.addItem(create_guide_line(boundary, 90, color="b"))
-
-    def add_pulse_hover_region(
-        self, samples_v: np.ndarray, sample_rate_hz: float
-    ) -> None:
-        """Show a pointing hand between each visible pulse phase and zero."""
-        if not samples_v.any():
-            return
-
-        # Merge adjacent samples at the same level and use the sampled endpoints.
-        changes = np.flatnonzero(samples_v[1:] != samples_v[:-1]) + 1
-        edges = np.r_[0, changes, len(samples_v)]
-        for start, end in pairwise(edges):
-            level = float(samples_v[start])
-            if not level:
-                continue
-
-            # The region only supplies the cursor. Clicks go through to the view box.
-            region = QGraphicsRectItem(
-                start / sample_rate_hz,
-                min(0.0, level),
-                (end - start) / sample_rate_hz,
-                abs(level),
-            )
-            region.setPen(pg.mkPen(None))
-            region.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
-            region.setCursor(Qt.CursorShape.PointingHandCursor)
-            self.plotWidget.addItem(region, ignoreBounds=True)
 
     def draw_voltage_limit(self, limit_v):
         self.plotWidget.addItem(

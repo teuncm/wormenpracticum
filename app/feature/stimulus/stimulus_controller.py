@@ -28,7 +28,9 @@ class StimulusController:
         self.stimulus_view.stepChanged.connect(self.update_plot)
         self.stimulus_view.stimulusHighlightChanged.connect(self.update_plot)
         self.stimulus_view.voltageBoundaryChanged.connect(self.update_plot)
-        self.stimulus_view.previewTimeClicked.connect(self._select_pulse_at_time)
+        self.stimulus_view.previewPulseClicked.connect(
+            self.stimulus_view.ui.segmentTabWidget.setCurrentIndex
+        )
         self.stimulus_view.start_handle.dragged.connect(self._drag_pulse_start)
         self.stimulus_view.end_handle.dragged.connect(self._drag_pulse_end)
         for handle in (self.stimulus_view.start_handle, self.stimulus_view.end_handle):
@@ -161,22 +163,6 @@ class StimulusController:
                 restore_index = min(max(prev_index, 0), tab_widget.count() - 1)
                 tab_widget.setCurrentIndex(restore_index)
 
-    def _select_pulse_at_time(self, time_s: float) -> None:
-        """Select the pulse whose sampled interval contains the click."""
-        generator = self.app_model.stim_generator
-        step = self.stimulus_view.ui.stepSlider.value()
-        stimulus = generator.stims[step]
-        sample_rate = TARGET_N_SAMPLES_PULSE_PLOT / stimulus.dur_s
-
-        # Later pulses overwrite earlier pulses where their visible samples overlap.
-        for index in range(len(stimulus.pulses) - 1, -1, -1):
-            _, start, count = stimulus.pulse_overlap(
-                stimulus.pulses[index], sample_rate
-            )
-            if start / sample_rate <= time_s < (start + count) / sample_rate:
-                self.stimulus_view.ui.segmentTabWidget.setCurrentIndex(index)
-                return
-
     def update_plot(self, *_):
         """Draw the selected step without changing the preview axes."""
         self.stimulus_view.clear_plot()
@@ -194,10 +180,15 @@ class StimulusController:
         cur_step = self.stimulus_view.ui.stepSlider.value()
         y, t = self.app_model.stim_generator.sample_at_idx(train_plot_sr, cur_step)
         self.stimulus_view.update_train_plot((t, y), color="k", width=1)
-        self.stimulus_view.add_pulse_hover_region(y, train_plot_sr)
+        stimulus = self.app_model.stim_generator.stims[cur_step]
+        intervals = []
+        for pulse in stimulus.pulses:
+            _, start, count = stimulus.pulse_overlap(pulse, train_plot_sr)
+            intervals.append((start / train_plot_sr, (start + count) / train_plot_sr))
+        self.stimulus_view.preview_view_box.pulse_intervals = intervals
 
         cur_tab = self.stimulus_view.ui.segmentTabWidget.currentIndex()
-        pulses = self.app_model.stim_generator.stims[cur_step].pulses
+        pulses = stimulus.pulses
         if (
             self.stimulus_view.ui.highlight_selected_pulse_checkbox.isChecked()
             and 0 <= cur_tab < len(pulses)
