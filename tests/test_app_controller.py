@@ -5,12 +5,14 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pandas as pd
 import pytest
-from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton
+from PySide6.QtCore import QEventLoop, QTimer
+from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton, QToolButton
 
 from app.app_controller import AppController
 from app.feature.acquisition.protocol_config import ProtocolConfig
 from app.feature.acquisition.protocol_view import PinStateButton
 from app.feature.filter.filter_config import FilterConfig
+from app.feature.filter.filter_controls import FilterControls
 from app.feature.stimulus.pulse import Pulse
 from app.feature.stimulus.stimulus_config import StimulusConfig
 from app.shared import data_dialog, data_io
@@ -103,6 +105,106 @@ def test_analysis_tabs_defer_redraw_until_selected(monkeypatch):
         controller.app_view.set_current_tab(views[0])
         assert draws[0].call_count == 2
         draws[0].assert_called_with(None, {}, {})
+    finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+def test_analysis_filter_dropdowns_share_live_settings_and_defer_hidden_draws(
+    monkeypatch,
+):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    model = controller.app_model
+    views = (
+        controller.analyze_io_view,
+        controller.analyze_speed_view,
+        controller.analyze_tetanus_view,
+        controller.analyze_yolo_view,
+    )
+    editors = [view.findChild(FilterControls) for view in views]
+    main_editor = controller.filter_view.filter_controls
+    tabs = controller.app_view.ui.tabWidget
+    filter_index = tabs.indexOf(controller.filter_view.parentWidget())
+    draws = [MagicMock() for _ in views]
+    for view, draw in zip(views, draws, strict=True):
+        monkeypatch.setattr(view, "set_data", draw)
+    preview = MagicMock()
+    monkeypatch.setattr(controller.filter_view, "show_preview", preview)
+
+    try:
+        assert filter_index >= 0
+        assert not tabs.isTabVisible(filter_index)
+        for view, editor in zip(views, editors, strict=True):
+            assert editor is not None
+            plot_layout = view.ui.rightLayout
+            assert plot_layout.itemAt(plot_layout.count() - 1).widget() is editor
+            toggle = editor.findChild(QToolButton)
+            assert (
+                toggle.menu().actions()[0].defaultWidget().isAncestorOf(editor.cutoff)
+            )
+            assert not toggle.menu().isVisible()
+            assert not editor.apply_button.isEnabled()
+
+        raw, payload = gen_dummy_recording(0.01, 3, 4)
+        original = raw.copy()
+        model.update_recording(raw, payload["metadata"], payload["experiment_config"])
+        controller.app_view.set_current_tab(views[-1])
+        yolo_editor = editors[-1]
+        assert yolo_editor.cutoff_slider.isEnabled()
+
+        # Wait for an update while the active analysis slider is still held down.
+        yolo_editor.cutoff_slider.setSliderDown(True)
+        update = QEventLoop()
+        model.experiment_data_changed.connect(update.quit)
+        yolo_editor.cutoff_slider.setSliderPosition(160)
+        QTimer.singleShot(3000, update.quit)
+        update.exec()
+        model.experiment_data_changed.disconnect(update.quit)
+
+        assert yolo_editor.cutoff_slider.isSliderDown()
+        assert model.filtered_data_df is not raw
+        assert not model.filtered_data_df.equals(raw)
+        pd.testing.assert_frame_equal(model.raw_data_df, original)
+        assert all(
+            editor.to_config() == model.filter_config
+            for editor in [main_editor, *editors]
+        )
+        assert [draw.call_count for draw in draws] == [0, 0, 0, 2]
+        assert draws[-1].call_args.args[0] is model.filtered_data_df
+        preview.assert_not_called()
+        yolo_editor.cutoff_slider.setSliderDown(False)
+
+        tabs.setTabVisible(filter_index, True)
+        controller.app_view.set_current_tab(controller.filter_view)
+        preview.assert_called_once()
+        main_editor.cutoff.setValue(0)
+        main_editor.suppress_50hz.setChecked(False)
+        main_editor.remove_dc.setChecked(False)
+        main_editor.apply_button.click()
+        pd.testing.assert_frame_equal(model.filtered_data_df, original)
+        assert all(editor.to_config() == model.filter_config for editor in editors)
+        assert [draw.call_count for draw in draws] == [0, 0, 0, 2]
+
+        controller.app_view.set_current_tab(views[0])
+        draws[0].assert_called_once()
+        assert draws[0].call_args.args[0] is model.filtered_data_df
+
+        model.update_filter_config(FilterConfig(450, True, True))
+        assert all(
+            editor.to_config() == model.filter_config
+            for editor in [main_editor, *editors]
+        )
+        assert [draw.call_count for draw in draws] == [1, 0, 0, 2]
+
+        editors[0].cutoff.setValue(100_000)
+        editors[0].apply_button.click()
+        assert "Could not apply filters" in editors[0].status.text()
+        assert main_editor.to_config() == model.filter_config
+
+        model.clear_experiment_data()
+        assert all(editor.to_config() == model.filter_config for editor in editors)
+        assert all(not editor.apply_button.isEnabled() for editor in editors)
     finally:
         controller.app_view.close()
         app.processEvents()
@@ -513,7 +615,8 @@ def test_load_protocol_restores_settings(monkeypatch, file_kind):
         assert controller.protocol_view.ui.sampleRateDividerComboBox.currentData() == 8
         assert controller.app_model.filter_config == expected_filter
         assert (
-            controller.filter_view.cutoff.value() == expected_filter.low_pass_cutoff_hz
+            controller.filter_view.filter_controls.cutoff.value()
+            == expected_filter.low_pass_cutoff_hz
         )
     finally:
         controller.app_view.close()
@@ -602,7 +705,7 @@ def test_reset_config_actions_restore_default_configs(reset_messages):
     assert controller.app_model.protocol_config is not DEFAULT_PROTOCOL_CONFIG
     assert controller.app_model.filter_config == DEFAULT_FILTER_CONFIG
     assert controller.app_model.filter_config is not DEFAULT_FILTER_CONFIG
-    controller.filter_view.cutoff.setValue(123.0)
+    controller.filter_view.filter_controls.cutoff.setValue(123.0)
     assert controller.app_model.filter_config == DEFAULT_FILTER_CONFIG
     controller.filter_controller.update_ui_from_model()
     protocol_view_config = controller.protocol_view.to_config()
@@ -624,15 +727,15 @@ def test_reset_config_actions_restore_default_configs(reset_messages):
         == DEFAULT_PROTOCOL_CONFIG.sample_rate_divider
     )
     assert (
-        controller.filter_view.cutoff.value()
+        controller.filter_view.filter_controls.cutoff.value()
         == DEFAULT_FILTER_CONFIG.low_pass_cutoff_hz
     )
     assert (
-        controller.filter_view.suppress_50hz.isChecked()
+        controller.filter_view.filter_controls.suppress_50hz.isChecked()
         == DEFAULT_FILTER_CONFIG.suppress_50hz
     )
     assert (
-        controller.filter_view.remove_dc.isChecked()
+        controller.filter_view.filter_controls.remove_dc.isChecked()
         == DEFAULT_FILTER_CONFIG.remove_dc_offset
     )
 
@@ -647,9 +750,9 @@ def test_reset_config_actions_restore_ui_after_ui_edits(reset_messages):
     controller.protocol_view.pinButtons[0].setChecked(True)
     controller.protocol_view.pinButtons[-1].setChecked(False)
     controller.protocol_view.ui.sampleRateDividerComboBox.setCurrentIndex(2)
-    controller.filter_view.cutoff.setValue(123.0)
-    controller.filter_view.suppress_50hz.setChecked(False)
-    controller.filter_view.remove_dc.setChecked(False)
+    controller.filter_view.filter_controls.cutoff.setValue(123.0)
+    controller.filter_view.filter_controls.suppress_50hz.setChecked(False)
+    controller.filter_view.filter_controls.remove_dc.setChecked(False)
     app.processEvents()
 
     controller.app_view.ui.actionReset_protocol.trigger()
@@ -674,15 +777,15 @@ def test_reset_config_actions_restore_ui_after_ui_edits(reset_messages):
         == DEFAULT_PROTOCOL_CONFIG.sample_rate_divider
     )
     assert (
-        controller.filter_view.cutoff.value()
+        controller.filter_view.filter_controls.cutoff.value()
         == DEFAULT_FILTER_CONFIG.low_pass_cutoff_hz
     )
     assert (
-        controller.filter_view.suppress_50hz.isChecked()
+        controller.filter_view.filter_controls.suppress_50hz.isChecked()
         == DEFAULT_FILTER_CONFIG.suppress_50hz
     )
     assert (
-        controller.filter_view.remove_dc.isChecked()
+        controller.filter_view.filter_controls.remove_dc.isChecked()
         == DEFAULT_FILTER_CONFIG.remove_dc_offset
     )
 

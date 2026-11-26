@@ -17,6 +17,7 @@ class StimulusController:
     def __init__(self, app_model: AppModel, stimulus_view: StimulusView):
         self.app_model = app_model
         self.stimulus_view = stimulus_view
+        self._preview_bounds = None
 
         self.connect_data_signals()
         self._on_model_stim_config_changed()
@@ -41,7 +42,7 @@ class StimulusController:
         self.update_plot()
 
     def _on_model_stim_config_changed(self):
-        """Refresh the preview and fit its axes when the sequence changes."""
+        """Redraw the stimulus and refit when its time or voltage bounds change."""
         # Drag edits already update the open tab. Keep the axes still under the pointer.
         dragging = (
             self.stimulus_view.start_handle.moving
@@ -50,17 +51,20 @@ class StimulusController:
         if not dragging:
             self.update_ui_from_model()
         self.update_plot()
-        if not dragging:
-            self._fit_preview_axes()
 
-    def _fit_preview_axes(self, *_):
+        bounds = self._get_preview_bounds()
+        if not dragging and bounds != self._preview_bounds:
+            x_range, y_range = bounds
+            self.stimulus_view.plotWidget.setRange(xRange=x_range, yRange=y_range)
+        self._preview_bounds = bounds
+
+    def _get_preview_bounds(self):
         # Use bounds across every stimulus so stepping preserves the voltage scale.
         generator = self.app_model.stim_generator
         _, peak_v = self.app_model.get_y_bounds()
         limit_v = generator.config.limit_v
         span_v = min(peak_v, limit_v) if peak_v else limit_v
-        self.stimulus_view.plotWidget.setXRange(*self.app_model.get_x_bounds())
-        self.stimulus_view.plotWidget.setYRange(-span_v, span_v)
+        return self.app_model.get_x_bounds(), (-span_v, span_v)
 
     def _drag_pulse_start(self, position: QPointF) -> None:
         tab = self.stimulus_view.ui.segmentTabWidget.currentWidget()

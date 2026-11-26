@@ -1,36 +1,63 @@
+from functools import partial
+
 import numpy as np
 from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QTabWidget
 
 from app.app_model import AppModel
+from app.feature.filter.filter_controls import FilterControls
 from app.feature.filter.filter_view import FilterView
 from app.feature.filter.filters import filter_recording, recording_sample_rate
+from app.shared.deferred_tab_draw import DeferredTabDraw
 from app.shared.recording_metadata import recording_pin_channels
 
 
 class FilterController:
     """Controller for managing data filters in the app."""
 
-    def __init__(self, app_model: AppModel, view: FilterView):
+    def __init__(
+        self, app_model: AppModel, view: FilterView, *, tabs: QTabWidget | None = None
+    ):
         self.app_model = app_model
         self.view = view
         self._recording = None
         self._metadata = None
         self._sample_rate = None
+        self._editors: list[FilterControls] = []
+        self._pending_editor: FilterControls | None = None
 
         # Coalesce slider moves without waiting for the user to release the handle.
         self._live_update = QTimer(view)
         self._live_update.setSingleShot(True)
         self._live_update.setInterval(30)
-        self._live_update.timeout.connect(self.apply_filters)
+        self._live_update.timeout.connect(self._apply_pending_filters)
+        if tabs is not None:
+            # Commit the outgoing tab's last edit before the new tab draws or edits.
+            tabs.currentChanged.connect(self._apply_pending_filters)
 
-        self.view.apply_requested.connect(self.apply_filters)
-        self.view.settings_changed.connect(self.schedule_filter_update)
-        self.view.channel_changed.connect(self.update_preview)
+        page = view.parentWidget() if tabs is not None else None
+        self._preview_draw = DeferredTabDraw(self.update_preview, page, tabs)
+        self.view.channel_changed.connect(self._preview_draw.request)
         self.app_model.filter_config_changed.connect(self.update_ui_from_model)
         self.app_model.experiment_data_changed.connect(self.update_recording)
 
-        self.update_ui_from_model()
+        self.register_controls(self.view.filter_controls)
         self.update_recording()
+
+    def register_controls(self, controls: FilterControls) -> None:
+        """Connect another editor to the same model and live filter pass."""
+        self._editors.append(controls)
+        controls.set_config(self.app_model.filter_config)
+        self._set_recording_state(controls)
+        controls.settings_changed.connect(
+            partial(self.schedule_filter_update, controls)
+        )
+        controls.apply_requested.connect(partial(self.apply_filters, controls))
+
+    def _set_recording_state(self, controls: FilterControls) -> None:
+        controls.set_recording_available(
+            self.view.channel_selector.count() > 0, self._sample_rate
+        )
 
     def update_recording(self) -> None:
         """Refresh channel choices on load and redraw from the filtered copy."""
@@ -39,7 +66,7 @@ class FilterController:
 
         # Filtering emits the same signal as loading data. Keep the selector intact on live updates.
         if raw is not self._recording or metadata is not self._metadata:
-            self._live_update.stop()
+            self.update_ui_from_model()
             self._recording, self._metadata = raw, metadata
             self._sample_rate = None
             channels = []
@@ -61,15 +88,10 @@ class FilterController:
                     pass
 
             self.view.set_channels(channels)
-            self.view.set_sample_rate(self._sample_rate if channels else None)
-            self.view.apply_button.setEnabled(bool(channels))
-            self.view.status.setText(
-                "Adjust the filters to update the signal live."
-                if channels
-                else "Record or load data with voltage channels."
-            )
+            for controls in self._editors:
+                self._set_recording_state(controls)
 
-        self.update_preview()
+        self._preview_draw.request()
 
     def update_preview(self) -> None:
         """Draw the selected channel from the same samples used in analysis."""
@@ -94,18 +116,29 @@ class FilterController:
         has_time = "t_(s)" in data or self._sample_rate is not None
         self.view.show_preview(x, samples, has_time=has_time)
 
-    def schedule_filter_update(self) -> None:
-        if self.view.apply_button.isEnabled() and not self._live_update.isActive():
+    def schedule_filter_update(self, controls: FilterControls) -> None:
+        if not controls.apply_button.isEnabled():
+            return
+        self._pending_editor = controls
+        if not self._live_update.isActive():
             self._live_update.start()
 
-    def apply_filters(self) -> None:
-        """Start from raw data every time and publish only a successful result."""
+    def _cancel_pending_update(self) -> None:
         self._live_update.stop()
+        self._pending_editor = None
+
+    def _apply_pending_filters(self) -> None:
+        if self._pending_editor is not None:
+            self.apply_filters(self._pending_editor)
+
+    def apply_filters(self, controls: FilterControls) -> None:
+        """Start from raw data every time and publish only a successful result."""
+        self._cancel_pending_update()
         raw = self.app_model.raw_data_df
         if raw is None or raw.empty:
             return
 
-        config = self.view.to_config()
+        config = controls.to_config()
         try:
             filtered = filter_recording(
                 raw,
@@ -115,14 +148,20 @@ class FilterController:
                 else self.app_model.experiment_metadata.get("sample_rate_hz"),
             )
         except (ValueError, TypeError) as error:
-            self.view.status.setText(f"Could not apply filters. {error}")
+            controls.status.setText(f"Could not apply filters. {error}")
             return
 
-        self.app_model.update_filter_config(config)
+        if self.app_model.filter_config == config:
+            self.update_ui_from_model()
+        else:
+            self.app_model.update_filter_config(config)
         self.app_model.update_filtered_data(filtered)
-        self.view.status.setText("Analysis views updated.")
+        for editor in self._editors:
+            editor.status.setText("Filters applied.")
 
     def update_ui_from_model(self):
-        self._live_update.stop()
-        if self.view.to_config() != self.app_model.filter_config:
-            self.view.set_config(self.app_model.filter_config)
+        self._cancel_pending_update()
+        config = self.app_model.filter_config
+        for controls in self._editors:
+            if controls.to_config() != config:
+                controls.set_config(config)

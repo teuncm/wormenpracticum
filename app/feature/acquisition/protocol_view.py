@@ -1,9 +1,11 @@
 from typing import ClassVar
 
 import pyqtgraph as pg
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtGui import QPainterPath
 from PySide6.QtWidgets import (
     QFrame,
+    QGraphicsPathItem,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -34,11 +36,11 @@ class PinStateButton(QPushButton):
     BLUE_STATE = 3
     NUM_STATES = 4
 
-    STATE_APPEARANCE: ClassVar[dict[int, tuple[str, str]]] = {
-        RED_STATE: ("Stim +", "#c92a2a"),
-        BLUE_STATE: ("Stim −", "#1971c2"),
-        GREEN_STATE: ("Measure", "#2f9e44"),
-        DEFAULT_STATE: ("Off", "gray"),
+    STATE_APPEARANCE: ClassVar[dict[int, tuple[str, str, str]]] = {
+        RED_STATE: ("Stim +", "#c92a2a", "+"),
+        BLUE_STATE: ("Stim -", "#1971c2", "-"),
+        GREEN_STATE: ("Record (R)", "#2f9e44", "R"),
+        DEFAULT_STATE: ("Off (0)", "gray", "0"),
     }
 
     def __init__(self, text: str):
@@ -103,6 +105,10 @@ class PinStateButton(QPushButton):
         """Return the shared color for this pin button and its plot bar."""
         return self.STATE_APPEARANCE[self._pin_state][1]
 
+    def role_marker(self) -> str:
+        """Return the short role label that fits under the pin number."""
+        return self.STATE_APPEARANCE[self._pin_state][2]
+
     def _refresh_state_style(self):
         style = "min-width: 0px; padding: 0px;"
         if self.isChecked():
@@ -144,15 +150,19 @@ class ProtocolView(QWidget):
         plot.showGrid(x=False, y=False)
         pin_numbers = range(1, 17)
         pin_axis = plot.getAxis("bottom")
-        pin_axis.setTicks([[(pin, str(pin)) for pin in pin_numbers]])
         pin_axis.setStyle(tickLength=0)
 
         self.ui.rightLayout.addWidget(frame)
         self.ui.rightLayout.addLayout(self._create_pin_legend())
         self.plotWidget = plot
         # Pin positions never change; selection should only change their styling.
-        plot.setRange(xRange=(0.5, 16.5), yRange=(-0.05, 1.05), padding=0)
+        plot.setRange(xRange=(0.5, 16.5), yRange=(0, 1.05), padding=0)
         self._pin_bars = [plot.plot([pin, pin], [0, 1]) for pin in pin_numbers]
+
+        self._pin_outline = QGraphicsPathItem()
+        self._pin_outline.setPen(pg.mkPen(pin_axis.pen().color(), width=2))
+        self._pin_outline.hide()
+        plot.getViewBox().addItem(self._pin_outline, ignoreBounds=True)
 
         # Create a grid of 16 buttons that cycle through the pin colors.
         pins_container = QWidget()
@@ -238,7 +248,7 @@ class ProtocolView(QWidget):
         legend = QHBoxLayout()
         legend.setSpacing(12)
         legend.addStretch()
-        for role, color in PinStateButton.STATE_APPEARANCE.values():
+        for role, color, _marker in PinStateButton.STATE_APPEARANCE.values():
             entry = QHBoxLayout()
             entry.setSpacing(5)
 
@@ -306,17 +316,38 @@ class ProtocolView(QWidget):
 
     def plot_pins(self):
         """Match each bar to its button and emphasize the hovered pin."""
+        # Keep each role under its pin number without crowding neighboring pins.
+        labels = [
+            (pin, f"{pin}\n{button.role_marker()}")
+            for pin, button in enumerate(self.pinButtons, start=1)
+        ]
+        self.plotWidget.getAxis("bottom").setTicks([labels])
+        self._pin_outline.hide()
         for button, bar in zip(self.pinButtons, self._pin_bars):
+            hovered = button.underMouse()
+            bar.setVisible(not hovered)
+
             width = (
                 PLOT_PIN_SELECTED_PEN_WIDTH
                 if button.isChecked()
                 else PLOT_PIN_UNSELECTED_PEN_WIDTH
             )
-            if button.underMouse():
-                width += 2
             pen = pg.mkPen(button.pin_color(), width=width)
             pen.setCapStyle(Qt.PenCapStyle.RoundCap)
             bar.setPen(pen)
+
+            if hovered:
+                pin = bar.xData[0]
+                bottom, top = bar.yData
+
+                # Use a fraction of the spacing between pins so the outline scales with the plot.
+                path = QPainterPath()
+                rect = QRectF(pin - 0.1, bottom, 0.2, top - bottom)
+                path.addRoundedRect(rect, 100, 2.5, Qt.SizeMode.RelativeSize)
+                self._pin_outline.setPath(path)
+                fill = button.pin_color() if button.isChecked() else None
+                self._pin_outline.setBrush(pg.mkBrush(fill))
+                self._pin_outline.show()
 
     def request_run(self):
         self.run_requested.emit()

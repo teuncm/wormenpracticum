@@ -4,6 +4,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 import pyqtgraph as pg
+from PySide6.QtCore import Qt
 from PySide6.QtTest import QSignalSpy, QTest
 from PySide6.QtWidgets import QApplication, QPushButton
 
@@ -55,6 +56,7 @@ def test_pin_colors_and_selection_keep_plot_range_stable(monkeypatch):
         original_range = np.array(view.plotWidget.viewRange())
         bars = view.plotWidget.listDataItems()
         assert len(bars) == 16
+        assert all(bar.yData[0] == original_range[1, 0] for bar in bars)
         assert view.get_selected_stim_channels() == (1, 2)
         assert view.to_config().selected_pins == list(range(3, 17))
         expected_colors = ["#c92a2a", "#1971c2"] + ["#2f9e44"] * 14
@@ -136,19 +138,28 @@ def test_hover_emphasizes_only_the_matching_pin_bar(monkeypatch):
         original_pens = [bar.opts["pen"] for bar in bars]
         original_range = view.plotWidget.viewRange()
         protocol_changes = QSignalSpy(view.protocolChanged)
+        outline = view._pin_outline
+        assert not outline.isVisible()
 
         for index in (0, 2, 3):
             button = view.pinButtons[index]
             QTest.mouseMove(button, button.rect().center())
-            assert bars[index].opts["pen"].widthF() > original_pens[index].widthF()
-            assert bars[index].opts["pen"].color() == original_pens[index].color()
-            assert all(
-                bar.opts["pen"] == pen
-                for other, (bar, pen) in enumerate(zip(bars, original_pens))
-                if other != index
+            assert outline.isVisible()
+            bounds = outline.path().boundingRect()
+            np.testing.assert_allclose(bounds.center().x(), bars[index].xData[0])
+            np.testing.assert_allclose(
+                [bounds.top(), bounds.bottom()], bars[index].yData
             )
+            assert [bar.isVisible() for bar in bars] == [i != index for i in range(16)]
+            if button.isChecked():
+                assert outline.brush().color() == original_pens[index].color()
+            else:
+                assert outline.brush().style() == Qt.BrushStyle.NoBrush
+            assert [bar.opts["pen"] for bar in bars] == original_pens
 
         QTest.mouseMove(title, title.rect().center())
+        assert not outline.isVisible()
+        assert all(bar.isVisible() for bar in bars)
         assert [bar.opts["pen"] for bar in bars] == original_pens
         assert view.plotWidget.viewRange() == original_range
         assert protocol_changes.count() == 0

@@ -230,6 +230,36 @@ def test_pulse_handles_edit_base_fields_from_a_stepped_preview():
         app.processEvents()
 
 
+def test_toggling_monophasic_redraws_the_pulse_without_refitting_the_plot():
+    app = QApplication.instance() or QApplication([])
+    model = AppModel()
+    view = StimulusView()
+    controller = StimulusController(model, view)
+    controller.app_model.update_stim_config(
+        StimulusConfig(
+            dur_s=0.02,
+            limit_v=1.5,
+            pulses=[Pulse(amp_v=-0.8, start_s=0.003, dur_s=0.004)],
+        )
+    )
+
+    try:
+        view.plotWidget.setXRange(0.002, 0.009, padding=0)
+        view.plotWidget.setYRange(-0.3, 0.3, padding=0)
+        original_range = view.plotWidget.viewRange()
+
+        for monophasic, expected_peak in ((True, 0.0), (False, 0.8)):
+            view.ui.segmentTabWidget.currentWidget().monophasic_checkbox.click()
+            assert model.stim_config.stim.pulses[0].is_monophasic == monophasic
+            waveform = view.plotWidget.listDataItems()[0]
+            assert np.max(waveform.yData) == pytest.approx(expected_peak)
+            assert view.plotWidget.viewRange() == original_range
+    finally:
+        view.close()
+        view.deleteLater()
+        app.processEvents()
+
+
 def test_preview_cursors_follow_pulse_selection_and_drag_handles():
     app = QApplication.instance() or QApplication([])
     view = StimulusView()

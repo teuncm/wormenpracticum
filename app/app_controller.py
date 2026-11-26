@@ -21,6 +21,7 @@ from app.feature.analysis.analyze_view_tetanus import AnalyzeTetanusView
 from app.feature.analysis.analyze_view_yolo import AnalyzeYoloView
 from app.feature.debug.debug_view import DebugView
 from app.feature.filter.filter_controller import FilterController
+from app.feature.filter.filter_controls import FilterControls
 from app.feature.filter.filter_view import FilterView
 from app.feature.nidaq.nidaq_constants import (
     NI_DAQ_BASE_SAMPLE_RATE_HZ,
@@ -84,10 +85,13 @@ class AppController:
         self.app_view.add_tab(self.stimulus_view, "1. Stimulus")
         self.app_view.add_tab(self.protocol_view, "2. Record")
         self.app_view.add_tab(self.filter_view, "3. Filter")
-        self.app_view.add_tab(self.analyze_io_view, "4a. IO")
-        self.app_view.add_tab(self.analyze_speed_view, "4b. Speed")
-        self.app_view.add_tab(self.analyze_tetanus_view, "4c. Tetanus")
-        self.app_view.add_tab(self.analyze_yolo_view, "4d. Yolo")
+        self.app_view.add_tab(self.analyze_io_view, "3a. IO")
+        self.app_view.add_tab(self.analyze_speed_view, "3b. Speed")
+        self.app_view.add_tab(self.analyze_tetanus_view, "3c. Tetanus")
+        self.app_view.add_tab(self.analyze_yolo_view, "3d. Yolo")
+
+        tabs = self.app_view.ui.tabWidget
+        tabs.setTabVisible(tabs.indexOf(self.filter_view.parentWidget()), False)
         self.app_view.set_current_tab(self.protocol_view)
 
         self.stimulus_controller = StimulusController(
@@ -96,9 +100,19 @@ class AppController:
         self.protocol_controller = ProtocolController(
             self.app_model, self.protocol_view
         )
-        self.filter_controller = FilterController(self.app_model, self.filter_view)
+        self.filter_controller = FilterController(
+            self.app_model, self.filter_view, tabs=tabs
+        )
+        for view in (
+            self.analyze_io_view,
+            self.analyze_speed_view,
+            self.analyze_tetanus_view,
+            self.analyze_yolo_view,
+        ):
+            controls = FilterControls(dropdown=True)
+            view.ui.rightLayout.addWidget(controls)
+            self.filter_controller.register_controls(controls)
 
-        tabs = self.app_view.ui.tabWidget
         self.analyze_io_controller = AnalysisController(
             self.app_model, self.analyze_io_view, tabs=tabs
         )

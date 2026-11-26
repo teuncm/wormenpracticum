@@ -17,8 +17,9 @@ def test_filter_tab_reprocesses_raw_recording_and_can_restore_it():
     model = AppModel()
     view = FilterView()
     controller = FilterController(model, view)
+    controls = view.filter_controls
     try:
-        assert not view.apply_button.isEnabled()
+        assert not controls.apply_button.isEnabled()
         times = np.arange(2000) / 1000
         raw = pd.DataFrame(
             {
@@ -30,10 +31,10 @@ def test_filter_tab_reprocesses_raw_recording_and_can_restore_it():
             }
         )
         controller.app_model.update_recording(raw, {"sample_rate_hz": 1000}, {})
-        assert view.apply_button.isEnabled()
+        assert controls.apply_button.isEnabled()
         original = raw.copy()
-        view.cutoff.setValue(100)
-        view.apply_button.click()
+        controls.cutoff.setValue(100)
+        controls.apply_button.click()
         first_result = model.filtered_data_df.copy()
         pd.testing.assert_frame_equal(model.raw_data_df, original)
         np.testing.assert_array_equal(first_result["t_(s)"], times)
@@ -44,20 +45,20 @@ def test_filter_tab_reprocesses_raw_recording_and_can_restore_it():
                 raw["pin1"].to_numpy() @ tone
             )
 
-        view.apply_button.click()
+        controls.apply_button.click()
         pd.testing.assert_frame_equal(model.filtered_data_df, first_result)
-        view.cutoff.setValue(600)
-        view.apply_button.click()
-        assert "below 500 Hz" in view.status.text()
+        controls.cutoff.setValue(600)
+        controls.apply_button.click()
+        assert "below 500 Hz" in controls.status.text()
         pd.testing.assert_frame_equal(model.filtered_data_df, first_result)
 
-        view.cutoff.setValue(0)
-        view.suppress_50hz.setChecked(False)
-        view.remove_dc.setChecked(False)
-        view.apply_button.click()
+        controls.cutoff.setValue(0)
+        controls.suppress_50hz.setChecked(False)
+        controls.remove_dc.setChecked(False)
+        controls.apply_button.click()
         pd.testing.assert_frame_equal(model.filtered_data_df, original)
         model.clear_experiment_data()
-        assert not view.apply_button.isEnabled()
+        assert not controls.apply_button.isEnabled()
     finally:
         view.close()
         view.deleteLater()
@@ -69,6 +70,7 @@ def test_cutoff_drag_updates_filtered_preview_before_release():
     model = AppModel()
     view = FilterView()
     controller = FilterController(model, view)
+    controls = view.filter_controls
     try:
         times = np.arange(1000) / 1000
         raw = pd.DataFrame(
@@ -76,19 +78,19 @@ def test_cutoff_drag_updates_filtered_preview_before_release():
         )
         original = raw.copy()
         controller.app_model.update_recording(raw, {}, {})
-        view.suppress_50hz.setChecked(False)
-        view.remove_dc.setChecked(False)
-        view.cutoff_slider.setSliderDown(True)
+        controls.suppress_50hz.setChecked(False)
+        controls.remove_dc.setChecked(False)
+        controls.cutoff_slider.setSliderDown(True)
 
         # Wait for the published result while the slider is still held down.
         update = QEventLoop()
         model.experiment_data_changed.connect(update.quit)
-        view.cutoff_slider.setSliderPosition(160)
+        controls.cutoff_slider.setSliderPosition(160)
         QTimer.singleShot(3000, update.quit)
         update.exec()
         model.experiment_data_changed.disconnect(update.quit)
 
-        assert view.cutoff_slider.isSliderDown()
+        assert controls.cutoff_slider.isSliderDown()
         assert model.filtered_data_df is not raw
         assert model.filtered_data_df["pin1"].std() < raw["pin1"].std() / 5
         x, y = view.preview_curve.getOriginalDataset()
@@ -104,7 +106,7 @@ def test_cutoff_drag_updates_filtered_preview_before_release():
         pd.testing.assert_frame_equal(model.raw_data_df, original)
         model.clear_experiment_data()
         assert view.preview_curve.getOriginalDataset() == (None, None)
-        assert not view.cutoff_slider.isEnabled()
+        assert not controls.cutoff_slider.isEnabled()
     finally:
         view.close()
         view.deleteLater()
