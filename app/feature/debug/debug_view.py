@@ -1,5 +1,6 @@
 import json
 from dataclasses import asdict
+from datetime import datetime
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import (
@@ -61,6 +62,9 @@ class DebugView(QWidget):
 
         toolbar.addStretch()
 
+        self.last_refresh_label = QLabel()
+        toolbar.addWidget(self.last_refresh_label)
+
         refresh_button = QPushButton("Refresh")
         refresh_button.clicked.connect(self.refresh)
         toolbar.addWidget(refresh_button)
@@ -78,7 +82,7 @@ class DebugView(QWidget):
         self.ui.verticalLayout.addWidget(self.debugTextEdit)
 
     def refresh(self):
-        """Capture the app state on opening the window or clicking Refresh."""
+        """Capture and timestamp the app state when the user clicks Refresh."""
         cursor = self.debugTextEdit.textCursor()
         cursor_position = cursor.position()
         vertical_scroll = self.debugTextEdit.verticalScrollBar().value()
@@ -93,6 +97,9 @@ class DebugView(QWidget):
         self.debugTextEdit.verticalScrollBar().setValue(vertical_scroll)
         self.debugTextEdit.horizontalScrollBar().setValue(horizontal_scroll)
         self._highlight_search_matches()
+
+        refreshed_at = datetime.now().strftime("%H:%M:%S")
+        self.last_refresh_label.setText(f"Last refresh: {refreshed_at}")
 
     def find_next(self):
         self._find_search_text()

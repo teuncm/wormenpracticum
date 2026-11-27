@@ -196,8 +196,7 @@ class AppController:
         self.protocol_view.set_nidaq_status(self.nidaq_model.device_status)
 
     def show_debug_view(self):
-        """Refresh the app state snapshot whenever the debug window is opened."""
-        self.debug_view.refresh()
+        """Open the Debug window with the last manually captured snapshot."""
         self.debug_view.show()
         self.debug_view.raise_()
         self.debug_view.activateWindow()
@@ -333,6 +332,7 @@ class AppController:
                 "filter_config": dataclasses.asdict(DEFAULT_FILTER_CONFIG),
             }
         )
+        self.app_view.set_current_tab(self.stimulus_view)
 
     def reset_stimulus_state(self):
         """Restore the default stimulus and confirm that the reset completed."""

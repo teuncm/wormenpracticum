@@ -8,6 +8,7 @@ from app.app_model import AppModel
 from app.feature.filter.filter_controls import FilterControls
 from app.feature.filter.filter_view import FilterView
 from app.feature.filter.filters import filter_recording, recording_sample_rate
+from app.shared.constants import DEFAULT_FILTER_CONFIG
 from app.shared.deferred_tab_draw import DeferredTabDraw
 from app.shared.recording_metadata import recording_pin_channels
 
@@ -23,6 +24,11 @@ class FilterController:
         self._recording = None
         self._metadata = None
         self._sample_rate = None
+        self._last_low_pass_cutoff = (
+            app_model.filter_config.low_pass_cutoff_hz
+            or DEFAULT_FILTER_CONFIG.low_pass_cutoff_hz
+        )
+        self._auto_update = True
         self._editors: list[FilterControls] = []
         self._pending_editor: FilterControls | None = None
 
@@ -47,12 +53,20 @@ class FilterController:
     def register_controls(self, controls: FilterControls) -> None:
         """Connect another editor to the same model and live filter pass."""
         self._editors.append(controls)
-        controls.set_config(self.app_model.filter_config)
+        controls.set_config(
+            self.app_model.filter_config, inactive_cutoff=self._last_low_pass_cutoff
+        )
+        controls.set_auto_update(self._auto_update)
         self._set_recording_state(controls)
         controls.settings_changed.connect(
             partial(self.schedule_filter_update, controls)
         )
-        controls.apply_requested.connect(partial(self.apply_filters, controls))
+        controls.auto_update_changed.connect(self._set_auto_update)
+
+    def _set_auto_update(self, enabled: bool) -> None:
+        self._auto_update = enabled
+        for controls in self._editors:
+            controls.set_auto_update(enabled)
 
     def _set_recording_state(self, controls: FilterControls) -> None:
         controls.set_recording_available(
@@ -117,7 +131,7 @@ class FilterController:
         self.view.show_preview(x, samples, has_time=has_time)
 
     def schedule_filter_update(self, controls: FilterControls) -> None:
-        if not controls.apply_button.isEnabled():
+        if not self.view.channel_selector.count():
             return
         self._pending_editor = controls
         if not self._live_update.isActive():
@@ -148,7 +162,7 @@ class FilterController:
                 else self.app_model.experiment_metadata.get("sample_rate_hz"),
             )
         except (ValueError, TypeError) as error:
-            controls.status.setText(f"Could not apply filters. {error}")
+            controls.show_status(f"Could not apply filters. {error}")
             return
 
         if self.app_model.filter_config == config:
@@ -157,11 +171,14 @@ class FilterController:
             self.app_model.update_filter_config(config)
         self.app_model.update_filtered_data(filtered)
         for editor in self._editors:
-            editor.status.setText("Filters applied.")
+            editor.show_status("")
 
     def update_ui_from_model(self):
         self._cancel_pending_update()
         config = self.app_model.filter_config
+        if config.low_pass_cutoff_hz:
+            self._last_low_pass_cutoff = config.low_pass_cutoff_hz
         for controls in self._editors:
-            if controls.to_config() != config:
-                controls.set_config(config)
+            # Keep the last applied cutoff while storing Off as zero in saved protocols.
+            if not config.low_pass_cutoff_hz or controls.to_config() != config:
+                controls.set_config(config, inactive_cutoff=self._last_low_pass_cutoff)

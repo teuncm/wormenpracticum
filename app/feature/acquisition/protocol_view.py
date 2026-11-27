@@ -145,7 +145,7 @@ class ProtocolView(QWidget):
 
     def setup_widgets(self):
         """Set up the main plot and controls."""
-        frame, plot = create_plot_widget(x_label="Pin number")
+        frame, plot = create_plot_widget(x_label="Pin number (type below)")
         plot.hideAxis("left")
         plot.showGrid(x=False, y=False)
         pin_numbers = range(1, 17)
@@ -177,7 +177,8 @@ class ProtocolView(QWidget):
 
         # Keep columns even while letting pin buttons follow the available width.
         button_h = 26
-        for col in range(8):
+        columns = 8
+        for col in range(columns):
             pins_layout.setColumnMinimumWidth(col, 0)
             pins_layout.setColumnStretch(col, 1)
 
@@ -187,12 +188,13 @@ class ProtocolView(QWidget):
         )
 
         self.pinButtons = []
-        for i in range(16):
-            btn = PinStateButton(str(i + 1))
-            btn.setObjectName(f"pinButton{i + 1}")
+        for index, pin in enumerate(pin_numbers):
+            btn = PinStateButton(str(pin))
+            btn.setObjectName(f"pinButton{pin}")
             btn.setMinimumSize(0, button_h)
             btn.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
-            pins_layout.addWidget(btn, i // 8, i % 8)
+            row, col = divmod(index, columns)
+            pins_layout.addWidget(btn, row, col)
             btn.stateChanged.connect(lambda _state: self.plot_pins())
             btn.stateChanged.connect(lambda _state: self.protocolChanged.emit())
             btn.hoverChanged.connect(self.plot_pins)

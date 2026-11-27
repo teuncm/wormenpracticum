@@ -58,8 +58,8 @@ DEFAULT_PROTOCOL_CONFIG = ProtocolConfig(
 
 DEFAULT_FILTER_CONFIG = FilterConfig(
     low_pass_cutoff_hz=5000.0,
-    suppress_50hz=True,
-    remove_dc_offset=True,
+    suppress_50hz=False,
+    remove_dc_offset=False,
 )
 
 DEFAULT_STIMULUS_CONFIG = StimulusConfig(

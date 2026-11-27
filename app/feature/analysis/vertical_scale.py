@@ -15,12 +15,8 @@ class VerticalZoomControl(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.factor_label = QLabel("1×")
-        self.factor_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.factor_label)
-        upper_label = QLabel("100×")
-        upper_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(upper_label)
+        layout.addWidget(QLabel("100×"), alignment=Qt.AlignmentFlag.AlignHCenter)
+
         self.slider = QSlider(Qt.Orientation.Vertical)
         self.slider.setAccessibleName("Vertical zoom")
         self.slider.setRange(0, 200)
@@ -29,9 +25,7 @@ class VerticalZoomControl(QWidget):
         self.slider.setTickInterval(100)
         self.slider.setTickPosition(QSlider.TickPosition.TicksBothSides)
         layout.addWidget(self.slider, 1, Qt.AlignmentFlag.AlignHCenter)
-        lower_label = QLabel("1×")
-        lower_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lower_label)
+        layout.addWidget(QLabel("1×"), alignment=Qt.AlignmentFlag.AlignHCenter)
         self.setToolTip(
             "Vertical zoom relative to Total visible amplitude. 1× restores that range."
         )
@@ -48,7 +42,6 @@ class VerticalZoomControl(QWidget):
         return base_amplitude / self.factor
 
     def _zoom_changed(self, _value: int) -> None:
-        self.factor_label.setText(f"{self.factor:.3g}×")
         self.zoomChanged.emit(self.factor)
 
 

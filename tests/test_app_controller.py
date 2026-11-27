@@ -1,4 +1,6 @@
+import json
 import os
+from datetime import datetime
 from unittest.mock import MagicMock
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -63,6 +65,54 @@ def test_metadata_menu_save_load_preserves_samples_and_refreshes_analysis(
         controller.app_view.set_current_tab(controller.analyze_tetanus_view)
         assert len(controller.analyze_tetanus_view.peak_markers.points()) == 96
     finally:
+        controller.app_view.close()
+        app.processEvents()
+
+
+def test_debug_snapshot_and_timestamp_only_change_on_manual_refresh(monkeypatch):
+    app = QApplication.instance() or QApplication([])
+    controller = AppController()
+    debug = controller.debug_view
+    refresh = next(
+        button
+        for button in debug.findChildren(QPushButton)
+        if button.text() == "Refresh"
+    )
+    times = [
+        datetime(2026, 11, 27, 12, 0, 1, 1000),
+        datetime(2026, 11, 27, 12, 0, 2, 2000),
+    ]
+    clock = MagicMock()
+    clock.now.side_effect = times
+    monkeypatch.setattr("app.feature.debug.debug_view.datetime", clock)
+
+    try:
+        controller.app_view.ui.actionDebug.trigger()
+        assert debug.debugTextEdit.toPlainText() == ""
+        assert debug.last_refresh_label.text() == ""
+
+        refresh.click()
+        snapshot = debug.debugTextEdit.toPlainText()
+        timestamp = debug.last_refresh_label.text()
+        assert timestamp == "Last refresh: 12:00:01"
+
+        controller.app_model.update_protocol_config(ProtocolConfig(2, 3, [5], 4))
+        app.processEvents()
+        assert debug.debugTextEdit.toPlainText() == snapshot
+        assert debug.last_refresh_label.text() == timestamp
+
+        debug.close()
+        controller.app_view.ui.actionDebug.trigger()
+        assert debug.debugTextEdit.toPlainText() == snapshot
+        assert debug.last_refresh_label.text() == timestamp
+
+        refresh.click()
+        state = json.loads(debug.debugTextEdit.toPlainText())
+        assert state["protocol_config"]["sample_rate_divider"] == 4
+        assert debug.last_refresh_label.text() == "Last refresh: 12:00:02"
+        assert clock.now.call_count == 2
+    finally:
+        debug.close()
         controller.app_view.close()
         app.processEvents()
 
@@ -144,7 +194,7 @@ def test_analysis_filter_dropdowns_share_live_settings_and_defer_hidden_draws(
                 toggle.menu().actions()[0].defaultWidget().isAncestorOf(editor.cutoff)
             )
             assert not toggle.menu().isVisible()
-            assert not editor.apply_button.isEnabled()
+            assert not editor.low_pass.isEnabled()
 
         raw, payload = gen_dummy_recording(0.01, 3, 4)
         original = raw.copy()
@@ -178,12 +228,15 @@ def test_analysis_filter_dropdowns_share_live_settings_and_defer_hidden_draws(
         tabs.setTabVisible(filter_index, True)
         controller.app_view.set_current_tab(controller.filter_view)
         preview.assert_called_once()
-        main_editor.cutoff.setValue(0)
+        last_cutoff = model.filter_config.low_pass_cutoff_hz
+        main_editor.low_pass.setChecked(False)
         main_editor.suppress_50hz.setChecked(False)
         main_editor.remove_dc.setChecked(False)
-        main_editor.apply_button.click()
+        controller.filter_controller.apply_filters(main_editor)
         pd.testing.assert_frame_equal(model.filtered_data_df, original)
         assert all(editor.to_config() == model.filter_config for editor in editors)
+        assert all(not editor.low_pass.isChecked() for editor in editors)
+        assert all(editor.cutoff.value() == last_cutoff for editor in editors)
         assert [draw.call_count for draw in draws] == [0, 0, 0, 2]
 
         controller.app_view.set_current_tab(views[0])
@@ -198,13 +251,20 @@ def test_analysis_filter_dropdowns_share_live_settings_and_defer_hidden_draws(
         assert [draw.call_count for draw in draws] == [1, 0, 0, 2]
 
         editors[0].cutoff.setValue(100_000)
-        editors[0].apply_button.click()
+        controller.filter_controller.apply_filters(editors[0])
         assert "Could not apply filters" in editors[0].status.text()
         assert main_editor.to_config() == model.filter_config
 
         model.clear_experiment_data()
         assert all(editor.to_config() == model.filter_config for editor in editors)
-        assert all(not editor.apply_button.isEnabled() for editor in editors)
+        assert all(not editor.low_pass.isEnabled() for editor in editors)
+
+        editors[-1].auto_update.setChecked(False)
+        assert all(
+            not editor.auto_update.isChecked()
+            and not editor.cutoff_slider.hasTracking()
+            for editor in [main_editor, *editors]
+        )
     finally:
         controller.app_view.close()
         app.processEvents()
@@ -378,12 +438,15 @@ def test_new_experiment_requires_confirmation(monkeypatch, confirm):
     model.update_raw_data(data)
     model.experiment_metadata = {"run": 3}
     original_state = model.export_state()
+    tabs = controller.app_view.ui.tabWidget
+    original_tab = tabs.currentWidget()
     dialogs = []
 
     def answer(dialog):
         dialogs.append(dialog)
         assert model.export_state() == original_state
         assert model.raw_data_df is data
+        assert tabs.currentWidget() is original_tab
         assert dialog.defaultButton() == dialog.button(
             QMessageBox.StandardButton.Cancel
         )
@@ -398,6 +461,7 @@ def test_new_experiment_requires_confirmation(monkeypatch, confirm):
         controller.app_view.ui.actionNew.trigger()
         assert len(dialogs) == 1
         if confirm:
+            assert tabs.currentWidget() is controller.stimulus_view.parentWidget()
             assert model.stim_config == DEFAULT_STIMULUS_CONFIG
             assert model.protocol_config == DEFAULT_PROTOCOL_CONFIG
             assert model.filter_config == DEFAULT_FILTER_CONFIG
@@ -405,6 +469,7 @@ def test_new_experiment_requires_confirmation(monkeypatch, confirm):
             assert model.filtered_data_df is None
             assert model.experiment_metadata == {}
         else:
+            assert tabs.currentWidget() is original_tab
             assert model.export_state() == original_state
             assert model.raw_data_df is data
             assert model.experiment_metadata == {"run": 3}
@@ -596,6 +661,8 @@ def test_load_protocol_restores_settings(monkeypatch, file_kind):
     state = controller.app_model.export_state()
     state["protocol_config"]["sample_rate_divider"] = 8
     state["filter_config"]["low_pass_cutoff_hz"] = 250.0
+    state["filter_config"]["suppress_50hz"] = True
+    state["filter_config"]["remove_dc_offset"] = True
     expected_filter = controller.app_model.filter_config
     if file_kind == "combined":
         payload = {key: state[key] for key in ("protocol_config", "filter_config")}
@@ -686,8 +753,8 @@ def test_reset_config_actions_restore_default_configs(reset_messages):
     controller.app_model.update_filter_config(
         FilterConfig(
             low_pass_cutoff_hz=250.0,
-            suppress_50hz=False,
-            remove_dc_offset=False,
+            suppress_50hz=True,
+            remove_dc_offset=True,
         )
     )
 
@@ -751,8 +818,8 @@ def test_reset_config_actions_restore_ui_after_ui_edits(reset_messages):
     controller.protocol_view.pinButtons[-1].setChecked(False)
     controller.protocol_view.ui.sampleRateDividerComboBox.setCurrentIndex(2)
     controller.filter_view.filter_controls.cutoff.setValue(123.0)
-    controller.filter_view.filter_controls.suppress_50hz.setChecked(False)
-    controller.filter_view.filter_controls.remove_dc.setChecked(False)
+    controller.filter_view.filter_controls.suppress_50hz.setChecked(True)
+    controller.filter_view.filter_controls.remove_dc.setChecked(True)
     app.processEvents()
 
     controller.app_view.ui.actionReset_protocol.trigger()
